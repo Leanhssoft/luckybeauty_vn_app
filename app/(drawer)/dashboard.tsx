@@ -1,10 +1,10 @@
 import { Text, View } from "react-native";
 
-const CustomerPage = () => {
+const Dashboard = () => {
   return (
     <View style={{ backgroundColor: "yellow" }}>
-      <Text>page customer</Text>
+      <Text>Dashboard</Text>
     </View>
   );
 };
-export default CustomerPage;
+export default Dashboard;
