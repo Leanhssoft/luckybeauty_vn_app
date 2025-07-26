@@ -1,10 +1,14 @@
 import { Text, View } from "react-native";
 
-const Dashboard = () => {
+export const screenOptions = {
+  title: "Trang chủ",
+  drawerLabel: "Trang chủ",
+};
+
+export default function Dashboard() {
   return (
     <View style={{ backgroundColor: "yellow" }}>
       <Text>Dashboard</Text>
     </View>
   );
-};
-export default Dashboard;
+}
