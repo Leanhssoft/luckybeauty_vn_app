@@ -1,7 +1,7 @@
 import { Theme } from "@rneui/base";
 import { Button, Text, useTheme } from "@rneui/themed";
 import dayjs from "dayjs";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import { BarChart, barDataItem, LineChart } from "react-native-gifted-charts";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -44,33 +44,33 @@ export default function Dashboard() {
       idChiNhanhs: [idChiNhanhCurrent],
     });
 
-  const arr = [
-    { id: 0, label: "Thực thu" },
-    { id: 1, label: "Doanh thu" },
-    { id: 2, label: "Số cuộc hẹn" },
-    { id: 3, label: "Khách mới" },
-  ];
   const arrFilterButton = [
     { id: TypeTime.WEEK, label: "Tuần" },
     { id: TypeTime.MONTH, label: "Tháng" },
     { id: TypeTime.YEAR, label: "Năm" },
   ];
 
-  const ThongKeSoLuong = async () => {
+  const ThongKeSoLuong = useCallback(async () => {
     const input: IParamSearchFromToDto = {
       fromDate: dayjs().format("YYYY-MM-DD"),
       toDate: dayjs().format("YYYY-MM-DD"),
       idChiNhanhs: [idChiNhanhCurrent],
     };
     const xx = await DashboardService.ThongKeSoLuong(input);
+
     if (xx !== null) {
       setDoanhThu(xx.tongDoanhThu);
       setThucThu(xx.tongThucThu);
       setSoCuocHen(xx.tongLichHen);
       setSoKhachMoi(xx.tongKhachHangSinhNhat); //todo
     }
-  };
-  const ThongKeDoanhThu = async () => {
+  }, [idChiNhanhCurrent]);
+
+  useEffect(() => {
+    ThongKeSoLuong();
+  }, [ThongKeSoLuong]);
+
+  const ThongKeDoanhThu = useCallback(async () => {
     const xx = await DashboardService.ThongKeDoanhThu(doanhThu_ParamFilter);
 
     let timeThis = "";
@@ -106,13 +106,7 @@ export default function Dashboard() {
           label: x.label,
           value: x.value,
           topLabelComponent: () => (
-            <Text
-              style={{
-                color: theme.colors.primary,
-                fontSize: 14,
-                marginBottom: 6,
-              }}
-            >
+            <Text style={styles.barCharTtopLabel}>
               {ChartsFunc.formatYLabel(x.value)}
             </Text>
           ),
@@ -125,27 +119,21 @@ export default function Dashboard() {
       }
     });
     setDataDoanhThu([...xx2]);
-  };
+  }, [doanhThu_ParamFilter]);
 
   useEffect(() => {
-    if (firstLoad.current) {
-      firstLoad.current = false;
-      return;
-    }
-    // todo (load douple)
     ThongKeDoanhThu();
-  }, [doanhThu_ParamFilter]);
+  }, [ThongKeDoanhThu]); // Chỉ trigger khi filter thực sự thay đổi
 
   useEffect(() => {
     if (firstLoad2.current) {
       firstLoad2.current = false;
       return;
     }
-    setDoanhThu_ParamFilter({
-      ...doanhThu_ParamFilter,
+    setDoanhThu_ParamFilter((prev) => ({
+      ...prev,
       idChiNhanhs: [idChiNhanhCurrent],
-    });
-    ThongKeSoLuong();
+    }));
   }, [idChiNhanhCurrent]);
 
   const PageLoad = async () => {
@@ -330,6 +318,11 @@ const createStyles = (theme: Theme) =>
     flexRow: {
       flexDirection: "row",
       alignItems: "center",
+    },
+    barCharTtopLabel: {
+      color: theme.colors.primary,
+      fontSize: 14,
+      marginBottom: 6,
     },
     card: {
       flex: 1,
