@@ -1,13 +1,28 @@
+import { AppProvider, useAppContext } from "@/store/react_context/AppProvider";
 import { ThemeProvider, useTheme } from "@rneui/themed";
+import { Redirect, Slot } from "expo-router";
 
-import { Slot } from "expo-router";
+function MainLayout() {
+  const { isLogin, isLoading } = useAppContext();
+  if (isLoading) return null;
+
+  if (!isLogin) {
+    // Chuyển hướng tới login nếu chưa đăng nhập
+    return <Redirect href="./(auth)/login" />;
+  }
+
+  // Nếu đã đăng nhập, load layout chính (drawer)
+  return <Slot />;
+}
 
 export default function RootLayout() {
   const { theme } = useTheme();
 
   return (
-    <ThemeProvider>
-      <Slot />
-    </ThemeProvider>
+    <AppProvider>
+      <ThemeProvider>
+        <Slot />
+      </ThemeProvider>
+    </AppProvider>
   );
 }
