@@ -1,8 +1,8 @@
-import dayjs from 'dayjs';
-import { ICustomerBasicDto } from '../customer/ICustomerBasicDto';
-import { IProductBasic } from '../product/dto';
-import { LoaiChungTu } from '../../enum/LoaiChungTu';
-import { InvoiceStatus } from '../../enum/InvoiceStatus';
+import dayjs from "dayjs";
+import { InvoiceStatus } from "../../enum/InvoiceStatus";
+import { LoaiChungTu } from "../../enum/LoaiChungTu";
+import { ICustomerBasicDto } from "../customer/ICustomerBasicDto";
+import { IProductBasic } from "../product/dto";
 
 export interface IHoaDonDto extends ICustomerBasicDto {
   id: string;
@@ -81,13 +81,13 @@ export class HoaDonDto implements IHoaDonDto {
   soDienThoai: string;
 
   constructor({
-    id = '',
+    id = "",
     idLoaiChungTu = LoaiChungTu.HOA_DON_BAN_LE,
-    idChiNhanh = '',
+    idChiNhanh = "",
     idKhachHang = null,
     idNhanVien = null,
-    maHoaDon = '',
-    ngayLapHoaDon = dayjs(new Date()).format('YYYY-MM-DD HH:mm'),
+    maHoaDon = "",
+    ngayLapHoaDon = dayjs(new Date()).format("YYYY-MM-DD HH:mm"),
     isOpenLastest = true,
     tongTienHangChuaChietKhau = 0,
     ptChietKhauHang = 0,
@@ -101,12 +101,12 @@ export class HoaDonDto implements IHoaDonDto {
     chiPhiTraHang = 0,
     tongThanhToan = 0,
     chiPhiHD = 0,
-    ghiChuHD = '',
+    ghiChuHD = "",
     trangThai = InvoiceStatus.HOAN_THANH,
 
-    maKhachHang = 'KL',
-    tenKhachHang = 'Khách lẻ',
-    soDienThoai = ''
+    maKhachHang = "KL",
+    tenKhachHang = "Khách lẻ",
+    soDienThoai = "",
   }) {
     this.id = id;
     this.idLoaiChungTu = idLoaiChungTu;
@@ -157,15 +157,15 @@ export class HoaDonChiTietDto implements IHoaDonChiTietDto {
   ghiChu?: string;
   trangThai: number;
 
-  idDonViQuyDoi = '';
-  idHangHoa = '';
-  maHangHoa = '';
-  tenHangHoa = '';
+  idDonViQuyDoi = "";
+  idHangHoa = "";
+  maHangHoa = "";
+  tenHangHoa = "";
   giaBan = 0;
 
   constructor({
-    id = '',
-    idHoaDon = '',
+    id = "",
+    idHoaDon = "",
     idChiTietHoaDon = null,
     stt = 1,
     soLuong = 0,
@@ -180,13 +180,13 @@ export class HoaDonChiTietDto implements IHoaDonChiTietDto {
     thanhTienTruocCK = 0,
     thanhTienSauCK = 0,
     thanhTienSauVAT = 0,
-    ghiChu = '',
+    ghiChu = "",
     trangThai = InvoiceStatus.HOAN_THANH,
-    idDonViQuyDoi = '',
-    idHangHoa = '',
-    maHangHoa = '',
-    tenHangHoa = '',
-    giaBan = 0
+    idDonViQuyDoi = "",
+    idHangHoa = "",
+    maHangHoa = "",
+    tenHangHoa = "",
+    giaBan = 0,
   }) {
     this.id = id;
     this.idHoaDon = idHoaDon;
@@ -223,15 +223,18 @@ export class HoaDonChiTietDto implements IHoaDonChiTietDto {
         },
         set(value: number) {
           this._thanhTienTruocCK = value;
-        }
+        },
       },
       donGiaSauCK: {
         get() {
           if (this.ptChietKhau ?? 0 > 0) {
-            return this.donGiaTruocCK - (this.donGiaTruocCK * (this.ptChietKhau ?? 0)) / 100;
+            return (
+              this.donGiaTruocCK -
+              (this.donGiaTruocCK * (this.ptChietKhau ?? 0)) / 100
+            );
           }
           return this.donGiaTruocCK - (this.tienChietKhau ?? 0);
-        }
+        },
         // set(newVal: number) {
         //     return newVal;
         // }
@@ -247,15 +250,17 @@ export class HoaDonChiTietDto implements IHoaDonChiTietDto {
         },
         set(value: number) {
           this._thanhTienSauCK = value;
-        }
+        },
       },
       donGiaSauVAT: {
         get() {
           if (this.pTThue ?? 0 > 0) {
-            return this.donGiaSauCK + (this.donGiaSauCK * (this.pTThue ?? 0)) / 100;
+            return (
+              this.donGiaSauCK + (this.donGiaSauCK * (this.pTThue ?? 0)) / 100
+            );
           }
           return this.donGiaSauCK - (this.tienThue ?? 0);
-        }
+        },
         // set(newVal: number) {
         //     return newVal;
         // }
@@ -269,8 +274,8 @@ export class HoaDonChiTietDto implements IHoaDonChiTietDto {
         },
         set(value: number) {
           this._thanhTienSauVAT = value;
-        }
-      }
+        },
+      },
     });
   }
 }

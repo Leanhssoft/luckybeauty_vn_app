@@ -1,9 +1,9 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { IAuthenResultModel, ILoginInfo, ILoginModel } from '../services/login/LoginDto';
-const STORAGE_KEY_LOGIN = 'user_login';
-const ACCESS_TOKEN_KEY = 'access_token';
-const REFRESH_TOKEN_KEY = 'refresh_token';
-const EXPIRE_AT_KEY = 'access_token_expire_at';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { IAuthenResultModel } from "../services/login/LoginDto";
+const STORAGE_KEY_LOGIN = "user_login";
+const ACCESS_TOKEN_KEY = "access_token";
+const REFRESH_TOKEN_KEY = "refresh_token";
+const EXPIRE_AT_KEY = "access_token_expire_at";
 
 const expiresIn = 86400; // tương đương TimeSpan.FromDays(1)
 
@@ -13,7 +13,7 @@ class AuthStorage {
       const expireAt = Date.now() + expiresIn * 1000;
       const ops: [string, string][] = [
         [ACCESS_TOKEN_KEY, input.accessToken],
-        [EXPIRE_AT_KEY, expireAt.toString()]
+        [EXPIRE_AT_KEY, expireAt.toString()],
       ];
 
       if (input.refreshToken) {
@@ -22,7 +22,7 @@ class AuthStorage {
 
       await AsyncStorage.multiSet(ops);
     } catch (error) {
-      console.error('error get token', error);
+      console.error("error get token", error);
     }
   };
   getAccessToken = async (): Promise<string | null> => {
@@ -44,7 +44,11 @@ class AuthStorage {
   };
 
   removeTokens = async (): Promise<void> => {
-    await AsyncStorage.multiRemove([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, EXPIRE_AT_KEY]);
+    await AsyncStorage.multiRemove([
+      ACCESS_TOKEN_KEY,
+      REFRESH_TOKEN_KEY,
+      EXPIRE_AT_KEY,
+    ]);
   };
 
   clearToken = async (): Promise<void> => {
@@ -54,15 +58,15 @@ class AuthStorage {
     try {
       await AsyncStorage.setItem(STORAGE_KEY_LOGIN, userLogin);
     } catch (error) {
-      console.error('Lỗi khi lưu thông tin đăng nhập:', error);
+      console.error("Lỗi khi lưu thông tin đăng nhập:", error);
     }
   };
   getUserLogin = async (): Promise<string | null> => {
     try {
-      const json = await AsyncStorage.getItem(STORAGE_KEY_LOGIN);
-      return json ? JSON.parse(json) : null;
+      const str = await AsyncStorage.getItem(STORAGE_KEY_LOGIN);
+      return str;
     } catch (error) {
-      console.error('Lỗi khi lấy thông tin đăng nhập:', error);
+      console.error("Lỗi khi lấy thông tin đăng nhập:", error);
       return null;
     }
   };
@@ -70,7 +74,7 @@ class AuthStorage {
     try {
       await AsyncStorage.removeItem(STORAGE_KEY_LOGIN);
     } catch (error) {
-      console.error('Lỗi khi xoá thông tin đăng nhập:', error);
+      console.error("Lỗi khi xoá thông tin đăng nhập:", error);
     }
   };
 }

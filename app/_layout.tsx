@@ -1,6 +1,7 @@
 import { AppProvider, useAppContext } from "@/store/react_context/AppProvider";
 import { ThemeProvider, useTheme } from "@rneui/themed";
 import { Redirect, Slot } from "expo-router";
+import { SQLiteProvider } from "expo-sqlite";
 
 function MainLayout() {
   const { isLogin, isLoading } = useAppContext();
@@ -20,9 +21,11 @@ export default function RootLayout() {
 
   return (
     <AppProvider>
-      <ThemeProvider>
-        <Slot />
-      </ThemeProvider>
+      <SQLiteProvider databaseName="expo-luckybeauty02.db">
+        <ThemeProvider>
+          <Slot />
+        </ThemeProvider>
+      </SQLiteProvider>
     </AppProvider>
   );
 }

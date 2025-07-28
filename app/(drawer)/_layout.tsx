@@ -112,6 +112,7 @@ export default function DrawerLayout() {
           name="(sale-stack)"
           options={{
             title: "Bán hàng",
+            headerShown: false,
             drawerIcon: ({ focused, color, size }) => (
               <Icon
                 type={IconType.FOUNDATION}

@@ -29,17 +29,15 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const checkLogin = async () => {
     const accessToken = await AuthStorage.getAccessToken();
     const expireAt = await AuthStorage.getExpireAt();
-    // if (accessToken && expireAt && Date.now() < expireAt) {
-    //   setIsLogin(true);
-
-    //   const userCache = await AuthStorage.getUserLogin();
-    //   await SetInforUserLogin(userCache);
-    // } else {
-    //   setIsLogin(false);
-    //   await AuthStorage.clearToken();
-    // }
+    if (accessToken && expireAt && Date.now() < expireAt) {
+      setIsLogin(true);
+      const userCache = await AuthStorage.getUserLogin();
+      await SetInforUserLogin(userCache);
+    } else {
+      setIsLogin(false);
+      await AuthStorage.clearToken();
+    }
     setIsLoading(false);
-    setIsLogin(false);
   };
 
   const SetInforUserLogin = async (userName: string | null) => {
