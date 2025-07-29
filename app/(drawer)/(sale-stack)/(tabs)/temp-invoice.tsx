@@ -349,6 +349,8 @@ const createStyles = (theme: Theme) =>
     },
     tabItemInActive: {
       backgroundColor: theme.colors.disabled,
+      borderColor: theme.colors.grey4,
+      borderWidth: 1,
     },
     tabItemAdd: {
       backgroundColor: theme.colors.white,

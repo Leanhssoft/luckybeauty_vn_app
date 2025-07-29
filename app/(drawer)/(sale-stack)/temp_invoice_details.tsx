@@ -1,6 +1,6 @@
-import { Button, Icon, Text, useTheme } from "@rneui/themed";
+import { Button, Icon, Input, Text, useTheme } from "@rneui/themed";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import uuid from "react-native-uuid";
 
@@ -378,33 +378,37 @@ export default function TempInvoiceDetails() {
           padding: 8,
         }}
       >
-        <View
-          style={{
-            borderRadius: 4,
-            borderColor: theme.colors.greyOutline,
-            borderWidth: 1,
-            flex: 3,
-            flexDirection: "row",
-            alignItems: "center",
-            paddingHorizontal: 8,
-            paddingVertical: 4,
-            backgroundColor: theme.colors.white,
-          }}
-        >
-          <Icon type={IconType.IONICON} name="search" size={18} />
-          <TextInput
-            style={{
-              marginLeft: 8,
+        <View style={{ flex: 7.5 }}>
+          <Input
+            errorStyle={{ height: 0 }}
+            errorMessage=""
+            leftIcon={{
+              type: IconType.IONICON,
+              name: "search",
+              size: 14,
+              style: {
+                color: theme.colors.greyOutline,
+              },
             }}
-            placeholder="Tìm dịch vụ"
-            value={txtSearchProduct}
-            onChangeText={(text) => setTxtSearchProduct(text)}
+            placeholder="Tìm kiếm sản phẩm"
+            containerStyle={{
+              borderColor: theme.colors.greyOutline,
+              padding: 0,
+              backgroundColor: theme.colors.white,
+              borderRadius: 8,
+            }}
+            inputStyle={{
+              fontSize: 14,
+            }}
+            onChangeText={(text) => {
+              setTxtSearchProduct(text);
+            }}
           />
         </View>
 
         <Pressable
           style={{
-            flex: 1,
+            flex: 2.5,
             marginLeft: 8,
             justifyContent: "center",
             alignItems: "center",
@@ -423,7 +427,7 @@ export default function TempInvoiceDetails() {
           </Text>
         </Pressable>
       </View>
-      {lstSearchCTHD?.length == 0 ? (
+      {lstSearchCTHD?.length === 0 ? (
         <View style={styles.container}>
           <View
             style={{
@@ -447,11 +451,12 @@ export default function TempInvoiceDetails() {
         </View>
       ) : (
         <View style={styles.containerDetail}>
-          <View
+          <ScrollView
             style={{
               gap: 8,
               backgroundColor: theme.colors.white,
             }}
+            contentContainerStyle={{ paddingBottom: 150 }}
           >
             {lstSearchCTHD?.map((item, index) => (
               <View
@@ -522,17 +527,17 @@ export default function TempInvoiceDetails() {
                 </View>
               </View>
             ))}
-          </View>
+          </ScrollView>
         </View>
       )}
 
-      <View style={styles.boxInvoice}>
+      <View style={[styles.boxInvoice, { paddingBottom: insets.bottom }]}>
         <View
           style={{
             padding: 12,
             borderRadius: 8,
             borderWidth: 1,
-            borderColor: theme.colors.greyOutline,
+            borderColor: theme.colors.primary,
           }}
         >
           <View
@@ -595,32 +600,29 @@ export default function TempInvoiceDetails() {
             </View>
           </View>
         </View>
-      </View>
-      <Button
-        titleStyle={{
-          fontSize: 18,
-        }}
-        size="lg"
-        containerStyle={{
-          position: "absolute",
-          bottom: 0,
-          width: "100%",
-          padding: 8,
-        }}
-        buttonStyle={{
-          borderRadius: 4,
-        }}
-        onPress={gotoThanhToan}
-      >
-        <Icon
-          name="check"
-          color={theme.colors.white}
-          containerStyle={{
-            marginRight: 10,
+        <Button
+          titleStyle={{
+            fontSize: 18,
           }}
-        />
-        Thanh toán
-      </Button>
+          size="lg"
+          containerStyle={{
+            marginTop: 8,
+          }}
+          buttonStyle={{
+            borderRadius: 4,
+          }}
+          onPress={gotoThanhToan}
+        >
+          <Icon
+            name="check"
+            color={theme.colors.white}
+            containerStyle={{
+              marginRight: 10,
+            }}
+          />
+          Thanh toán
+        </Button>
+      </View>
     </View>
   );
 }
@@ -633,7 +635,7 @@ const createStyle = (theme: Theme) =>
       position: "relative",
     },
     boxInvoice: {
-      bottom: 75,
+      bottom: 8,
       position: "absolute",
       width: "100%",
       padding: 8,
@@ -652,6 +654,6 @@ const createStyle = (theme: Theme) =>
       alignItems: "center",
     },
     containerDetail: {
-      padding: 8,
+      paddingHorizontal: 8,
     },
   });

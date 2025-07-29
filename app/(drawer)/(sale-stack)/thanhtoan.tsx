@@ -33,7 +33,7 @@ import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ThanhToan() {
@@ -116,19 +116,12 @@ export default function ThanhToan() {
     GetInforHoadon_fromCache();
   }, [idHoaDon]);
 
-  const changeHinhThucThanhToan = (id: HinhThucThanhToan) => {
-    let arrNew: HinhThucThanhToan[] = [];
-    setArrHinhThucChosed((prev) => {
-      if (prev.includes(id)) {
-        arrNew = prev.filter((item) => item !== id);
-        return prev.filter((item) => item !== id); // Nếu đã chọn thì bỏ chọn
-      } else {
-        arrNew = [...prev, id];
-        return [...prev, id]; // Nếu chưa chọn thì chọn
-      }
-    });
-    console.log("change HTTT ", arrNew?.length);
-    switch (arrNew?.length ?? 0) {
+  useEffect(() => {
+    AssignAgain_LoaiTien(arrHinhThucChosed);
+  }, [arrHinhThucChosed]);
+
+  const AssignAgain_LoaiTien = (arrNew: HinhThucThanhToan[]) => {
+    switch (arrNew?.length) {
       case 0: {
         setTienMat("0");
         setTienChuyenKhoan("0");
@@ -169,6 +162,16 @@ export default function ThanhToan() {
         }
         break;
     }
+  };
+
+  const changeHinhThucThanhToan = (id: HinhThucThanhToan) => {
+    setArrHinhThucChosed((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((item) => item !== id); // Nếu đã chọn thì bỏ chọn
+      } else {
+        return [...prev, id]; // Nếu chưa chọn thì chọn
+      }
+    });
   };
 
   const editTienTheGiaTri = (value: string) => {
@@ -475,307 +478,314 @@ export default function ThanhToan() {
         mes={objSimpleDialog?.mes}
         onClose={onCloseSimpleDialog}
       />
-      <View style={styles.flexRow}>
-        <Text style={styles.textInfor}>Tổng phải trả</Text>
-        <Text style={styles.textInfor}>
-          {new Intl.NumberFormat("vi-VN").format(
-            hoadonOpen?.tongThanhToan ?? 0
-          )}
-        </Text>
-      </View>
-      <View style={styles.boxCheckPhuongThucTT}>
-        <Text>Phương thức thanh toán</Text>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          {arrPhuongThucTT?.map((item) => (
-            <CheckBox
-              key={item.id}
-              title={item.text}
-              checked={arrHinhThucChosed.includes(item.id)}
-              onPress={() => {
-                changeHinhThucThanhToan(item.id);
-              }}
-            />
-          ))}
+      <View style={{ gap: 16, marginTop: 16, padding: 8 }}>
+        <View style={styles.flexRow}>
+          <Text style={styles.textInfor}>Tổng phải trả</Text>
+          <Text style={styles.textInfor}>
+            {new Intl.NumberFormat("vi-VN").format(
+              hoadonOpen?.tongThanhToan ?? 0
+            )}
+          </Text>
         </View>
-      </View>
-
-      <View style={{ gap: 20 }}>
-        {arrHinhThucChosed?.includes(HinhThucThanhToan.TIEN_MAT) && (
-          <View style={styles.itemLoaiTien}>
-            <Text>Tiền mặt</Text>
-            <Input
-              inputStyle={{
-                textAlign: "right",
-              }}
-              value={tienMat?.toString()}
-              onChangeText={(txt) => editTienMat(txt)}
-            />
+        <View style={styles.boxCheckPhuongThucTT}>
+          <Text>Phương thức thanh toán</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingLeft: 0,
+            }}
+          >
+            {arrPhuongThucTT?.map((item) => (
+              <CheckBox
+                key={item.id}
+                title={item.text}
+                containerStyle={{
+                  marginLeft: 0,
+                }}
+                checked={arrHinhThucChosed.includes(item.id)}
+                onPress={() => {
+                  changeHinhThucThanhToan(item.id);
+                }}
+              />
+            ))}
           </View>
-        )}
+        </View>
 
-        {arrHinhThucChosed?.includes(HinhThucThanhToan.CHUYEN_KHOAN) && (
-          <View style={[styles.flexRow, { gap: 8 }]}>
+        <ScrollView>
+          {arrHinhThucChosed?.includes(HinhThucThanhToan.TIEN_MAT) && (
             <View style={styles.itemLoaiTien}>
-              <Text>Chuyển khoản</Text>
+              <Text>Tiền mặt</Text>
               <Input
                 inputStyle={{
                   textAlign: "right",
                 }}
-                value={tienChuyenKhoan}
-                onChangeText={(text) =>
-                  setTienChuyenKhoan(
-                    CommonFunc.formatCurrency(
-                      CommonFunc.formatNumberToFloat(text)
-                    )
-                  )
-                }
+                value={tienMat?.toString()}
+                onChangeText={(txt) => editTienMat(txt)}
               />
             </View>
+          )}
 
-            {!CommonFunc.checkNull_OrEmpty(idTaiKhoanChuyenKhoan) ? (
-              <View
-                style={{
-                  width: "40%",
-                }}
-              >
-                <View style={styles.accountItem}>
-                  <Image
-                    style={{
-                      height: 60,
-                    }}
-                    source={{
-                      uri: taiKhoanCKChosed?.logoNganHang,
-                    }}
-                  />
-
-                  <View>
-                    <Text
-                      style={{
-                        fontWeight: 500,
-                        fontSize: 18,
-                        textAlign: "center",
-                      }}
-                    >
-                      {taiKhoanCKChosed?.tenChuThe ?? ""}
-                    </Text>
-                    <Text
-                      style={{
-                        color: theme.colors.grey4,
-                        textAlign: "center",
-                      }}
-                    >
-                      {taiKhoanCKChosed?.soTaiKhoan ?? ""}
-                    </Text>
-                  </View>
-                </View>
-                <TextLink
-                  lable="Thay đổi"
-                  overrideStyles={{ textAlign: "center" }}
-                  onPress={() => changeTaiKhoanNganHang(true)}
+          {arrHinhThucChosed?.includes(HinhThucThanhToan.CHUYEN_KHOAN) && (
+            <View style={[styles.flexRow, { gap: 8, marginTop: 20 }]}>
+              <View style={styles.itemLoaiTien}>
+                <Text>Chuyển khoản</Text>
+                <Input
+                  inputStyle={{
+                    textAlign: "right",
+                  }}
+                  value={tienChuyenKhoan}
+                  onChangeText={(text) =>
+                    setTienChuyenKhoan(
+                      CommonFunc.formatCurrency(
+                        CommonFunc.formatNumberToFloat(text)
+                      )
+                    )
+                  }
                 />
               </View>
-            ) : (
-              <TouchableOpacity
-                style={[
-                  styles.flexRow,
-                  {
-                    width: "40%",
-                  },
-                ]}
-                onPress={() => showModalTaiKhoanNganHang(true)}
-              >
-                <Text
+
+              {!CommonFunc.checkNull_OrEmpty(idTaiKhoanChuyenKhoan) ? (
+                <View
                   style={{
-                    textDecorationLine: "underline",
-                    textAlign: "center",
+                    width: "40%",
                   }}
                 >
-                  Chọn tài khoản nhận
-                </Text>
-                <Icon
-                  size={30}
-                  name="keyboard-double-arrow-right"
-                  type={IconType.MATERIAL}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-
-        {arrHinhThucChosed.includes(HinhThucThanhToan.QUYET_THE) && (
-          <View style={[styles.flexRow, { gap: 16 }]}>
-            <View style={styles.itemLoaiTien}>
-              <Text>POS</Text>
-              <Input
-                inputStyle={{
-                  textAlign: "right",
-                }}
-                value={tienQuyeThePos}
-                onChangeText={(text) =>
-                  setTienQuyeThePos(
-                    CommonFunc.formatCurrency(
-                      CommonFunc.formatNumberToFloat(text)
-                    )
-                  )
-                }
-              />
-            </View>
-            {!CommonFunc.checkNull_OrEmpty(idTaiKhoanPOS) ? (
-              <View
-                style={{
-                  width: "40%",
-                }}
-              >
-                <View style={styles.accountItem}>
-                  <Image
-                    style={{
-                      height: 60,
-                    }}
-                    source={{
-                      uri: taiKhoanPOSChosed?.logoNganHang,
-                    }}
-                  />
-
-                  <View>
-                    <Text
+                  <View style={styles.accountItem}>
+                    <Image
                       style={{
-                        fontWeight: 500,
-                        fontSize: 18,
-                        textAlign: "center",
+                        height: 60,
                       }}
-                    >
-                      {taiKhoanPOSChosed?.tenChuThe ?? ""}
-                    </Text>
-                    <Text
-                      style={{
-                        color: theme.colors.grey4,
-                        textAlign: "center",
+                      source={{
+                        uri: taiKhoanCKChosed?.logoNganHang,
                       }}
-                    >
-                      {taiKhoanPOSChosed?.soTaiKhoan ?? ""}
-                    </Text>
+                    />
+
+                    <View>
+                      <Text
+                        style={{
+                          fontWeight: 500,
+                          fontSize: 18,
+                          textAlign: "center",
+                        }}
+                      >
+                        {taiKhoanCKChosed?.tenChuThe ?? ""}
+                      </Text>
+                      <Text
+                        style={{
+                          color: theme.colors.grey4,
+                          textAlign: "center",
+                        }}
+                      >
+                        {taiKhoanCKChosed?.soTaiKhoan ?? ""}
+                      </Text>
+                    </View>
                   </View>
                   <TextLink
                     lable="Thay đổi"
                     overrideStyles={{ textAlign: "center" }}
-                    onPress={() => changeTaiKhoanNganHang(false)}
+                    onPress={() => changeTaiKhoanNganHang(true)}
                   />
                 </View>
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    styles.flexRow,
+                    {
+                      width: "40%",
+                    },
+                  ]}
+                  onPress={() => showModalTaiKhoanNganHang(true)}
+                >
+                  <Text
+                    style={{
+                      textDecorationLine: "underline",
+                      textAlign: "center",
+                    }}
+                  >
+                    Chọn tài khoản nhận
+                  </Text>
+                  <Icon
+                    size={30}
+                    name="keyboard-double-arrow-right"
+                    type={IconType.MATERIAL}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
+          {arrHinhThucChosed.includes(HinhThucThanhToan.QUYET_THE) && (
+            <View style={[styles.flexRow, { gap: 16, marginTop: 20 }]}>
+              <View style={styles.itemLoaiTien}>
+                <Text>POS</Text>
+                <Input
+                  inputStyle={{
+                    textAlign: "right",
+                  }}
+                  value={tienQuyeThePos}
+                  onChangeText={(text) =>
+                    setTienQuyeThePos(
+                      CommonFunc.formatCurrency(
+                        CommonFunc.formatNumberToFloat(text)
+                      )
+                    )
+                  }
+                />
               </View>
-            ) : (
-              <TouchableOpacity
-                style={[
-                  styles.flexRow,
-                  {
-                    width: "40%",
-                  },
-                ]}
-                onPress={() => showModalTaiKhoanNganHang(false)}
-              >
-                <Text
+              {!CommonFunc.checkNull_OrEmpty(idTaiKhoanPOS) ? (
+                <View
                   style={{
-                    textDecorationLine: "underline",
-                    textAlign: "center",
+                    width: "40%",
                   }}
                 >
-                  Chọn tài khoản nhận
-                </Text>
-                <Icon
-                  size={30}
-                  name="keyboard-double-arrow-right"
-                  type={IconType.MATERIAL}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
+                  <View style={styles.accountItem}>
+                    <Image
+                      style={{
+                        height: 60,
+                      }}
+                      source={{
+                        uri: taiKhoanPOSChosed?.logoNganHang,
+                      }}
+                    />
+
+                    <View>
+                      <Text
+                        style={{
+                          fontWeight: 500,
+                          fontSize: 18,
+                          textAlign: "center",
+                        }}
+                      >
+                        {taiKhoanPOSChosed?.tenChuThe ?? ""}
+                      </Text>
+                      <Text
+                        style={{
+                          color: theme.colors.grey4,
+                          textAlign: "center",
+                        }}
+                      >
+                        {taiKhoanPOSChosed?.soTaiKhoan ?? ""}
+                      </Text>
+                    </View>
+                    <TextLink
+                      lable="Thay đổi"
+                      overrideStyles={{ textAlign: "center" }}
+                      onPress={() => changeTaiKhoanNganHang(false)}
+                    />
+                  </View>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    styles.flexRow,
+                    {
+                      width: "40%",
+                    },
+                  ]}
+                  onPress={() => showModalTaiKhoanNganHang(false)}
+                >
+                  <Text
+                    style={{
+                      textDecorationLine: "underline",
+                      textAlign: "center",
+                    }}
+                  >
+                    Chọn tài khoản nhận
+                  </Text>
+                  <Icon
+                    size={30}
+                    name="keyboard-double-arrow-right"
+                    type={IconType.MATERIAL}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        </ScrollView>
       </View>
 
       <View
         style={{
           position: "absolute",
-          bottom: 16,
+          bottom: 8,
           width: "100%",
-          marginHorizontal: 16,
-          gap: 16,
           paddingBottom: insets.bottom,
+          backgroundColor: theme.colors.white,
         }}
       >
-        <Input
-          placeholder="Nội dung thanh toán"
-          inputStyle={{
-            fontStyle: "italic",
-            fontSize: 14,
-          }}
-          value={noiDungThu}
-          onChangeText={(text) => setNoiDungThu(text)}
-        />
-        <View
-          style={{
-            flex: 1,
-            borderWidth: 1,
-            borderColor: theme.colors.black,
-            borderRadius: 8,
-            padding: 12,
-          }}
-        >
+        <View style={{ gap: 16, paddingHorizontal: 8 }}>
+          <Input
+            placeholder="Nội dung thanh toán"
+            inputStyle={{
+              fontStyle: "italic",
+              fontSize: 14,
+            }}
+            value={noiDungThu}
+            onChangeText={(text) => setNoiDungThu(text)}
+          />
           <View
             style={{
-              gap: 16,
+              flex: 1,
+              borderWidth: 1,
+              borderColor: theme.colors.black,
+              borderRadius: 8,
+              padding: 12,
             }}
           >
-            <View style={styles.flexRow}>
-              <View
-                style={{
-                  gap: 16,
-                }}
-              >
-                <Text
+            <View
+              style={{
+                gap: 16,
+              }}
+            >
+              <View style={styles.flexRow}>
+                <View
                   style={{
-                    fontWeight: 500,
+                    gap: 16,
                   }}
                 >
-                  Tổng khách trả
-                </Text>
-                <Text>{tienKhachThieu < 0 ? "Tiền thừa" : "Còn thiếu"}</Text>
-              </View>
-              <View
-                style={{
-                  gap: 16,
-                }}
-              >
-                <Text
+                  <Text
+                    style={{
+                      fontWeight: 500,
+                    }}
+                  >
+                    Tổng khách trả
+                  </Text>
+                  <Text>{tienKhachThieu < 0 ? "Tiền thừa" : "Còn thiếu"}</Text>
+                </View>
+                <View
                   style={{
-                    fontWeight: 500,
+                    gap: 16,
                   }}
                 >
-                  {CommonFunc.formatCurrency(tienKhachDua)}
-                </Text>
-                <Text
-                  style={{
-                    textAlign: "right",
-                  }}
-                >
-                  {CommonFunc.formatCurrency(Math.abs(tienKhachThieu))}
-                </Text>
+                  <Text
+                    style={{
+                      fontWeight: 500,
+                    }}
+                  >
+                    {CommonFunc.formatCurrency(tienKhachDua)}
+                  </Text>
+                  <Text
+                    style={{
+                      textAlign: "right",
+                    }}
+                  >
+                    {CommonFunc.formatCurrency(Math.abs(tienKhachThieu))}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
+          <Button
+            title={"Thanh toán"}
+            size="lg"
+            containerStyle={{
+              borderRadius: 4,
+            }}
+            onPress={thanhToan}
+          />
         </View>
-        <Button
-          title={"Thanh toán"}
-          size="lg"
-          containerStyle={{
-            borderRadius: 8,
-          }}
-          onPress={thanhToan}
-        />
       </View>
     </View>
   );
@@ -786,8 +796,7 @@ const createStyles = (theme: Theme) =>
     container: {
       backgroundColor: theme.colors.white,
       flex: 1,
-      padding: 16,
-      gap: 16,
+      position: "relative",
     },
     flexRow: {
       flexDirection: "row",

@@ -1,9 +1,10 @@
-import api from '../api';
-import { IProductGroupDto } from './dto';
+import api from "../api";
+import { IPageResultDto } from "../commonDto/IPageResultDto";
+import { IProductGroupDto } from "./dto";
 
 class ProductGroupSevice {
-  GetAllNhomHangHoa = async (): Promise<IProductGroupDto[]> => {
-    const xx = await api.get(`api/services/app/HangHoa/GetNhomDichVu`);
+  GetAllNhomHangHoa = async (): Promise<IPageResultDto<IProductGroupDto>> => {
+    const xx = await api.get(`api/services/app/NhomHangHoa/GetNhomDichVu`);
     return xx;
   };
 }

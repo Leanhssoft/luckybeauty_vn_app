@@ -9,12 +9,14 @@ import { Text, Theme } from "@rneui/base";
 import { Button, Icon, Input, useTheme } from "@rneui/themed";
 import { FC, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ItemProductSale } from "./ban_hang/_item_product_sale";
 
 type PropsListProductSale = {
@@ -33,6 +35,9 @@ const ListProductSale: FC<PropsListProductSale> = ({
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const firstLoad = useRef(true);
+  const insets = useSafeAreaInsets();
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [txtSearchProduct, setTxtSearchProduct] = useState("");
   const [isCheckMultipleProduct, setIsCheckMultipleProduct] = useState(false);
   const [arrIdQuyDoiChosed, setArrIdQuyDoiChosed] = useState<string[]>([]);
@@ -44,7 +49,7 @@ const ListProductSale: FC<PropsListProductSale> = ({
   const [paramSearchProduct, setParamSearchProduct] =
     useState<IParamSearchProductDto>({
       textSearch: "",
-      currentPage: 0,
+      currentPage: 1,
       pageSize: 10,
       idNhomHangHoas: [],
     });
@@ -64,40 +69,53 @@ const ListProductSale: FC<PropsListProductSale> = ({
   }, [isDoneAgreeChoseProduct]);
 
   const GetAllNhomSanPham = async () => {
-    const lst = await ProductGroupSevice.GetAllNhomHangHoa();
-    if (lst?.length > 0) {
-      setListGroupProduct([...lst]);
-    } else {
-      setListGroupProduct([]);
-    }
+    const data = await ProductGroupSevice.GetAllNhomHangHoa();
+    // setListGroupProduct([...data.items]);
+    setListGroupProduct([]);
   };
 
-  const getListProduct = async () => {
+  const getListProduct = async (resetPage: boolean = false) => {
+    console.log("getListProduct ", isLoading, !hasMore);
+
+    if (isLoading || !hasMore) return;
+
+    setIsLoading(true);
     const param = {
       ...paramSearchProduct,
     };
     param.textSearch = txtSearchProduct;
-    console.log("paramSearchProduct ", paramSearchProduct);
-    const data = await ProductService.GetListproduct(param);
 
-    if (data?.items?.length > 0) {
-      setPageResultProduct({
-        ...pageResultProduct,
-        items: data?.items,
-        totalCount: data?.totalCount,
+    const data = await ProductService.GetListproduct(param);
+    console.log("paramSearchProduct ", paramSearchProduct);
+
+    // if ((data?.items?.length ?? 0) < (paramSearchProduct?.pageSize ?? 10)) {
+    //   setHasMore(false);
+    // }
+    const newData = data?.items ?? [];
+    if (resetPage) {
+      setPageResultProduct((prev) => {
+        return {
+          ...pageResultProduct,
+          items: [...newData],
+          totalCount: data?.totalCount,
+        };
       });
     } else {
-      setPageResultProduct({
-        ...pageResultProduct,
-        items: [],
-        totalCount: 0,
+      setPageResultProduct((prev) => {
+        return {
+          ...pageResultProduct,
+          items: [...prev.items, ...newData],
+          totalCount: data?.totalCount,
+        };
       });
     }
+
+    setIsLoading(false);
   };
 
   useEffect(() => {
     if (isLoadData) {
-      getListProduct();
+      getListProduct((paramSearchProduct?.currentPage ?? 1) === 1);
     }
   }, [paramSearchProduct]);
 
@@ -106,15 +124,33 @@ const ListProductSale: FC<PropsListProductSale> = ({
   }, []);
 
   useEffect(() => {
-    if (firstLoad) {
+    if (firstLoad.current) {
       firstLoad.current = false;
       return;
     }
+    console.log("txtSearchProduct ", txtSearchProduct);
     const getData = setTimeout(async () => {
-      await getListProduct();
+      await getListProduct(true);
       return () => clearTimeout(getData);
     }, 2000);
   }, [txtSearchProduct]);
+
+  const handleLoadMore = () => {
+    if (!isLoading && hasMore) {
+      setParamSearchProduct((prev) => {
+        {
+          return {
+            ...prev,
+            currentPage: (prev?.currentPage ?? 0) + 1,
+          };
+        }
+      });
+    }
+  };
+  const renderFooter = () => {
+    if (!isLoading) return null;
+    return <ActivityIndicator size="small" />;
+  };
 
   const nhomHangHoa_clickAll = () => {
     setArrIdNhomHangFilter([]);
@@ -123,9 +159,13 @@ const ListProductSale: FC<PropsListProductSale> = ({
 
   const choseNhomHangHoa = async (idNhomHang: string) => {
     setArrIdNhomHangFilter([idNhomHang]);
-    setParamSearchProduct({
-      ...paramSearchProduct,
-      idNhomHangHoas: [idNhomHang],
+    setParamSearchProduct(() => {
+      return {
+        ...paramSearchProduct,
+        currentPage: 1,
+        pageSize: 10,
+        idNhomHangHoas: [idNhomHang],
+      };
     });
   };
 
@@ -181,6 +221,9 @@ const ListProductSale: FC<PropsListProductSale> = ({
           inputStyle={{
             fontSize: 14,
           }}
+          onChangeText={(text) => {
+            setTxtSearchProduct(text);
+          }}
         />
         {(listGroupProduct?.length ?? 0) > 0 && (
           <View>
@@ -233,7 +276,12 @@ const ListProductSale: FC<PropsListProductSale> = ({
         <PageEmpty txt="Chưa có dữ liệu" />
       ) : (
         <View style={{ marginTop: 8 }}>
-          <View style={[styles.flexRow, { justifyContent: "space-between" }]}>
+          <View
+            style={[
+              styles.flexRow,
+              { justifyContent: "space-between", marginHorizontal: 8 },
+            ]}
+          >
             <TouchableOpacity
               onPress={() => setIsCheckMultipleProduct(!isCheckMultipleProduct)}
               style={styles.flexRow}
@@ -275,8 +323,10 @@ const ListProductSale: FC<PropsListProductSale> = ({
             )}
             keyExtractor={(item) => item.idDonViQuyDoi}
             style={{
-              paddingBottom: 8,
+              paddingBottom: insets.bottom + 60,
             }}
+            onEndReached={handleLoadMore}
+            ListFooterComponent={renderFooter}
           />
         </View>
       )}
@@ -292,7 +342,7 @@ const createStyles = (theme: Theme) =>
       flex: 1,
       backgroundColor: theme.colors.white,
       position: "relative",
-      padding: 16,
+      padding: 8,
     },
     flexRow: {
       flexDirection: "row",

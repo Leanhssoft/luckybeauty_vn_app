@@ -212,7 +212,7 @@ export default function Dashboard() {
         </View>
         <View style={[styles.summaryRow, { marginTop: 16 }]}>
           <Card title="Số cuộc hẹn" value={soCuocHen.toString()} />
-          <Card title="Khách mới" value={soKhachMoi.toString()} />
+          <Card title="Khách sinh nhật" value={soKhachMoi.toString()} />
         </View>
       </View>
 
@@ -256,7 +256,7 @@ export default function Dashboard() {
             barWidth={40}
             spacing={
               (dataDoanhThu?.length ?? 0) < 3
-                ? 30
+                ? 10
                 : (screenWidth - 80) / (dataDoanhThu?.length - 1)
             }
             initialSpacing={20}

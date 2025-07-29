@@ -2,6 +2,7 @@ import { Theme } from "@rneui/base";
 import { Button, useTheme } from "@rneui/themed";
 import { useState } from "react";
 import { Modal, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BackDropView } from "../../components/back_drop_view";
 import { ModalContainer } from "../../components/modal_container";
 import { PropModal } from "../../type/PropModal";
@@ -14,6 +15,8 @@ export const ModalListProduct = ({
   onSave,
 }: PropModal<string[]>) => {
   const { theme } = useTheme();
+  const styles = createStyles(theme);
+  const insets = useSafeAreaInsets();
   const [isDoneAgreeChoseProduct, setIsDoneAgreeChoseProduct] =
     useState<boolean>(false);
   const [arrIdQuyDoiChosed, setArrIdQuyDoiChosed] = useState<string[]>([]);
@@ -40,8 +43,15 @@ export const ModalListProduct = ({
             isDoneAgreeChoseProduct={isDoneAgreeChoseProduct}
             onClickChoseProduct={choseProduct}
           />
-          <View style={{ position: "absolute", bottom: 16, right: 16 }}>
-            <View style={{ flexDirection: "row", gap: 12 }}>
+          <View style={[styles.boxButton]}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                gap: 12,
+                paddingVertical: 16,
+              }}
+            >
               <Button
                 size="lg"
                 radius={"sm"}
@@ -64,25 +74,11 @@ export const ModalListProduct = ({
 };
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: theme.colors.white,
+    boxButton: {
+      right: 16,
+      position: "absolute",
       width: "100%",
-      height: "100%",
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      marginTop: 12, // cách top 1 đoạn để vẫn tạo cảm giác như modal
-      overflow: "hidden",
-    },
-    flexRow: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-    boxContainer: {
-      justifyContent: "space-between",
-      padding: 10,
-    },
-    textRightIcon: {
-      paddingLeft: 8,
+      backgroundColor: theme.colors.white,
+      bottom: 0,
     },
   });

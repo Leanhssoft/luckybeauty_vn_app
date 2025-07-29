@@ -4,7 +4,7 @@
     "slug": "luckybeauty",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/app-logo.png",
+    "icon": "./assets/images/app-logo-slash-screen.png",
     "scheme": "expomoblie",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
