@@ -3,6 +3,7 @@ import { Theme } from "@rneui/base";
 import { Icon, Text, useTheme } from "@rneui/themed";
 import { Dimensions, StyleSheet, TouchableOpacity } from "react-native";
 import Animated from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type ActionBottomProps = {
   visible: boolean;
@@ -16,6 +17,7 @@ export const ActionBottom = ({
   enable = true,
 }: ActionBottomProps) => {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = createStyles(theme);
   const SCREEN_HEIGHT = Dimensions.get("window").height;
   const animatedStyle = useFadeAndSlideUpAnimation(visible, SCREEN_HEIGHT);
@@ -26,6 +28,7 @@ export const ActionBottom = ({
         animatedStyle,
         {
           position: "absolute",
+          paddingBottom: insets.bottom,
           left: 0,
           right: 0,
           bottom: 0,

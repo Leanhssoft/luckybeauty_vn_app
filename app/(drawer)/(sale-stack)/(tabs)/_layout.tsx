@@ -1,13 +1,9 @@
 import { IconType } from "@/enum/IconType";
-import { MainNavigation, SaleManagerStack } from "@/enum/navigation/RouteName";
-import {
-  MainDrawerParamList,
-  SaleManagerStackParamList,
-} from "@/enum/navigation/RouteParam";
+import { MainNavigation } from "@/enum/navigation/RouteName";
+import { MainDrawerParamList } from "@/enum/navigation/RouteParam";
 import SQLLiteQuery from "@/store/expo-sqlite/SQLLiteQuery";
 import { useSaleManagerStackContext } from "@/store/react_context/SaleManagerStackProvide";
 import { DrawerNavigationProp } from "@react-navigation/drawer";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Icon } from "@rneui/base";
 import { Badge, useTheme } from "@rneui/themed";
 import { Tabs, useNavigation } from "expo-router";
@@ -103,11 +99,7 @@ export default function SaleTabsLayout() {
                 padding: 16,
                 position: "relative",
               }}
-              onPress={() => {
-                (
-                  navigation as unknown as NativeStackNavigationProp<SaleManagerStackParamList>
-                ).navigate(SaleManagerStack.TEMP_INVOICE_DETAIL);
-              }}
+              onPress={() => navigation.navigate("temp_invoice_details")}
             >
               {(countProduct ?? 0) > 0 && (
                 <Badge

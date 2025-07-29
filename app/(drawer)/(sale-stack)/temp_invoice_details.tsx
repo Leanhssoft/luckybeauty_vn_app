@@ -1,17 +1,13 @@
-import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Button, Icon, Text, useTheme } from "@rneui/themed";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import uuid from "react-native-uuid";
 
-import ModalListCustomer from "@/components/ban_hang/customer/modal_list_customer";
 import { ModalListProduct } from "@/components/ban_hang/modal_list_product";
+import ModalListCustomer from "@/components/customer/modal_list_customer";
 import { SimpleDialog } from "@/components/simple_dialog";
 import { IconType } from "@/enum/IconType";
-import { SaleManagerStack } from "@/enum/navigation/RouteName";
-import { SaleManagerStackParamList } from "@/enum/navigation/RouteParam";
 import { IKhachHangItemDto } from "@/services/customer/IKhachHangItemDto";
 import KhachHangService from "@/services/customer/KhachHangService";
 import {
@@ -26,25 +22,16 @@ import { useSaleManagerStackContext } from "@/store/react_context/SaleManagerSta
 import { IPropsSimpleDialog } from "@/type/IPropsSimpleDialog";
 import CommonFunc from "@/utils/CommonFunc";
 import { Theme } from "@rneui/base";
+import { useNavigation, useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 
-type ScreensTempInvoiceDetailsNavigationProps = NativeStackNavigationProp<
-  SaleManagerStackParamList,
-  SaleManagerStack.TEMP_INVOICE_DETAIL
->;
-
-type ScreensTempInvoiceDetailRouteProp = RouteProp<
-  SaleManagerStackParamList,
-  SaleManagerStack.TEMP_INVOICE_DETAIL
->;
-
-export const TempInvoiceDetails = () => {
+export default function TempInvoiceDetails() {
   const { theme } = useTheme();
   const styles = createStyle(theme);
   const insets = useSafeAreaInsets();
   const db = useSQLiteContext();
-  const route = useRoute<ScreensTempInvoiceDetailRouteProp>();
-  const navigation = useNavigation<ScreensTempInvoiceDetailsNavigationProps>();
+  const route = useRouter();
+  const navigation = useNavigation();
   const { currentInvoice, setCurrentInvoice } = useSaleManagerStackContext();
   const idHoaDon = currentInvoice?.idHoaDon ?? "";
 
@@ -310,7 +297,7 @@ export const TempInvoiceDetails = () => {
   };
 
   const gotoThanhToan = () => {
-    navigation.navigate(SaleManagerStack.THANH_TOAN);
+    route.navigate("/thanhtoan");
     setCurrentInvoice({
       ...currentInvoice,
       tongPhaiTra: hoadonOpen?.tongThanhToan ?? 0,
@@ -636,7 +623,7 @@ export const TempInvoiceDetails = () => {
       </Button>
     </View>
   );
-};
+}
 
 const createStyle = (theme: Theme) =>
   StyleSheet.create({

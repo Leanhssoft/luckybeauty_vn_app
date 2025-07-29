@@ -11,26 +11,23 @@ import {
 import PageEmpty from "@/components/page_empty";
 import { IconType } from "@/enum/IconType";
 import { LoaiChungTu, TenLoaiChungTu } from "@/enum/LoaiChungTu";
-import { HoaDonDto, IHoaDonDto } from "@/services/hoadon/dto";
-import dayjs from "dayjs";
-import { useEffect, useRef, useState } from "react";
-// import { v4 as uuidv4 } from "uuid";
-import uuid from "react-native-uuid";
-import CommonFunc from "../../../../utils/CommonFunc";
-
-import { useSaleManagerStackContext } from "@/store/react_context/SaleManagerStackProvide";
-import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
-import { CompositeNavigationProp, RouteProp } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-
 import { SaleManagerTab } from "@/enum/navigation/RouteName";
 import {
   SaleManagerStackParamList,
   SaleManagerTabParamList,
 } from "@/enum/navigation/RouteParam";
+import { HoaDonDto, IHoaDonDto } from "@/services/hoadon/dto";
 import SQLLiteQuery from "@/store/expo-sqlite/SQLLiteQuery";
+import { useSaleManagerStackContext } from "@/store/react_context/SaleManagerStackProvide";
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { CompositeNavigationProp, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
+import { useEffect, useRef, useState } from "react";
+import uuid from "react-native-uuid";
+import CommonFunc from "../../../../utils/CommonFunc";
 
 type TempInvoicekNavigationProps = CompositeNavigationProp<
   BottomTabNavigationProp<SaleManagerTabParamList, SaleManagerTab.TEMP_INVOICE>,
@@ -78,14 +75,6 @@ const TempInvoice = () => {
   useEffect(() => {
     getHoaDonFromCache();
   }, []);
-
-  // useEffect(() => {
-  //   const unsubscribe = navigation.addListener('focus', () => {
-  //     getHoaDonFromCache(tabActive);
-  //   });
-
-  //   return unsubscribe; // Cleanup khi component bị unmount
-  // }, [navigation, tabActive]);
 
   const createNewInvoice = async () => {
     const max = CommonFunc.getMaxNumberFromMaHoaDon(lstHoaDon);
@@ -143,7 +132,7 @@ const TempInvoice = () => {
       idHoaDon: item.id,
       countProduct: lstCTHD?.length ?? 0,
     });
-    // navigation.navigate(SaleManagerTab.PRODUCT);
+    route.navigate("/product");
   };
   return (
     <View style={styles.container}>
