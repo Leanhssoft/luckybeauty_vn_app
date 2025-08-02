@@ -21,7 +21,6 @@ class SQLLiteQuery {
       if (currentDbVersion >= DATABASE_VERSION) {
         return;
       }
-      console.log("currentDbVersion ", currentDbVersion);
       if (currentDbVersion === 0) {
         await db.execAsync(`PRAGMA journal_mode = WAL;
         CREATE TABLE IF NOT EXISTS tblHoaDon (id text PRIMARY KEY, idLoaiChungTu integer default 1,

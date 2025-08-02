@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from "react";
 
 type CurrentInvoiceType = {
   idHoaDon?: string;
@@ -15,19 +15,38 @@ type SaleManagerStackContextType = {
   setIsHideTab?: (isHide: boolean) => void;
 };
 
-const SaleManagerStackContext = createContext<SaleManagerStackContextType | undefined>(undefined);
+const SaleManagerStackContext = createContext<
+  SaleManagerStackContextType | undefined
+>(undefined);
 
-export const SaleManagerStackProvider = ({ children }: { children: React.ReactNode }) => {
-  const [currentInvoice, setCurrentInvoice] = useState<CurrentInvoiceType | null>(null);
+export const SaleManagerStackProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const [currentInvoice, setCurrentInvoice] =
+    useState<CurrentInvoiceType | null>(null);
   const [isHideTabs, setIsHideTab] = useState<boolean>(false);
+
+  const value = useMemo(
+    () => ({
+      currentInvoice,
+      setCurrentInvoice,
+      isHideTabs,
+      setIsHideTab,
+    }),
+    [currentInvoice, isHideTabs]
+  );
+
   return (
     <SaleManagerStackContext.Provider
       value={{
         currentInvoice,
         setCurrentInvoice,
         isHideTabs,
-        setIsHideTab
-      }}>
+        setIsHideTab,
+      }}
+    >
       {children}
     </SaleManagerStackContext.Provider>
   );
@@ -36,7 +55,7 @@ export const SaleManagerStackProvider = ({ children }: { children: React.ReactNo
 export const useSaleManagerStackContext = () => {
   const context = useContext(SaleManagerStackContext);
   if (!context) {
-    throw new Error('useTabTitle must be used within a TabTitleProvider');
+    throw new Error("useTabTitle must be used within a TabTitleProvider");
   }
   return context;
 };

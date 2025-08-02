@@ -1,6 +1,7 @@
 import { IKhachHangItemDto } from "@/services/customer/IKhachHangItemDto";
 import CommonFunc from "@/utils/CommonFunc";
 import { Avatar, Text } from "@rneui/base";
+import { useTheme } from "@rneui/themed";
 import { Pressable, StyleSheet, View } from "react-native";
 
 type PropCustomerItem = {
@@ -9,6 +10,7 @@ type PropCustomerItem = {
 };
 
 export const CustomerItem = ({ item, choseCustomer }: PropCustomerItem) => {
+  const { theme } = useTheme();
   return (
     <Pressable
       style={styles.customerContainer}
@@ -44,6 +46,16 @@ export const CustomerItem = ({ item, choseCustomer }: PropCustomerItem) => {
           >
             Điểm: {item?.tongTichDiem ?? 0}{" "}
           </Text>
+          <Text
+            style={{
+              color:
+                (item?.conNo ?? 0) > 0
+                  ? theme.colors.error
+                  : theme.colors.black,
+            }}
+          >
+            Nợ: {item?.conNo ?? 0}{" "}
+          </Text>
         </View>
       </View>
     </Pressable>
@@ -55,7 +67,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     height: 80,
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
   },
   avatarContainer: {
     width: 60,

@@ -21,7 +21,7 @@ export default function RootLayout() {
 
   return (
     <AppProvider>
-      <SQLiteProvider databaseName="expo-luckybeauty02.db">
+      <SQLiteProvider databaseName="expo-luckybeauty.db">
         <ThemeProvider>
           <Slot />
         </ThemeProvider>

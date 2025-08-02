@@ -50,7 +50,7 @@ export default function ModalListCustomer({
     const param: IPagedKhachHangRequestDto = {
       keyword: txtSearch,
       skipCount: 0,
-      maxResultCount: 5,
+      maxResultCount: 10,
     };
     const lst = await KhachHangService.jqAutoCustomer(param);
     setLstCustomer([...lst]);
@@ -100,9 +100,9 @@ export default function ModalListCustomer({
               <CustomerItem item={item} choseCustomer={choseCustomer} />
             )}
             keyExtractor={(item) => item.id}
-            style={{
-              paddingBottom: 8,
-            }}
+            // style={{
+            //   paddingBottom: 8,
+            // }}
           />
         </ModalContainer>
       </BackDropView>

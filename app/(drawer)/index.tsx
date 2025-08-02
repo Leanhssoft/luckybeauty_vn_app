@@ -255,8 +255,8 @@ export default function Dashboard() {
             }
             barWidth={40}
             spacing={
-              (dataDoanhThu?.length ?? 0) < 3
-                ? 10
+              (dataDoanhThu?.length ?? 0) < 4
+                ? 30
                 : (screenWidth - 80) / (dataDoanhThu?.length - 1)
             }
             initialSpacing={20}

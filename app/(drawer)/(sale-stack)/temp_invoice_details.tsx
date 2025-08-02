@@ -456,7 +456,7 @@ export default function TempInvoiceDetails() {
               gap: 8,
               backgroundColor: theme.colors.white,
             }}
-            contentContainerStyle={{ paddingBottom: 150 }}
+            contentContainerStyle={{ paddingBottom: 220 }}
           >
             {lstSearchCTHD?.map((item, index) => (
               <View
@@ -655,5 +655,6 @@ const createStyle = (theme: Theme) =>
     },
     containerDetail: {
       paddingHorizontal: 8,
+      flex: 1,
     },
   });

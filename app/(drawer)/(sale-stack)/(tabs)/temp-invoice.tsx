@@ -11,17 +11,10 @@ import {
 import PageEmpty from "@/components/page_empty";
 import { IconType } from "@/enum/IconType";
 import { LoaiChungTu, TenLoaiChungTu } from "@/enum/LoaiChungTu";
-import { SaleManagerTab } from "@/enum/navigation/RouteName";
-import {
-  SaleManagerStackParamList,
-  SaleManagerTabParamList,
-} from "@/enum/navigation/RouteParam";
 import { HoaDonDto, IHoaDonDto } from "@/services/hoadon/dto";
 import SQLLiteQuery from "@/store/expo-sqlite/SQLLiteQuery";
 import { useSaleManagerStackContext } from "@/store/react_context/SaleManagerStackProvide";
-import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
-import { CompositeNavigationProp, RouteProp } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useIsFocused } from "@react-navigation/native";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
@@ -29,22 +22,12 @@ import { useEffect, useRef, useState } from "react";
 import uuid from "react-native-uuid";
 import CommonFunc from "../../../../utils/CommonFunc";
 
-type TempInvoicekNavigationProps = CompositeNavigationProp<
-  BottomTabNavigationProp<SaleManagerTabParamList, SaleManagerTab.TEMP_INVOICE>,
-  NativeStackNavigationProp<SaleManagerStackParamList>
->;
-
-type TempInvoiceRouteProp = RouteProp<
-  SaleManagerTabParamList,
-  SaleManagerTab.TEMP_INVOICE
->;
-
 const TempInvoice = () => {
   const { theme } = useTheme();
   const db = useSQLiteContext();
   const styles = createStyles(theme);
   const firstLoad = useRef(true);
-  // const navigation = useNavigation<TempInvoicekNavigationProps>();
+  const isFocused = useIsFocused();
   const route = useRouter();
   const { currentInvoice, setCurrentInvoice } = useSaleManagerStackContext();
 
@@ -76,6 +59,12 @@ const TempInvoice = () => {
     getHoaDonFromCache();
   }, []);
 
+  useEffect(() => {
+    if (isFocused) {
+      getHoaDonFromCache(tabActive);
+    }
+  }, [isFocused]);
+
   const createNewInvoice = async () => {
     const max = CommonFunc.getMaxNumberFromMaHoaDon(lstHoaDon);
     const kiHieuMaChungTu =
@@ -89,7 +78,7 @@ const TempInvoice = () => {
       maHoaDon: `${kiHieuMaChungTu} ${max}`,
     });
 
-    setLstHoaDon([newHD, ...lstHoaDon]);
+    //setLstHoaDon([newHD, ...lstHoaDon]);
 
     await SQLLiteQuery.HoaDon_ResetValueForColumn_isOpenLastest(db, tabActive);
     await SQLLiteQuery.InsertTo_HoaDon(db, newHD);
