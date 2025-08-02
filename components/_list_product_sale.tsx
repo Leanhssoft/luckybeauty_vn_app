@@ -1,4 +1,5 @@
 import PageEmpty from "@/components/page_empty";
+import AppConst from "@/const/AppConst";
 import { IconType } from "@/enum/IconType";
 import { IPageResultDto } from "@/services/commonDto/IPageResultDto";
 import { IParamSearchProductDto, IProductBasic } from "@/services/product/dto";
@@ -10,6 +11,7 @@ import { Button, Icon, Input, useTheme } from "@rneui/themed";
 import { FC, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   ScrollView,
   StyleSheet,
@@ -32,6 +34,7 @@ const ListProductSale: FC<PropsListProductSale> = ({
   isDoneAgreeChoseProduct,
   onClickChoseProduct,
 }) => {
+  const height = Dimensions.get("window").height;
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const firstLoad = useRef(true);
@@ -45,14 +48,8 @@ const ListProductSale: FC<PropsListProductSale> = ({
   const [listGroupProduct, setListGroupProduct] = useState<IProductGroupDto[]>(
     []
   );
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const [paramSearchProduct, setParamSearchProduct] =
-    useState<IParamSearchProductDto>({
-      textSearch: "",
-      currentPage: 1,
-      pageSize: 10,
-      idNhomHangHoas: [],
-    });
   const [pageResultProduct, setPageResultProduct] = useState<
     IPageResultDto<IProductBasic>
   >({
@@ -60,6 +57,12 @@ const ListProductSale: FC<PropsListProductSale> = ({
     totalCount: 0,
     totalPage: 0,
   });
+
+  useEffect(() => {
+    if (isLoadData) {
+      getListProduct();
+    }
+  }, []);
 
   useEffect(() => {
     if (isDoneAgreeChoseProduct) {
@@ -70,32 +73,36 @@ const ListProductSale: FC<PropsListProductSale> = ({
 
   const GetAllNhomSanPham = async () => {
     const data = await ProductGroupSevice.GetAllNhomHangHoa();
-    // setListGroupProduct([...data.items]);
-    setListGroupProduct([]);
+    setListGroupProduct([...data.items]);
   };
 
-  const getListProduct = async (resetPage: boolean = false) => {
-    console.log("getListProduct ", isLoading, !hasMore);
-
-    if (isLoading || !hasMore) return;
-
+  const getListProduct = async (
+    hasMore: boolean = true,
+    textSearch: string = "",
+    currentPage: number = 1,
+    arrIdNhomHangFilter: string[] = []
+  ) => {
+    if (!hasMore || isLoading) return;
     setIsLoading(true);
-    const param = {
-      ...paramSearchProduct,
+
+    const param: IParamSearchProductDto = {
+      textSearch: textSearch,
+      currentPage: currentPage,
+      pageSize: AppConst.PAGE_SIZE,
+      idNhomHangHoas: arrIdNhomHangFilter,
     };
-    param.textSearch = txtSearchProduct;
-
     const data = await ProductService.GetListproduct(param);
-    console.log("paramSearchProduct ", paramSearchProduct);
 
-    // if ((data?.items?.length ?? 0) < (paramSearchProduct?.pageSize ?? 10)) {
-    //   setHasMore(false);
-    // }
     const newData = data?.items ?? [];
-    if (resetPage) {
+    const lengData = newData?.length ?? 0;
+    if (lengData === 0) {
+      setHasMore(false);
+    }
+
+    if (currentPage === 1) {
       setPageResultProduct((prev) => {
         return {
-          ...pageResultProduct,
+          ...prev,
           items: [...newData],
           totalCount: data?.totalCount,
         };
@@ -103,21 +110,15 @@ const ListProductSale: FC<PropsListProductSale> = ({
     } else {
       setPageResultProduct((prev) => {
         return {
-          ...pageResultProduct,
+          ...prev,
           items: [...prev.items, ...newData],
-          totalCount: data?.totalCount,
+          totalCount: (prev?.items?.length ?? 0) + lengData,
         };
       });
     }
 
     setIsLoading(false);
   };
-
-  useEffect(() => {
-    if (isLoadData) {
-      getListProduct((paramSearchProduct?.currentPage ?? 1) === 1);
-    }
-  }, [paramSearchProduct]);
 
   useEffect(() => {
     GetAllNhomSanPham();
@@ -128,23 +129,22 @@ const ListProductSale: FC<PropsListProductSale> = ({
       firstLoad.current = false;
       return;
     }
-    console.log("txtSearchProduct ", txtSearchProduct);
     const getData = setTimeout(async () => {
-      await getListProduct(true);
-      return () => clearTimeout(getData);
+      setCurrentPage(1);
+      await getListProduct(true, txtSearchProduct, 1, arrIdNhomHangFilter);
     }, 2000);
+    return () => clearTimeout(getData);
   }, [txtSearchProduct]);
 
-  const handleLoadMore = () => {
-    if (!isLoading && hasMore) {
-      setParamSearchProduct((prev) => {
-        {
-          return {
-            ...prev,
-            currentPage: (prev?.currentPage ?? 0) + 1,
-          };
-        }
-      });
+  const handleLoadMore = async () => {
+    if (hasMore) {
+      setCurrentPage(() => currentPage + 1);
+      await getListProduct(
+        true,
+        txtSearchProduct,
+        currentPage + 1,
+        arrIdNhomHangFilter
+      );
     }
   };
   const renderFooter = () => {
@@ -152,21 +152,17 @@ const ListProductSale: FC<PropsListProductSale> = ({
     return <ActivityIndicator size="small" />;
   };
 
-  const nhomHangHoa_clickAll = () => {
+  const nhomHangHoa_clickAll = async () => {
     setArrIdNhomHangFilter([]);
-    setParamSearchProduct({ ...paramSearchProduct, idNhomHangHoas: [] });
+    setHasMore(true);
+    setCurrentPage(1);
+    await getListProduct(true, "", 1, []);
   };
 
   const choseNhomHangHoa = async (idNhomHang: string) => {
     setArrIdNhomHangFilter([idNhomHang]);
-    setParamSearchProduct(() => {
-      return {
-        ...paramSearchProduct,
-        currentPage: 1,
-        pageSize: 10,
-        idNhomHangHoas: [idNhomHang],
-      };
-    });
+    setCurrentPage(1);
+    await getListProduct(true, "", 1, [idNhomHang]);
   };
 
   const choseProduct = async (item: IProductBasic) => {
@@ -275,7 +271,7 @@ const ListProductSale: FC<PropsListProductSale> = ({
       {(pageResultProduct?.totalCount ?? 0) == 0 ? (
         <PageEmpty txt="Chưa có dữ liệu" />
       ) : (
-        <View style={{ marginTop: 8 }}>
+        <View style={{ marginTop: 8, flex: 1 }}>
           <View
             style={[
               styles.flexRow,
@@ -325,6 +321,7 @@ const ListProductSale: FC<PropsListProductSale> = ({
             style={{
               paddingBottom: insets.bottom + 60,
             }}
+            onEndReachedThreshold={0.5}
             onEndReached={handleLoadMore}
             ListFooterComponent={renderFooter}
           />
