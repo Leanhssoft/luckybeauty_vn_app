@@ -1,14 +1,17 @@
+import Popover from "@/components/_popover";
 import Dropdown from "@/components/dropdown";
+import HeaderUserInfor from "@/components/user/header_user_infor";
 import { IconType } from "@/enum/IconType";
 import { IChiNhanhBasicDto } from "@/services/chi_nhanh/ChiNhanhDto";
 import ChiNhanhService from "@/services/chi_nhanh/ChiNhanhService";
 import { ISelect } from "@/services/commonDto/ISelect";
 import { useAppContext } from "@/store/react_context/AppProvider";
+import { Theme } from "@rneui/base";
 import { Avatar, Icon, useTheme } from "@rneui/themed";
 import { Redirect } from "expo-router";
 import { Drawer } from "expo-router/drawer";
-import { useEffect, useState } from "react";
-import { View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { findNodeHandle, StyleSheet, UIManager, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import CommonFunc from "../../utils/CommonFunc";
 
@@ -26,6 +29,11 @@ import CommonFunc from "../../utils/CommonFunc";
 
 const HeaderRight = () => {
   const { theme } = useTheme();
+  const styles = createStyle(theme);
+  const [visible, setVisible] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const targetRef = useRef<View>(null);
+
   const { userLogin, chiNhanhCurrent, setChiNhanhCurrent } = useAppContext();
   const [expanded, setExpanded] = useState(false);
   const [lstChiNhanhByUser, setListChiNhanhByUser] = useState<
@@ -44,6 +52,25 @@ const HeaderRight = () => {
   const changeChiNhanh = (item: ISelect) => {
     setChiNhanhCurrent({ id: item.id, tenChiNhanh: item.text });
   };
+
+  const showPopover = () => {
+    if (targetRef.current) {
+      targetRef.current.measureInWindow((x, y, width, height) => {
+        setPosition({ x, y, width, height });
+        setVisible(true);
+      });
+    }
+  };
+  const measurePosition = () => {
+    const handle = findNodeHandle(targetRef.current);
+    if (handle) {
+      UIManager.measure(handle, (x, y, width, height, pageX, pageY) => {
+        setPosition({ x: pageX, y: pageY, width, height });
+      });
+    }
+  };
+
+  const hidePopover = () => setVisible(false);
   return (
     <View
       style={{ flexDirection: "row", alignItems: "center", paddingRight: 16 }}
@@ -59,20 +86,35 @@ const HeaderRight = () => {
         onSelect={changeChiNhanh}
       />
 
-      <Avatar
-        size={32}
-        rounded
-        containerStyle={{ backgroundColor: theme.colors.greyOutline }}
-        // source={userLogin?.userAvatar ? { uri: userLogin?.userAvatar } : {}}
-        title={
-          CommonFunc.checkNull(userLogin?.userAvatar ?? "")
-            ? CommonFunc.getFirstLetter(userLogin?.userName)
-            : ""
-        }
-      />
+      <View ref={targetRef} onLayout={measurePosition}>
+        <Avatar
+          size={32}
+          rounded
+          onPress={showPopover}
+          containerStyle={{ backgroundColor: theme.colors.greyOutline }}
+          // source={userLogin?.userAvatar ? { uri: userLogin?.userAvatar } : {}}
+          title={
+            CommonFunc.checkNull(userLogin?.userAvatar ?? "")
+              ? CommonFunc.getFirstLetter(userLogin?.userName)
+              : ""
+          }
+        />
+        <Popover visible={visible} onClose={hidePopover} position={position}>
+          <HeaderUserInfor />
+        </Popover>
+      </View>
     </View>
   );
 };
+
+const createStyle = (theme: Theme) =>
+  StyleSheet.create({
+    boxPopover: {
+      flex: 1,
+      paddingTop: 100,
+      alignItems: "center",
+    },
+  });
 
 export default function DrawerLayout() {
   const { theme } = useTheme();
