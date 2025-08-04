@@ -1,20 +1,44 @@
 import { IconType } from "@/enum/IconType";
 import { useAppContext } from "@/store/react_context/AppProvider";
 import CommonFunc from "@/utils/CommonFunc";
+import Octicons from "@expo/vector-icons/Octicons";
 import { Theme } from "@rneui/base";
 import { Avatar, Icon, Text, useTheme } from "@rneui/themed";
-import { Pressable, StyleSheet, View } from "react-native";
+import { useState } from "react";
+import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
+import ModalChangePassWord from "./modal_change_password";
 
 export default function HeaderUserInfor() {
   const { theme } = useTheme();
   const styles = createStyle(theme);
   const { userLogin, logout } = useAppContext();
+  // const { onClosePopover } = usePopoverContext();
+
+  const [isShowModalChangePass, setIsShowModalChangePass] = useState(false);
 
   const onPressLogout = () => {
     logout();
   };
+
+  const onCloseModalChangePassword = () => {
+    setIsShowModalChangePass(false);
+  };
+
+  const onSaveOKModalChangePassword = async () => {
+    setIsShowModalChangePass(false);
+  };
+  const showModalChangePassword = () => {
+    // onClosePopover();
+    setTimeout(() => setIsShowModalChangePass(true), 0);
+  };
   return (
     <View style={styles.container}>
+      <ModalChangePassWord
+        isShow={isShowModalChangePass}
+        onClose={onCloseModalChangePassword}
+        onSave={onSaveOKModalChangePassword}
+      />
+
       <View style={styles.box}>
         <View
           style={{
@@ -44,23 +68,24 @@ export default function HeaderUserInfor() {
           </View>
         </View>
 
-        <View style={styles.boxUserInfor}>
-          <Icon type={IconType.FONT_AWESOME_5} name="user-alt" size={16} />
-          <Text style={{ marginLeft: 8 }}>Quuản lý tài khoản</Text>
-        </View>
-        <View style={[styles.boxUserInfor]}>
-          <Icon type={IconType.FONT_AWESOME_5} name="key" size={16} />
+        {/* <TouchableOpacity
+          style={styles.boxUserInfor}
+          onPress={showModalAddUser}
+        >
+          <FontAwesome5 name="user" size={16} />
+          <Text style={{ marginLeft: 8 }}>Quản lý tài khoản</Text>
+        </TouchableOpacity> */}
+        <TouchableOpacity
+          style={[styles.boxUserInfor]}
+          onPress={showModalChangePassword}
+        >
+          <Octicons name="key" size={16} />
           <Text style={{ marginLeft: 8 }}>Đổi mật khẩu</Text>
-        </View>
+        </TouchableOpacity>
 
-        <Pressable style={styles.btnLogout} onPress={onPressLogout}>
-          <Text> Đăng xuất</Text>
-          <Icon
-            name="logout"
-            size={16}
-            type={IconType.ANTDESIGN}
-            style={{ marginLeft: 8 }}
-          />
+        <Pressable style={styles.boxUserInfor} onPress={onPressLogout}>
+          <Icon name="logout" size={16} type={IconType.ANTDESIGN} />
+          <Text style={{ marginLeft: 8 }}> Đăng xuất</Text>
         </Pressable>
       </View>
     </View>
@@ -85,9 +110,9 @@ const createStyle = (theme: Theme) =>
     btnLogout: {
       flexDirection: "row",
       padding: 8,
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: theme.colors.grey4,
+      // borderRadius: 16,
+      // borderWidth: 1,
+      // borderColor: theme.colors.grey4,
       justifyContent: "center",
     },
   });

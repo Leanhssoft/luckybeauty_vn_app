@@ -1,4 +1,11 @@
-import { Dimensions, Modal, Pressable, StyleSheet, View } from "react-native";
+import React from "react";
+import {
+  Dimensions,
+  Modal,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 
 interface PopoverProps {
   visible: boolean;
@@ -16,30 +23,25 @@ const Popover: React.FC<PopoverProps> = ({
   children,
 }) => {
   const screenWidth = Dimensions.get("window").width;
-
-  // ✅ Căn trái popover với Avatar
-  let left = position.x;
-  if (left + POPUP_WIDTH > screenWidth) {
-    left = screenWidth - POPUP_WIDTH - 10;
-  }
-
-  const top = position.y + position.height; // nằm ngay dưới Avatar
+  const left = Math.min(position.x, screenWidth - POPUP_WIDTH - 10);
+  const top = position.y + position.height;
 
   if (!visible) return null;
 
   return (
-    <Modal
-      transparent
-      visible={visible}
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <View style={[styles.popover, { top, left }]}>{children}</View>
-      </Pressable>
+    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback>
+            <View style={[styles.popover, { top, left }]}>{children}</View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
+
+export default Popover;
 
 const styles = StyleSheet.create({
   overlay: {
@@ -49,10 +51,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: POPUP_WIDTH,
     backgroundColor: "white",
-    padding: 10,
     borderRadius: 10,
-    elevation: 5,
+    padding: 10,
+    elevation: 4,
   },
 });
-
-export default Popover;
