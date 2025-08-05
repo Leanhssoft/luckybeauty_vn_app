@@ -54,7 +54,9 @@ export default function LoginScreen() {
     //if (!tenancyName) errors.tenancyName = "Vui lòng nhập Id cửa hàng";
     setErrors(errors);
     return (
-      errors.userName == "" && errors.passWord == "" && errors.tenancyName == ""
+      errors.userName === "" &&
+      errors.passWord === "" &&
+      errors.tenancyName === ""
     );
   };
 

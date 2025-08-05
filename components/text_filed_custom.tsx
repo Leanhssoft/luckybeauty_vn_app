@@ -48,11 +48,7 @@ export const TextFieldCustom: React.FC<TextFieldCustomProps> = ({
 
   return (
     <View style={[styles.wrapper, containerStyle]}>
-      {label && (
-        <Text style={[styles.label, error && { color: "#f44336" }]}>
-          {label}
-        </Text>
-      )}
+      {label && <Text style={[styles.label]}>{label}</Text>}
       <View
         style={[
           styles.inputContainer,
