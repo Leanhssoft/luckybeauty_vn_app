@@ -46,8 +46,9 @@ const CustomerPage = () => {
       pageSize: AppConst.PAGE_SIZE,
     });
 
-  const getListCustomer = async () => {
-    const data = await KhachHangService.getAll(paramSearchCustomer);
+  const getListCustomer = async (param: IParamSearchCustomerDto) => {
+    const data = await KhachHangService.getAll(param);
+
     setPageDataCustomer({
       ...pageDataCustomer,
       items: data?.items,
@@ -60,12 +61,30 @@ const CustomerPage = () => {
   };
 
   const PageLoad = async () => {
-    await getListCustomer();
+    //await getListCustomer();
   };
 
   useEffect(() => {
     PageLoad();
   }, []);
+
+  useEffect(() => {
+    const getData = setTimeout(async () => {
+      const param = {
+        ...paramSearchCustomer,
+      };
+      param.textSearch = textSearch;
+      param.currentPage = 1;
+      setParamSearchCustomer((prev) => {
+        return {
+          ...prev,
+          currentPage: 1,
+        };
+      });
+      await getListCustomer(param);
+    }, 2000);
+    return () => clearTimeout(getData);
+  }, [textSearch]);
 
   const renderItem = ({
     item,
@@ -99,53 +118,59 @@ const CustomerPage = () => {
               containerStyle={{
                 backgroundColor:
                   index % 4 === 1
-                    ? "#BADEFB"
+                    ? theme.colors.softBlue_background
                     : index % 4 === 2
-                    ? "#FFDDB7"
+                    ? theme.colors.softOrange_background
                     : index % 4 === 3
-                    ? "#FFCDD3"
-                    : "#C3E7E2",
+                    ? theme.colors.softPink_background
+                    : theme.colors.softTeal_background,
               }}
               titleStyle={{
                 fontSize: 18,
                 color:
                   index % 4 === 1
-                    ? "#448aff"
+                    ? theme.colors.softBlue
                     : index % 4 === 2
-                    ? "#E97C24"
+                    ? theme.colors.softOrange
                     : index % 4 === 3
-                    ? "#d36772"
-                    : "#30958A",
+                    ? theme.colors.softPink
+                    : theme.colors.softTeal,
               }}
             />
-            <View style={{ gap: 4 }}>
+            <View style={{ gap: 4, alignItems: "center" }}>
               <Text style={{ fontSize: 20, fontWeight: 600 }}>
                 {item?.tenKhachHang}
               </Text>
-              <Text style={{ color: theme.colors.grey5 }}>
-                {item?.soDienThoai}
-              </Text>
+              {item?.soDienThoai && (
+                <Text style={{ color: theme.colors.grey4 }}>
+                  {item?.soDienThoai}
+                </Text>
+              )}
             </View>
           </View>
           <View style={styles.boxNumber}>
             <View style={{ gap: 8 }}>
-              <Text>{item?.tenNhomKhach ?? " Nhóm mặc định"}</Text>
+              <Text>{item?.tenNhomKhach ?? "Nhóm mặc định"}</Text>
               <Text>
                 Số dư thẻ:
-                <Text style={{ fontSize: 16, fontWeight: 600 }}>
-                  {CommonFunc.formatCurrency(item?.soDuTheGiaTri ?? 0)}
+                <Text style={{ fontWeight: 600 }}>
+                  {` ${CommonFunc.formatCurrency(item?.soDuTheGiaTri ?? 0)}`}
                 </Text>
               </Text>
             </View>
-            {(item?.conNo ?? 0) > 0 && (
-              <View style={{ gap: 8 }}>
-                <Text> Còn nợ</Text>
-
-                <Text style={{ color: "red" }}>
-                  {CommonFunc.formatCurrency(item?.conNo ?? 0)}
-                </Text>
-              </View>
-            )}
+            <View style={{ gap: 8, justifyContent: "flex-start" }}>
+              <Text> Còn nợ</Text>
+              <Text
+                style={{
+                  color:
+                    (item?.conNo ?? 0) > 0
+                      ? theme.colors.error
+                      : theme.colors.black,
+                }}
+              >
+                {CommonFunc.formatCurrency(item?.conNo ?? 0)}
+              </Text>
+            </View>
           </View>
         </ListItem.Content>
       </ListItem.Swipeable>
@@ -157,16 +182,17 @@ const CustomerPage = () => {
       <SearchBar
         placeholder="Tìm kiếm khách hàng"
         containerStyle={{
-          paddingLeft: 16,
-          paddingRight: 16,
           borderTopWidth: 0,
-          paddingBottom: 0,
+          paddingVertical: 0,
+          paddingHorizontal: 16,
           backgroundColor: theme.colors.white,
         }}
         inputContainerStyle={{
           backgroundColor: theme.colors.white,
         }}
         inputStyle={{ fontSize: 14 }}
+        value={textSearch}
+        onChangeText={(txt) => setTextSearch(txt)}
       />
       <FlatList
         data={pageDataCustomer?.items}
@@ -174,20 +200,32 @@ const CustomerPage = () => {
         keyExtractor={(item) => item.id}
         style={{ paddingBottom: insets.bottom + 40 }}
       />
-      <Pagination currentPage={paramSearchCustomer?.currentPage ?? 1} />
+      <Pagination
+        currentPage={paramSearchCustomer?.currentPage ?? 1}
+        totalRow={pageDataCustomer?.totalCount ?? 0}
+        totalPage={pageDataCustomer?.totalPage ?? 0}
+        onChangePage={(newPage: number) =>
+          setParamSearchCustomer((prev) => {
+            return {
+              ...prev,
+              currentPage: newPage,
+            };
+          })
+        }
+      />
       <TouchableOpacity
         style={{
           position: "absolute",
-          bottom: -40,
-          right: -40,
+          bottom: 70,
+          right: 8,
         }}
         // onPress={createNewInvoice}
       >
         <View
           style={{
-            width: 120,
-            height: 120,
-            borderRadius: 60,
+            width: 80,
+            height: 80,
+            borderRadius: 50,
             // borderColor: theme.colors.white,
             justifyContent: "center",
             backgroundColor: theme.colors.primary,

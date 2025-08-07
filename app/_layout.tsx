@@ -1,5 +1,6 @@
 import { AppProvider, useAppContext } from "@/store/react_context/AppProvider";
-import { ThemeProvider, useTheme } from "@rneui/themed";
+import { theme } from "@/theme";
+import { ThemeProvider } from "@rneui/themed";
 import { Redirect, Slot } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
 
@@ -17,12 +18,12 @@ function MainLayout() {
 }
 
 export default function RootLayout() {
-  const { theme } = useTheme();
+  // const { theme } = useTheme();
 
   return (
     <AppProvider>
       <SQLiteProvider databaseName="expo-luckybeauty.db">
-        <ThemeProvider>
+        <ThemeProvider theme={theme}>
           <Slot />
         </ThemeProvider>
       </SQLiteProvider>
