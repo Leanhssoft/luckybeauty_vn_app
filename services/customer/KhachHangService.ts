@@ -52,7 +52,7 @@ class KhachHangService {
   }
   public async delete(id: string) {
     const result = await api.post(`api/services/app/KhachHang/Delete?id=${id}`);
-    return result.data.result;
+    return result;
   }
   public async DeleteMultipleCustomer(lstId: any) {
     const result = await api.post(
@@ -100,7 +100,7 @@ class KhachHangService {
     const result = await api.get(
       `api/services/app/KhachHang/CheckExistSoDienThoai?phone=${phone}&id=${id}`
     );
-    return result.data.result;
+    return result;
   }
   async GetKhachHang_noBooking(
     input: IPagedKhachHangRequestDto

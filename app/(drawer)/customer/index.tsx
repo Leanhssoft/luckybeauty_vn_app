@@ -1,4 +1,5 @@
 import Pagination from "@/components/_pagination";
+import { ConfirmOKCancel } from "@/components/confirm_ok_cancel";
 import ModalAddCustomer from "@/components/customer/modal_add_customer";
 import AppConst from "@/const/AppConst";
 import { IconType } from "@/enum/IconType";
@@ -9,9 +10,17 @@ import { IKhachHangItemDto } from "@/services/customer/IKhachHangItemDto";
 import KhachHangService from "@/services/customer/KhachHangService";
 import { IParamSearchCustomerDto } from "@/services/customer/ParamSearchCustomerDto";
 import { useAppContext } from "@/store/react_context/AppProvider";
+import { IPropsSimpleDialog } from "@/type/IPropsSimpleDialog";
 import CommonFunc from "@/utils/CommonFunc";
 import { Theme } from "@rneui/base";
-import { Avatar, Icon, ListItem, SearchBar, useTheme } from "@rneui/themed";
+import {
+  Avatar,
+  Button,
+  Icon,
+  ListItem,
+  SearchBar,
+  useTheme,
+} from "@rneui/themed";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -31,6 +40,9 @@ const CustomerPage = () => {
   const [textSearch, setTextSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isShowModalAddCustomer, setIsShowModalAddCustomer] = useState(false);
+  const [objSimpleDialog, setObjSimpleDialog] = useState<IPropsSimpleDialog>();
+  const [customerChosed, setCustomerChosed] = useState<IKhachHangItemDto>();
+
   const [pageDataCustomer, setPageDataCustomer] = useState<
     IPageResultDto<IKhachHangItemDto>
   >({ items: [], totalCount: 0, totalPage: 0 });
@@ -100,6 +112,23 @@ const CustomerPage = () => {
     return () => clearTimeout(getData);
   }, [textSearch]);
 
+  const onClickDelete = (item: IKhachHangItemDto) => {
+    setCustomerChosed({ ...item });
+    setObjSimpleDialog({
+      ...objSimpleDialog,
+      isShow: true,
+      mes: `Bạn có chắc chắn muốn xóa khách hàng ${item?.tenKhachHang} không`,
+    });
+  };
+  const deleteCustomer = async () => {
+    const data = await KhachHangService.delete(customerChosed?.id ?? "");
+    // setObjSimpleDialog({
+    //   ...objSimpleDialog,
+    //   isShow: true,
+    //   mes: `Xóa khách hàng ${customerChosed?.tenKhachHang} không`,
+    // });
+  };
+
   const saveOKCustomer = (
     cusItem: ICreateOrEditKhachHangDto,
     actionid?: number
@@ -120,24 +149,12 @@ const CustomerPage = () => {
         bottomDivider={false}
         containerStyle={{ paddingVertical: 8 }}
         rightContent={
-          <View>
-            <TouchableOpacity
-              style={{ flex: 1, backgroundColor: theme.colors.primary }}
-            >
-              <Icon name="edit" type={IconType.ANTDESIGN} />
-              <Text style={{ marginLeft: 8, color: theme.colors.white }}>
-                Sửa
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={{ flex: 1, backgroundColor: theme.colors.error }}
-            >
-              <Icon name="delete" type={IconType.ANTDESIGN} />
-              <Text style={{ marginLeft: 8, color: theme.colors.white }}>
-                Xóa
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <Button
+            title="Xóa"
+            onPress={() => onClickDelete(item)}
+            icon={{ name: "delete", color: "white" }}
+            buttonStyle={{ minHeight: "100%", backgroundColor: "red" }}
+          />
         }
       >
         <ListItem.Content style={styles.customerItem}>
@@ -210,6 +227,14 @@ const CustomerPage = () => {
 
   return (
     <View style={[styles.container, { position: "relative" }]}>
+      <ConfirmOKCancel
+        isShow={objSimpleDialog?.isShow ?? false}
+        mes={objSimpleDialog?.mes}
+        onAgree={deleteCustomer}
+        onClose={() =>
+          setObjSimpleDialog({ ...objSimpleDialog, isShow: false })
+        }
+      />
       <ModalAddCustomer
         isShow={isShowModalAddCustomer}
         onClose={() => setIsShowModalAddCustomer(false)}
@@ -293,9 +318,17 @@ const createStyles = (theme: Theme) =>
     customerItem: {
       padding: 20,
       borderWidth: 1,
-      borderRadius: 4,
+      borderRadius: 8,
       backgroundColor: theme.colors.background,
-      boxShadow: `-4px 4px 2px ${theme.colors.grey5}`,
+      // boxShadow: `-4px 4px 2px ${theme.colors.grey5}`,
+
+      shadowColor: `${theme.colors.grey5}`,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+
+      // Đổ bóng Android
+      elevation: 3,
     },
     boxNumber: {
       justifyContent: "space-between",

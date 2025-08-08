@@ -5,13 +5,17 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 type RadioProps = {
   label: string;
   isSelected: boolean;
+  onPressRdo: () => void;
 };
 
-export default function Radio({ label, isSelected }: RadioProps) {
+export default function Radio({ label, isSelected, onPressRdo }: RadioProps) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
   return (
-    <TouchableOpacity style={{ flexDirection: "row", gap: 8 }}>
+    <TouchableOpacity
+      style={{ flexDirection: "row", gap: 8 }}
+      onPress={onPressRdo}
+    >
       <View
         style={[
           styles.radio,

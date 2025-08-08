@@ -11,7 +11,7 @@ export interface ICreateOrEditKhachHangDto extends ICustomerBasicDto {
   tongTichDiem?: number;
   maSoThue?: string;
   avatar?: string;
-  ngaySinh?: Date;
+  ngaySinh: Date | null;
   kieuNgaySinh?: number;
   idLoaiKhach?: number;
   idNhomKhach?: string;
@@ -36,7 +36,7 @@ export class CreateOrEditKhachangDto implements ICreateOrEditKhachHangDto {
   tongTichDiem?: number;
   maSoThue?: string;
   avatar?: string;
-  ngaySinh?: Date;
+  ngaySinh: Date | null;
   kieuNgaySinh?: number;
   idLoaiKhach?: number;
   idNhomKhach?: string;
@@ -50,6 +50,7 @@ export class CreateOrEditKhachangDto implements ICreateOrEditKhachHangDto {
     tenKhachHang = "",
     soDienThoai = "",
     gioiTinhNam = false,
+    ngaySinh = null,
     diaChi = "",
     idNhomKhach = "",
   }) {
@@ -58,6 +59,7 @@ export class CreateOrEditKhachangDto implements ICreateOrEditKhachHangDto {
     this.maKhachHang = maKhachHang;
     this.tenKhachHang = tenKhachHang;
     this.soDienThoai = soDienThoai;
+    this.ngaySinh = ngaySinh;
     this.diaChi = diaChi;
     this.gioiTinhNam = gioiTinhNam;
     this.idNhomKhach = idNhomKhach;

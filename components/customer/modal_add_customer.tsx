@@ -1,20 +1,23 @@
 import AppConst from "@/const/AppConst";
+import { IconType } from "@/enum/IconType";
 import {
   CreateOrEditKhachangDto,
   ICreateOrEditKhachHangDto,
 } from "@/services/customer/ICreateOrEditKhachHangDto";
+import KhachHangService from "@/services/customer/KhachHangService";
 import { PropModal } from "@/type/PropModal";
 import CommonFunc from "@/utils/CommonFunc";
 import { yupResolver } from "@hookform/resolvers/yup";
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import { Button } from "@rneui/base";
+import { Button, Icon } from "@rneui/base";
 import { Text, useTheme } from "@rneui/themed";
 import dayjs from "dayjs";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Modal, Platform, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as yup from "yup";
 import Radio from "../_radio";
 import { TextLink } from "../_text_link";
@@ -30,18 +33,28 @@ const ModalAddCustomer = ({
   onSave,
 }: PropModal<ICreateOrEditKhachHangDto>) => {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
+
   const [isShowDateWheel, setIsShowDateWheel] = useState(false);
   const [dateOfBirth, setDateOfBirth] = useState<Date>(new Date());
 
   const [objCustomer, setObjCustomer] = useState<CreateOrEditKhachangDto>(
-    new CreateOrEditKhachangDto({ id: "" })
+    new CreateOrEditKhachangDto({
+      id: "",
+      tenKhachHang: "",
+      soDienThoai: "",
+      gioiTinhNam: false,
+      diaChi: "",
+      ngaySinh: null,
+    })
   );
 
   const schema = yup.object({
     tenKhachHang: yup.string().required("Vui lòng nhập tên khách hàng"),
-    soDienThoai: yup
-      .string()
-      .matches(AppConst.PHONE_REGX, "Số điện thoại không hợp lệ"),
+    soDienThoai: yup.string().matches(AppConst.PHONE_REGX, {
+      message: "Số điện thoại không hợp lệ",
+      excludeEmptyString: true,
+    }),
   });
 
   type UserFormData = InstanceType<typeof CreateOrEditKhachangDto>;
@@ -51,6 +64,8 @@ const ModalAddCustomer = ({
   const {
     control,
     handleSubmit,
+    setValue,
+    watch,
     setError,
     formState: { errors },
   } = useForm<FormData>({
@@ -68,11 +83,37 @@ const ModalAddCustomer = ({
 
   const choseDateOfBirth = (event: DateTimePickerEvent, date?: Date) => {
     setDateOfBirth(date ?? new Date());
+    setIsShowDateWheel(false);
+    setValue("ngaySinh", date ?? null);
   };
 
   const onDoneChoseDateOfBirth = () => {
     setIsShowDateWheel(false);
-    setObjCustomer({ ...objCustomer, ngaySinh: dateOfBirth });
+  };
+
+  const checkSave = async (data: FormData) => {
+    if (!CommonFunc.checkNull(data?.soDienThoai)) {
+      const existSDT = await KhachHangService.checkExistSoDienThoai(
+        data?.soDienThoai,
+        data?.id
+      );
+      if (existSDT) {
+        setError("soDienThoai", {
+          type: "manual",
+          message: "Số điện thoại đã tồn tại",
+        });
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const onSaveCustomer = async (data: FormData) => {
+    // const check = await checkSave(data);
+    // if (!check) {
+    //   return;
+    // }
+    console.log("onSaveCustomer ", data);
   };
 
   return (
@@ -96,6 +137,8 @@ const ModalAddCustomer = ({
                   onBlur={onBlur}
                   value={value}
                   onFocus={() => setIsShowDateWheel(false)}
+                  error={errors?.tenKhachHang ?? false ? true : false}
+                  helperText={errors?.tenKhachHang?.message}
                 />
               )}
             />
@@ -110,6 +153,8 @@ const ModalAddCustomer = ({
                   onBlur={onBlur}
                   value={value}
                   onFocus={() => setIsShowDateWheel(false)}
+                  error={errors?.soDienThoai ?? false ? true : false}
+                  helperText={errors?.soDienThoai?.message}
                 />
               )}
             />
@@ -125,18 +170,57 @@ const ModalAddCustomer = ({
               showSoftInputOnFocus={false}
             />
 
-            <View style={{ flexDirection: "row", gap: 8 }}>
+            <View
+              style={{ flexDirection: "row", gap: 16, alignItems: "center" }}
+            >
               <Text>Giới tính</Text>
-              <Radio label="Nữ" isSelected={true} />
-              <Radio label="Nam" isSelected={false} />
+              <View
+                style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
+              >
+                <Radio
+                  label="Nữ"
+                  isSelected={!(watch("gioiTinhNam") ?? false)}
+                  onPressRdo={() => setValue("gioiTinhNam", false)}
+                />
+                <Radio
+                  label="Nam"
+                  isSelected={watch("gioiTinhNam") ?? false}
+                  onPressRdo={() => setValue("gioiTinhNam", true)}
+                />
+              </View>
             </View>
+
+            <TextFieldCustom
+              label="Nhóm khách"
+              variant="outlined"
+              value={objCustomer?.idNhomKhach ?? "Nhóm mặc định"}
+              readOnly
+              endIcon={
+                <Icon name="navigate-next" type={IconType.MATERIAL} size={24} />
+              }
+            />
+            <Controller
+              control={control}
+              name="diaChi"
+              render={({ field: { value, onChange, onBlur } }) => (
+                <TextFieldCustom
+                  multiline
+                  variant="outlined"
+                  label="Địa chỉ"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                />
+              )}
+            />
+
             <View style={{ paddingTop: 20, gap: 8 }}>
-              <Button radius={"md"} size="lg">
+              <Button radius={"md"} onPress={handleSubmit(onSaveCustomer)}>
                 Thêm mới
               </Button>
-              {/* <Button radius={"md"} color={"error"}>
+              <Button radius={"md"} color={"error"}>
                 Đóng
-              </Button> */}
+              </Button>
             </View>
           </View>
           {isShowDateWheel && (
