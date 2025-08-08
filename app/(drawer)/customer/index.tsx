@@ -1,24 +1,20 @@
 import Pagination from "@/components/_pagination";
+import ModalAddCustomer from "@/components/customer/modal_add_customer";
 import AppConst from "@/const/AppConst";
 import { IconType } from "@/enum/IconType";
 import { LoaiDoiTuong } from "@/enum/LoaiDoiTuong";
 import { IPageResultDto } from "@/services/commonDto/IPageResultDto";
+import { ICreateOrEditKhachHangDto } from "@/services/customer/ICreateOrEditKhachHangDto";
 import { IKhachHangItemDto } from "@/services/customer/IKhachHangItemDto";
 import KhachHangService from "@/services/customer/KhachHangService";
 import { IParamSearchCustomerDto } from "@/services/customer/ParamSearchCustomerDto";
 import { useAppContext } from "@/store/react_context/AppProvider";
 import CommonFunc from "@/utils/CommonFunc";
 import { Theme } from "@rneui/base";
-import {
-  Avatar,
-  Button,
-  Icon,
-  ListItem,
-  SearchBar,
-  useTheme,
-} from "@rneui/themed";
+import { Avatar, Icon, ListItem, SearchBar, useTheme } from "@rneui/themed";
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   StyleSheet,
   Text,
@@ -33,6 +29,8 @@ const CustomerPage = () => {
   const insets = useSafeAreaInsets();
   const { userLogin, chiNhanhCurrent } = useAppContext();
   const [textSearch, setTextSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isShowModalAddCustomer, setIsShowModalAddCustomer] = useState(false);
   const [pageDataCustomer, setPageDataCustomer] = useState<
     IPageResultDto<IKhachHangItemDto>
   >({ items: [], totalCount: 0, totalPage: 0 });
@@ -47,6 +45,7 @@ const CustomerPage = () => {
     });
 
   const getListCustomer = async (param: IParamSearchCustomerDto) => {
+    setIsLoading(true);
     const data = await KhachHangService.getAll(param);
 
     setPageDataCustomer({
@@ -58,6 +57,7 @@ const CustomerPage = () => {
           (paramSearchCustomer?.pageSize ?? AppConst.PAGE_SIZE)
       ),
     });
+    setIsLoading(false);
   };
 
   const PageLoad = async () => {
@@ -67,6 +67,20 @@ const CustomerPage = () => {
   useEffect(() => {
     PageLoad();
   }, []);
+
+  const onChangePage = async (newPage: number) => {
+    setParamSearchCustomer((prev) => {
+      return {
+        ...prev,
+        currentPage: newPage,
+      };
+    });
+    const param = {
+      ...paramSearchCustomer,
+    };
+    param.currentPage = newPage;
+    await getListCustomer(param);
+  };
 
   useEffect(() => {
     const getData = setTimeout(async () => {
@@ -86,6 +100,11 @@ const CustomerPage = () => {
     return () => clearTimeout(getData);
   }, [textSearch]);
 
+  const saveOKCustomer = (
+    cusItem: ICreateOrEditKhachHangDto,
+    actionid?: number
+  ) => {};
+
   const renderItem = ({
     item,
     index,
@@ -101,12 +120,24 @@ const CustomerPage = () => {
         bottomDivider={false}
         containerStyle={{ paddingVertical: 8 }}
         rightContent={
-          <Button
-            title="Delete"
-            // onPress={() => reset()}
-            icon={{ name: "delete", color: "white" }}
-            buttonStyle={{ minHeight: "100%", backgroundColor: "red" }}
-          />
+          <View>
+            <TouchableOpacity
+              style={{ flex: 1, backgroundColor: theme.colors.primary }}
+            >
+              <Icon name="edit" type={IconType.ANTDESIGN} />
+              <Text style={{ marginLeft: 8, color: theme.colors.white }}>
+                Sửa
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ flex: 1, backgroundColor: theme.colors.error }}
+            >
+              <Icon name="delete" type={IconType.ANTDESIGN} />
+              <Text style={{ marginLeft: 8, color: theme.colors.white }}>
+                Xóa
+              </Text>
+            </TouchableOpacity>
+          </View>
         }
       >
         <ListItem.Content style={styles.customerItem}>
@@ -178,7 +209,12 @@ const CustomerPage = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { position: "relative" }]}>
+      <ModalAddCustomer
+        isShow={isShowModalAddCustomer}
+        onClose={() => setIsShowModalAddCustomer(false)}
+        onSave={saveOKCustomer}
+      />
       <SearchBar
         placeholder="Tìm kiếm khách hàng"
         containerStyle={{
@@ -194,6 +230,17 @@ const CustomerPage = () => {
         value={textSearch}
         onChangeText={(txt) => setTextSearch(txt)}
       />
+      {isLoading && (
+        <ActivityIndicator
+          size={"large"}
+          style={{
+            position: "absolute",
+            top: 100,
+            width: "100%",
+            zIndex: 99999,
+          }}
+        />
+      )}
       <FlatList
         data={pageDataCustomer?.items}
         renderItem={renderItem}
@@ -204,14 +251,7 @@ const CustomerPage = () => {
         currentPage={paramSearchCustomer?.currentPage ?? 1}
         totalRow={pageDataCustomer?.totalCount ?? 0}
         totalPage={pageDataCustomer?.totalPage ?? 0}
-        onChangePage={(newPage: number) =>
-          setParamSearchCustomer((prev) => {
-            return {
-              ...prev,
-              currentPage: newPage,
-            };
-          })
-        }
+        onChangePage={onChangePage}
       />
       <TouchableOpacity
         style={{
@@ -219,14 +259,13 @@ const CustomerPage = () => {
           bottom: 70,
           right: 8,
         }}
-        // onPress={createNewInvoice}
+        onPress={() => setIsShowModalAddCustomer(true)}
       >
         <View
           style={{
             width: 80,
             height: 80,
             borderRadius: 50,
-            // borderColor: theme.colors.white,
             justifyContent: "center",
             backgroundColor: theme.colors.primary,
           }}
