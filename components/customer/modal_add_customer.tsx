@@ -1,10 +1,12 @@
 import AppConst from "@/const/AppConst";
+import { ActionType } from "@/enum/ActionType";
 import { IconType } from "@/enum/IconType";
 import {
   CreateOrEditKhachangDto,
   ICreateOrEditKhachHangDto,
 } from "@/services/customer/ICreateOrEditKhachHangDto";
 import KhachHangService from "@/services/customer/KhachHangService";
+import { ICustomerGroupDto } from "@/services/customer_group/ICustomerGroupDto";
 import { PropModal } from "@/type/PropModal";
 import CommonFunc from "@/utils/CommonFunc";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -14,9 +16,9 @@ import DateTimePicker, {
 import { Button, Icon } from "@rneui/base";
 import { Text, useTheme } from "@rneui/themed";
 import dayjs from "dayjs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Modal, Platform, View } from "react-native";
+import { Modal, Platform, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as yup from "yup";
 import Radio from "../_radio";
@@ -24,6 +26,7 @@ import { TextLink } from "../_text_link";
 import { TitleModal } from "../_title_modal";
 import { BackDropView } from "../back_drop_view";
 import { ModalContainer } from "../modal_container";
+import ModalListCustomerGroup from "../nhom_khach_hang/modal_list_customer_group";
 import { TextFieldCustom } from "../text_filed_custom";
 
 const ModalAddCustomer = ({
@@ -35,23 +38,13 @@ const ModalAddCustomer = ({
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
 
+  const [isShowModalListCustomer, setIsShowModalListCustomer] = useState(false);
   const [isShowDateWheel, setIsShowDateWheel] = useState(false);
   const [dateOfBirth, setDateOfBirth] = useState<Date>(new Date());
 
-  const [objCustomer, setObjCustomer] = useState<CreateOrEditKhachangDto>(
-    new CreateOrEditKhachangDto({
-      id: "",
-      tenKhachHang: "",
-      soDienThoai: "",
-      gioiTinhNam: false,
-      diaChi: "",
-      ngaySinh: null,
-    })
-  );
-
   const schema = yup.object({
     tenKhachHang: yup.string().required("Vui lòng nhập tên khách hàng"),
-    soDienThoai: yup.string().matches(AppConst.PHONE_REGX, {
+    soDienThoai: yup.string().min(9).matches(AppConst.PHONE_REGX, {
       message: "Số điện thoại không hợp lệ",
       excludeEmptyString: true,
     }),
@@ -60,25 +53,41 @@ const ModalAddCustomer = ({
   type UserFormData = InstanceType<typeof CreateOrEditKhachangDto>;
   type ValidatedFields = yup.InferType<typeof schema>; // Chỉ validate cho 1 số field
   type FormData = ValidatedFields & UserFormData;
+  const defaultValues = new CreateOrEditKhachangDto({
+    id: "",
+    tenKhachHang: "",
+    soDienThoai: "",
+    gioiTinhNam: false,
+    diaChi: "",
+    ngaySinh: null,
+    tenNhomKhach: "Nhóm mặc định",
+  });
+
+  useEffect(() => {
+    if (isShow) {
+      // todo update reset (objupdate)
+      reset(defaultValues);
+    }
+  }, [isShow]);
 
   const {
     control,
     handleSubmit,
     setValue,
     watch,
+    reset,
     setError,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver<FormData, any, FormData>(
       schema as yup.ObjectSchema<FormData>
     ),
-    defaultValues: objCustomer,
+    defaultValues: defaultValues,
     shouldUnregister: false,
   });
 
   const showDateWheel = () => {
     setIsShowDateWheel(true);
-    //Keyboard.dismiss();
   };
 
   const choseDateOfBirth = (event: DateTimePickerEvent, date?: Date) => {
@@ -89,6 +98,10 @@ const ModalAddCustomer = ({
 
   const onDoneChoseDateOfBirth = () => {
     setIsShowDateWheel(false);
+  };
+
+  const showModalNhomKhach = () => {
+    setIsShowModalListCustomer(true);
   };
 
   const checkSave = async (data: FormData) => {
@@ -109,22 +122,43 @@ const ModalAddCustomer = ({
   };
 
   const onSaveCustomer = async (data: FormData) => {
-    // const check = await checkSave(data);
-    // if (!check) {
-    //   return;
-    // }
-    console.log("onSaveCustomer ", data);
+    const check = await checkSave(data);
+    if (!check) {
+      return false;
+    }
+
+    const result = await KhachHangService.createOrEdit(data);
+
+    onSave(result, ActionType.INSERT);
+  };
+
+  const saveOKNhomKhach = async (
+    nhomKhach: ICustomerGroupDto,
+    actionid?: number
+  ) => {
+    setValue("idNhomKhach", nhomKhach?.id);
+    setValue("tenNhomKhach", nhomKhach?.tenNhomKhach);
+    setIsShowModalListCustomer(false);
   };
 
   return (
     <Modal visible={isShow} animationType="slide" transparent={true}>
+      <ModalListCustomerGroup
+        isShow={isShowModalListCustomer}
+        onClose={() => setIsShowModalListCustomer(false)}
+        onSave={saveOKNhomKhach}
+      />
       <BackDropView>
         <ModalContainer
           style={{
             position: "relative",
           }}
         >
-          <TitleModal title="Khách hàng mới" onClose={onClose} />
+          <TitleModal
+            title="Khách hàng mới"
+            onClose={onClose}
+            style={{ backgroundColor: theme.colors.primary }}
+          />
           <View style={{ gap: 8, padding: 16 }}>
             <Controller
               control={control}
@@ -161,11 +195,9 @@ const ModalAddCustomer = ({
             <TextFieldCustom
               label="Ngày sinh"
               variant="outlined"
-              value={
-                CommonFunc.checkNull(objCustomer?.ngaySinh?.toString())
-                  ? ""
-                  : dayjs().format("DD/MM/YYYY")
-              }
+              value={dayjs(watch("ngaySinh") ?? new Date()).format(
+                "DD/MM/YYYY"
+              )}
               onFocus={showDateWheel}
               showSoftInputOnFocus={false}
             />
@@ -190,15 +222,6 @@ const ModalAddCustomer = ({
               </View>
             </View>
 
-            <TextFieldCustom
-              label="Nhóm khách"
-              variant="outlined"
-              value={objCustomer?.idNhomKhach ?? "Nhóm mặc định"}
-              readOnly
-              endIcon={
-                <Icon name="navigate-next" type={IconType.MATERIAL} size={24} />
-              }
-            />
             <Controller
               control={control}
               name="diaChi"
@@ -213,13 +236,25 @@ const ModalAddCustomer = ({
                 />
               )}
             />
+            <TouchableOpacity onPress={showModalNhomKhach}>
+              <TextFieldCustom
+                label="Nhóm khách"
+                variant="outlined"
+                value={watch("tenNhomKhach")}
+                readOnly
+                endIcon={
+                  <Icon
+                    name="navigate-next"
+                    type={IconType.MATERIAL}
+                    size={30}
+                  />
+                }
+              />
+            </TouchableOpacity>
 
             <View style={{ paddingTop: 20, gap: 8 }}>
               <Button radius={"md"} onPress={handleSubmit(onSaveCustomer)}>
                 Thêm mới
-              </Button>
-              <Button radius={"md"} color={"error"}>
-                Đóng
               </Button>
             </View>
           </View>

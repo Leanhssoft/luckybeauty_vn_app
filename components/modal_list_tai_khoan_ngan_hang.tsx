@@ -102,7 +102,7 @@ export const Modal_ListTaiKhoanNganHang = ({
   return (
     <Modal visible={isShow} transparent={true} animationType="slide">
       <BackDropView>
-        <ModalContainer>
+        <ModalContainer style={styles.modalContainer}>
           <TitleModal title="Chọn tài khoản ngân hàng" onClose={onClose} />
           <SearchBar
             placeholder="Tìm kiếm"
@@ -202,6 +202,12 @@ export const Modal_ListTaiKhoanNganHang = ({
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
+    modalContainer: {
+      height: "100%",
+      flex: 1,
+      position: "relative",
+    },
+
     accountItem: {
       padding: 10,
       borderRadius: 8,

@@ -31,14 +31,16 @@ export const ModalContainer: FC<ICenterViewProps> = ({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
-      flex: 1,
       width: "100%",
-      height: "100%",
       borderTopLeftRadius: 16,
       borderTopRightRadius: 16,
       borderBottomLeftRadius: 16,
       borderBottomRightRadius: 16,
-      boxShadow: `0px 2px ${theme.colors.greyOutline}`,
+      shadowColor: theme.colors.greyOutline,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 3, // cho Android
 
       //  Ẩn (không hiển thị) bất kỳ phần tử con nào bị tràn ra ngoài góc bo tròn
       overflow: "hidden",

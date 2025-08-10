@@ -36,7 +36,7 @@ export const ModalListProduct = ({
   return (
     <Modal visible={isShow} transparent={true} animationType="slide">
       <BackDropView>
-        <ModalContainer style={{ position: "relative" }}>
+        <ModalContainer style={styles.modalContainer}>
           <TitleModal title="Thêm sản phẩm vào giỏ hàng" onClose={onClose} />
           <ListProductSale
             isLoadData={isShow}
@@ -74,6 +74,12 @@ export const ModalListProduct = ({
 };
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
+    modalContainer: {
+      height: "100%",
+      flex: 1,
+      position: "relative",
+    },
+
     boxButton: {
       right: 16,
       position: "absolute",

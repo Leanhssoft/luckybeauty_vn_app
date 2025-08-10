@@ -22,29 +22,7 @@ export default function ModalListCustomer({
   const [txtSearch, setTxtSearch] = useState("");
   const firstLoad = useRef(true);
 
-  const [lstCustomer, setLstCustomer] = useState<IKhachHangItemDto[]>([
-    {
-      id: "01",
-      idKhachHang: "01",
-      maKhachHang: "KH01",
-      tenKhachHang: "Nguyễn Thị Hương Giang",
-      soDienThoai: "97844545",
-    },
-    {
-      id: "04",
-      idKhachHang: "04",
-      maKhachHang: "KH04",
-      tenKhachHang: "Hoàng Mai Ngô",
-      soDienThoai: "",
-    },
-    {
-      id: "03",
-      idKhachHang: "03",
-      maKhachHang: "KH03",
-      tenKhachHang: "Lê Phương Thao",
-      soDienThoai: "08844545",
-    },
-  ]);
+  const [lstCustomer, setLstCustomer] = useState<IKhachHangItemDto[]>([]);
 
   const jqAutoCustomer = async () => {
     const param: IPagedKhachHangRequestDto = {
@@ -81,7 +59,7 @@ export default function ModalListCustomer({
   return (
     <Modal visible={isShow} animationType="slide" transparent={true}>
       <BackDropView>
-        <ModalContainer>
+        <ModalContainer style={styles.modalContainer}>
           <TitleModal title="Chọn khách hàng" onClose={onClose} />
 
           <SearchBar
@@ -118,5 +96,9 @@ const createStyles = (theme: Theme) =>
       borderTopWidth: 0,
       paddingBottom: 0,
       backgroundColor: theme.colors.white,
+    },
+    modalContainer: {
+      height: "100%",
+      flex: 1,
     },
   });
