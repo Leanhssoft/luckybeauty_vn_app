@@ -1,22 +1,27 @@
 import { IconType } from "@/enum/IconType";
 import { Icon, Text, useTheme } from "@rneui/themed";
 import { FC } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View, ViewProps } from "react-native";
 
-export const TitleModal: FC<{
+type TitleModalProps = ViewProps & {
   title: string;
   onClose: () => void;
-}> = ({ title, onClose }) => {
+};
+
+export const TitleModal: FC<TitleModalProps> = ({
+  title,
+  onClose,
+  style,
+  ...rest
+}) => {
   const { theme } = useTheme();
   return (
     <View
-      style={{
-        backgroundColor: theme.colors.primary,
-        justifyContent: "center",
-        alignItems: "center",
-        position: "relative",
-        height: 50,
-      }}
+      style={[
+        styles.container,
+        { backgroundColor: theme.colors.primary },
+        style,
+      ]}
     >
       <TouchableOpacity
         onPress={onClose}
@@ -47,3 +52,12 @@ export const TitleModal: FC<{
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+    height: 50,
+  },
+});
