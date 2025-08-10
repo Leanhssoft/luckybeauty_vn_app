@@ -17,7 +17,7 @@ class KhachHangService {
       "api/services/app/KhachHang/CreateOrEdit",
       input
     );
-    return result.data.result;
+    return result;
   }
   public async getDetail(id: string): Promise<IKhachHangItemDto> {
     // full infor soLanCheckin, ngayCheckinGanNhat

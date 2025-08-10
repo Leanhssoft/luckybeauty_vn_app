@@ -2,6 +2,7 @@ import Pagination from "@/components/_pagination";
 import { ConfirmOKCancel } from "@/components/confirm_ok_cancel";
 import ModalAddCustomer from "@/components/customer/modal_add_customer";
 import AppConst from "@/const/AppConst";
+import { ActionType } from "@/enum/ActionType";
 import { IconType } from "@/enum/IconType";
 import { LoaiDoiTuong } from "@/enum/LoaiDoiTuong";
 import { IPageResultDto } from "@/services/commonDto/IPageResultDto";
@@ -36,6 +37,7 @@ const CustomerPage = () => {
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const insets = useSafeAreaInsets();
+
   const { userLogin, chiNhanhCurrent } = useAppContext();
   const [textSearch, setTextSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -121,18 +123,58 @@ const CustomerPage = () => {
     });
   };
   const deleteCustomer = async () => {
-    const data = await KhachHangService.delete(customerChosed?.id ?? "");
-    // setObjSimpleDialog({
-    //   ...objSimpleDialog,
-    //   isShow: true,
-    //   mes: `Xóa khách hàng ${customerChosed?.tenKhachHang} không`,
-    // });
+    setObjSimpleDialog({ ...objSimpleDialog, isShow: false });
+    await KhachHangService.delete(customerChosed?.id ?? "");
+    setPageDataCustomer({
+      ...pageDataCustomer,
+      items: pageDataCustomer?.items?.filter(
+        (x) => x.id !== customerChosed?.id
+      ),
+      totalCount: (pageDataCustomer?.totalCount ?? 0) - 1,
+    });
   };
 
   const saveOKCustomer = (
     cusItem: ICreateOrEditKhachHangDto,
     actionid?: number
-  ) => {};
+  ) => {
+    setIsShowModalAddCustomer(false);
+
+    switch (actionid) {
+      case ActionType.INSERT:
+        {
+          setPageDataCustomer({
+            ...pageDataCustomer,
+            items: [cusItem, ...pageDataCustomer?.items],
+            totalCount: (pageDataCustomer?.totalCount ?? 0) + 1,
+          });
+        }
+        break;
+      case ActionType.UPDATE:
+        {
+          setPageDataCustomer({
+            ...pageDataCustomer,
+            items: pageDataCustomer?.items?.map((x) => {
+              if (x.id === cusItem?.id) {
+                return {
+                  ...x,
+                  tenKhachHang: cusItem?.tenKhachHang,
+                  tenNhomKhach: cusItem?.tenNhomKhach,
+                  soDienThoai: cusItem?.soDienThoai,
+                  idNhomKhach: cusItem?.idNhomKhach,
+                  diaChi: cusItem?.diaChi,
+                  ngaySinh: cusItem?.ngaySinh,
+                  gioiTinhNam: cusItem?.gioiTinhNam,
+                };
+              } else {
+                return { ...x };
+              }
+            }),
+          });
+        }
+        break;
+    }
+  };
 
   const renderItem = ({
     item,
@@ -141,21 +183,21 @@ const CustomerPage = () => {
     item: IKhachHangItemDto;
     index: number;
   }) => {
-    // const backgroundColor = item.id === selectedId ? '#0a080aff' : '#f9c2ff';
-    // const color = item.id === selectedId ? 'white' : 'black';
-
     return (
       <ListItem.Swipeable
         bottomDivider={false}
         containerStyle={{ paddingVertical: 8 }}
-        rightContent={
+        rightContent={(reset) => (
           <Button
             title="Xóa"
-            onPress={() => onClickDelete(item)}
+            onPress={() => {
+              onClickDelete(item);
+              reset();
+            }}
             icon={{ name: "delete", color: "white" }}
             buttonStyle={{ minHeight: "100%", backgroundColor: "red" }}
           />
-        }
+        )}
       >
         <ListItem.Content style={styles.customerItem}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
@@ -320,7 +362,6 @@ const createStyles = (theme: Theme) =>
       borderWidth: 1,
       borderRadius: 8,
       backgroundColor: theme.colors.background,
-      // boxShadow: `-4px 4px 2px ${theme.colors.grey5}`,
 
       shadowColor: `${theme.colors.grey5}`,
       shadowOffset: { width: 0, height: 2 },

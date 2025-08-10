@@ -11,14 +11,16 @@ export interface ICreateOrEditKhachHangDto extends ICustomerBasicDto {
   tongTichDiem?: number;
   maSoThue?: string;
   avatar?: string;
-  ngaySinh: Date | null;
+  ngaySinh?: Date | null;
   kieuNgaySinh?: number;
   idLoaiKhach?: number;
-  idNhomKhach?: string;
+  idNhomKhach?: string | null;
   idNguonKhach?: string;
   idTinhThanh?: string;
   idQuanHuyen?: string;
   idKhachHangZOA?: string;
+
+  tenNhomKhach?: string;
 }
 
 export class CreateOrEditKhachangDto implements ICreateOrEditKhachHangDto {
@@ -39,11 +41,12 @@ export class CreateOrEditKhachangDto implements ICreateOrEditKhachHangDto {
   ngaySinh: Date | null;
   kieuNgaySinh?: number;
   idLoaiKhach?: number;
-  idNhomKhach?: string;
+  idNhomKhach: string | null;
   idNguonKhach?: string;
   idTinhThanh?: string;
   idQuanHuyen?: string;
   idKhachHangZOA?: string;
+  tenNhomKhach?: string;
   constructor({
     id = "",
     maKhachHang = "",
@@ -52,7 +55,8 @@ export class CreateOrEditKhachangDto implements ICreateOrEditKhachHangDto {
     gioiTinhNam = false,
     ngaySinh = null,
     diaChi = "",
-    idNhomKhach = "",
+    idNhomKhach = null,
+    tenNhomKhach = "Nhóm mặc định",
   }) {
     this.id = id;
     this.idKhachHang = id;
@@ -63,5 +67,6 @@ export class CreateOrEditKhachangDto implements ICreateOrEditKhachHangDto {
     this.diaChi = diaChi;
     this.gioiTinhNam = gioiTinhNam;
     this.idNhomKhach = idNhomKhach;
+    this.tenNhomKhach = tenNhomKhach;
   }
 }
