@@ -18,7 +18,7 @@ export const ModalListProduct = ({
   const styles = createStyles(theme);
   const insets = useSafeAreaInsets();
   const [isDoneAgreeChoseProduct, setIsDoneAgreeChoseProduct] =
-    useState<boolean>(false);
+    useState<number>(0);
   const [arrIdQuyDoiChosed, setArrIdQuyDoiChosed] = useState<string[]>([]);
 
   const choseProduct = (
@@ -29,7 +29,7 @@ export const ModalListProduct = ({
   };
 
   const agree = () => {
-    setIsDoneAgreeChoseProduct(true);
+    setIsDoneAgreeChoseProduct(() => isDoneAgreeChoseProduct + 1);
     onSave(arrIdQuyDoiChosed);
   };
 

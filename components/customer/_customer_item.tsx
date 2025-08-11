@@ -27,7 +27,7 @@ export const CustomerItem = ({ item, choseCustomer }: PropCustomerItem) => {
         }}
       />
       <View style={styles.infoContainer}>
-        <View style={{ gap: 12 }}>
+        <View style={{ gap: 12, justifyContent: "center" }}>
           <Text
             style={{
               fontWeight: 600,
@@ -36,7 +36,9 @@ export const CustomerItem = ({ item, choseCustomer }: PropCustomerItem) => {
           >
             {item?.tenKhachHang}
           </Text>
-          <Text>{item.soDienThoai}</Text>
+          <Text style={{ color: theme.colors.grey4, fontSize: 14 }}>
+            {item.soDienThoai}
+          </Text>
         </View>
         <View style={{ gap: 12 }}>
           <Text
@@ -44,18 +46,9 @@ export const CustomerItem = ({ item, choseCustomer }: PropCustomerItem) => {
               fontWeight: 500,
             }}
           >
-            Điểm: {item?.tongTichDiem ?? 0}{" "}
+            TGT: {item?.soDuTheGiaTri ?? 0}{" "}
           </Text>
-          <Text
-            style={{
-              color:
-                (item?.conNo ?? 0) > 0
-                  ? theme.colors.error
-                  : theme.colors.black,
-            }}
-          >
-            Nợ: {item?.conNo ?? 0}{" "}
-          </Text>
+          {(item?.conNo ?? 0) > 0 && <Text>Nợ: {item?.conNo ?? 0} </Text>}
         </View>
       </View>
     </Pressable>

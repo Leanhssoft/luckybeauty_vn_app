@@ -200,7 +200,9 @@ const CustomerPage = () => {
         )}
       >
         <ListItem.Content style={styles.customerItem}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <TouchableOpacity
+            style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+          >
             <Avatar
               rounded
               size={"medium"}
@@ -237,7 +239,7 @@ const CustomerPage = () => {
                 </Text>
               )}
             </View>
-          </View>
+          </TouchableOpacity>
           <View style={styles.boxNumber}>
             <View style={{ gap: 8 }}>
               <Text>{item?.tenNhomKhach ?? "Nhóm mặc định"}</Text>
@@ -359,13 +361,12 @@ const createStyles = (theme: Theme) =>
     },
     customerItem: {
       padding: 20,
-      borderWidth: 1,
       borderRadius: 8,
       backgroundColor: theme.colors.background,
 
-      shadowColor: `${theme.colors.grey5}`,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
+      shadowColor: theme.colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
       shadowRadius: 4,
 
       // Đổ bóng Android

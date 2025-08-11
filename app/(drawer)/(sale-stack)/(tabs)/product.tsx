@@ -54,7 +54,7 @@ const Product = () => {
   const [idHoaDonChosing, setIdHoaDonChosing] = useState("");
   const [isShowModalAddGioHang, setIsShowModalAddGioHang] = useState(false);
   const [isCheckMultipleProduct, setIsCheckMultipleProduct] = useState(false);
-  const [isDoneAgreeChoseProduct, setIsDoneAgreeChoseProduct] = useState(false);
+  const [isDoneAgreeChoseProduct, setIsDoneAgreeChoseProduct] = useState(0);
   const [arrIdQuyDoiChosed, setArrIdQuyDoiChosed] = useState<string[]>([]);
   const [ctDoing, setCTDoing] = useState<IHoaDonChiTietDto>(
     {} as IHoaDonChiTietDto
@@ -251,7 +251,7 @@ const Product = () => {
   const addMultipleProduct = async () => {
     setIsCheckMultipleProduct(false);
     setArrIdQuyDoiChosed([]);
-    setIsDoneAgreeChoseProduct(true);
+    setIsDoneAgreeChoseProduct(() => isDoneAgreeChoseProduct + 1);
 
     let cthd = await SQLLiteQuery.GetChiTietHoaDon_byIdHoaDon(
       db,
@@ -303,6 +303,7 @@ const Product = () => {
 
   const agreeAddGioHang = async (ctAfter: IHoaDonChiTietDto) => {
     setIsShowModalAddGioHang(false);
+    setIsDoneAgreeChoseProduct(() => isDoneAgreeChoseProduct + 1);
 
     let idHoaDon = await GetIdHoaDon_andCreateNewHD_ifNotExist();
     // delete & add again

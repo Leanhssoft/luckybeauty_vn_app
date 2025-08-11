@@ -8,7 +8,7 @@ import { PropModal } from "@/type/PropModal";
 import { Theme } from "@rneui/base";
 import { SearchBar, useTheme } from "@rneui/themed";
 import { useEffect, useRef, useState } from "react";
-import { FlatList, Modal, StyleSheet } from "react-native";
+import { ActivityIndicator, FlatList, Modal, StyleSheet } from "react-native";
 import { CustomerItem } from "./_customer_item";
 
 export default function ModalListCustomer({
@@ -17,26 +17,44 @@ export default function ModalListCustomer({
   onClose,
   onSave,
 }: PropModal<IKhachHangItemDto>) {
+  const firstLoad = useRef(true);
   const { theme } = useTheme();
   const styles = createStyles(theme);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [txtSearch, setTxtSearch] = useState("");
-  const firstLoad = useRef(true);
+  const [currentPage, setCurrentPage] = useState(0);
 
   const [lstCustomer, setLstCustomer] = useState<IKhachHangItemDto[]>([]);
 
-  const jqAutoCustomer = async () => {
-    const param: IPagedKhachHangRequestDto = {
-      keyword: txtSearch,
-      skipCount: 0,
-      maxResultCount: 10,
-    };
+  const jqAutoCustomer = async (param: IPagedKhachHangRequestDto) => {
+    if (isLoading) return;
+    setIsLoading(true);
     const lst = await KhachHangService.jqAutoCustomer(param);
-    setLstCustomer([...lst]);
+
+    if ((lst?.length ?? 0) === 0) {
+      setHasMore(false);
+    }
+
+    if (param.skipCount === 0) {
+      setLstCustomer([...lst]);
+    } else {
+      setLstCustomer((prev) => {
+        return [...prev, ...lst];
+      });
+    }
+    setIsLoading(false);
   };
 
   useEffect(() => {
     if (isShow) {
-      jqAutoCustomer();
+      setCurrentPage(0);
+      const param: IPagedKhachHangRequestDto = {
+        keyword: "",
+        skipCount: 0,
+        maxResultCount: 10,
+      };
+      jqAutoCustomer(param);
     }
   }, [isShow]);
 
@@ -45,15 +63,36 @@ export default function ModalListCustomer({
       firstLoad.current = false;
       return;
     }
-
+    setCurrentPage(0);
     const getData = setTimeout(async () => {
-      await jqAutoCustomer();
-      return () => clearTimeout(getData);
+      const param: IPagedKhachHangRequestDto = {
+        keyword: txtSearch,
+        skipCount: 0,
+        maxResultCount: 10,
+      };
+      await jqAutoCustomer(param);
     }, 2000);
+    return () => clearTimeout(getData);
   }, [txtSearch]);
 
   const choseCustomer = (item: IKhachHangItemDto) => {
     onSave(item);
+  };
+
+  const handleLoadMore = async () => {
+    if (hasMore) {
+      setCurrentPage(() => currentPage + 1);
+      const param: IPagedKhachHangRequestDto = {
+        keyword: txtSearch,
+        skipCount: currentPage + 1,
+        maxResultCount: 10,
+      };
+      await jqAutoCustomer(param);
+    }
+  };
+  const renderFooter = () => {
+    if (!isLoading) return null;
+    return <ActivityIndicator size="small" />;
   };
 
   return (
@@ -78,9 +117,9 @@ export default function ModalListCustomer({
               <CustomerItem item={item} choseCustomer={choseCustomer} />
             )}
             keyExtractor={(item) => item.id}
-            // style={{
-            //   paddingBottom: 8,
-            // }}
+            onEndReachedThreshold={0.5}
+            onEndReached={handleLoadMore}
+            ListFooterComponent={renderFooter}
           />
         </ModalContainer>
       </BackDropView>

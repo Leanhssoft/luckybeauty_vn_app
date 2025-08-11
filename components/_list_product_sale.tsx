@@ -23,7 +23,7 @@ import { ItemProductSale } from "./ban_hang/_item_product_sale";
 
 type PropsListProductSale = {
   isLoadData: boolean;
-  isDoneAgreeChoseProduct: boolean;
+  isDoneAgreeChoseProduct: number;
   onClickChoseProduct: (
     arrIdQuyDoiChosed: string[],
     isCheckMultipleProduct?: boolean

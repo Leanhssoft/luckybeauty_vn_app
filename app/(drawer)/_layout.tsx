@@ -165,6 +165,34 @@ export default function DrawerLayout() {
           }}
         />
         <Drawer.Screen
+          name="(invoices-stack)"
+          options={{
+            title: "Chọn loại hóa đơn",
+            headerTitleAlign: "left",
+            drawerLabel: "Hóa đơn",
+            drawerIcon: ({ focused, color, size }) => (
+              <Icon
+                type={IconType.FONT_AWESOME_5}
+                name={"file-invoice"}
+                color={focused ? theme.colors.primary : theme.colors.disabled}
+              />
+            ),
+          }}
+        />
+        <Drawer.Screen
+          name="product/index"
+          options={{
+            title: "Sản phẩm",
+            drawerIcon: ({ focused, color, size }) => (
+              <Icon
+                type={IconType.IONICON}
+                name={"list"}
+                color={focused ? theme.colors.primary : theme.colors.disabled}
+              />
+            ),
+          }}
+        />
+        <Drawer.Screen
           name="customer/index"
           options={{
             title: "Khách hàng",

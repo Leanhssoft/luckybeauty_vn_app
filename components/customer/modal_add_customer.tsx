@@ -18,11 +18,10 @@ import { Text, useTheme } from "@rneui/themed";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Modal, Platform, TouchableOpacity, View } from "react-native";
+import { Modal, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as yup from "yup";
 import Radio from "../_radio";
-import { TextLink } from "../_text_link";
 import { TitleModal } from "../_title_modal";
 import { BackDropView } from "../back_drop_view";
 import { ModalContainer } from "../modal_container";
@@ -159,6 +158,7 @@ const ModalAddCustomer = ({
             onClose={onClose}
             style={{ backgroundColor: theme.colors.primary }}
           />
+
           <View style={{ gap: 8, padding: 16 }}>
             <Controller
               control={control}
@@ -267,27 +267,6 @@ const ModalAddCustomer = ({
                 width: "100%",
               }}
             >
-              {Platform.OS === "ios" && (
-                <View
-                  style={{
-                    flexDirection: "row",
-                    padding: 16,
-                    justifyContent: "space-between",
-                    backgroundColor: theme.colors.grey4,
-                  }}
-                >
-                  <TextLink
-                    lable="Hủy"
-                    overrideStyles={{ fontWeight: 600 }}
-                    onPress={() => setIsShowDateWheel(false)}
-                  />
-                  <TextLink
-                    lable="Xong"
-                    overrideStyles={{ fontWeight: 600 }}
-                    onPress={onDoneChoseDateOfBirth}
-                  />
-                </View>
-              )}
               <View style={{ alignItems: "center" }}>
                 <DateTimePicker
                   value={dateOfBirth}
@@ -296,6 +275,7 @@ const ModalAddCustomer = ({
                   onChange={choseDateOfBirth}
                   minimumDate={new Date(1950, 1, 1)}
                   timeZoneName="Asia/Ho_Chi_Minh"
+                  locale="vi-VN"
                   is24Hour
                   textColor={theme.colors.black}
                 />

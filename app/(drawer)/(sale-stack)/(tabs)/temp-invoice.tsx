@@ -1,5 +1,5 @@
-import { Input, Theme } from "@rneui/base";
-import { Icon, Text, useTheme } from "@rneui/themed";
+import { Input, ListItem, Theme } from "@rneui/base";
+import { Button, Icon, Text, useTheme } from "@rneui/themed";
 import {
   Pressable,
   ScrollView,
@@ -78,8 +78,6 @@ const TempInvoice = () => {
       maHoaDon: `${kiHieuMaChungTu} ${max}`,
     });
 
-    //setLstHoaDon([newHD, ...lstHoaDon]);
-
     await SQLLiteQuery.HoaDon_ResetValueForColumn_isOpenLastest(db, tabActive);
     await SQLLiteQuery.InsertTo_HoaDon(db, newHD);
 
@@ -89,7 +87,7 @@ const TempInvoice = () => {
       countProduct: 0,
       idLoaiChungTu: tabActive,
     });
-    route.navigate("/product");
+    route.navigate("../(tabs)/product");
   };
 
   const onChangeTab = (tabActive: number) => {
@@ -111,7 +109,7 @@ const TempInvoice = () => {
       ...currentInvoice,
       idHoaDon: item.id,
     });
-    //navigation.navigate(SaleManagerStack.TEMP_INVOICE_DETAIL);
+    route.navigate("/(drawer)/(sale-stack)/temp_invoice_details");
   };
 
   const gotoEdit = async (item: IHoaDonDto) => {
@@ -121,7 +119,7 @@ const TempInvoice = () => {
       idHoaDon: item.id,
       countProduct: lstCTHD?.length ?? 0,
     });
-    route.navigate("/product");
+    route.navigate("/(drawer)/(sale-stack)/(tabs)/product");
   };
   return (
     <View style={styles.container}>
@@ -188,93 +186,99 @@ const TempInvoice = () => {
           {lstHoaDon?.length > 0 && (
             <ScrollView>
               {lstHoaDon?.map((item, index) => (
-                <Pressable
-                  style={styles.itemInvoice}
-                  key={index}
-                  onPress={() => goInvoiceDetail(item)}
+                <ListItem.Swipeable
+                  key={item?.id}
+                  bottomDivider
+                  rightContent={(reset) => (
+                    <Button
+                      title="Xóa"
+                      onPress={() => {
+                        removeInvoice(item.id);
+                        reset();
+                      }}
+                      icon={{ name: "delete", color: "white" }}
+                      buttonStyle={{
+                        minHeight: "100%",
+                        backgroundColor: "red",
+                      }}
+                    />
+                  )}
                 >
-                  <View
-                    style={{
-                      flex: 1,
-                      gap: 15,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Icon
-                      type="materialicon"
-                      name="delete-outline"
-                      size={24}
-                      color={theme.colors.error}
+                  <ListItem.Content>
+                    <Pressable
                       style={{
                         flex: 1,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
                       }}
-                      onPress={() => removeInvoice(item?.id)}
-                    />
-                    <View style={styles.contentInvoice}>
-                      <View
-                        style={{
-                          flex: 2,
-                        }}
-                      >
-                        <Text
+                      onLongPress={() => console.log("long press")}
+                      onPress={() => goInvoiceDetail(item)}
+                    >
+                      <View style={styles.contentInvoice}>
+                        <View
                           style={{
-                            fontWeight: 500,
-                            color: theme.colors.primary,
+                            flex: 2,
                           }}
                         >
-                          {item?.maHoaDon}
-                        </Text>
-                        <Text
+                          <Text
+                            style={{
+                              fontWeight: 500,
+                              color: theme.colors.primary,
+                            }}
+                          >
+                            {item?.maHoaDon}
+                          </Text>
+                          <Text
+                            style={{
+                              color: theme.colors.greyOutline,
+                              fontSize: 14,
+                            }}
+                          >
+                            {dayjs(item?.ngayLapHoaDon).format("HH:mm")}
+                          </Text>
+                        </View>
+                        <View
                           style={{
-                            color: theme.colors.greyOutline,
-                            fontSize: 14,
+                            flex: 3,
                           }}
                         >
-                          {dayjs(item?.ngayLapHoaDon).format("HH:mm")}
-                        </Text>
+                          <Text
+                            style={{
+                              fontWeight: 500,
+                              textAlign: "right",
+                              color: theme.colors.primary,
+                            }}
+                          >
+                            {new Intl.NumberFormat("vi-VN").format(
+                              item?.tongThanhToan ?? 0
+                            )}
+                          </Text>
+                          <Text
+                            ellipsizeMode="tail"
+                            numberOfLines={1}
+                            style={{
+                              textAlign: "right",
+                              color: theme.colors.greyOutline,
+                            }}
+                          >
+                            {item?.tenKhachHang}
+                          </Text>
+                        </View>
                       </View>
-                      <View
+                      <Icon
+                        containerStyle={{ marginLeft: 4 }}
+                        iconStyle={{ color: theme.colors.grey4 }}
+                        type={IconType.MATERIAL}
+                        name="navigate-next"
+                        size={24}
                         style={{
-                          flex: 3,
+                          flex: 1,
                         }}
-                      >
-                        <Text
-                          style={{
-                            fontWeight: 500,
-                            textAlign: "right",
-                            color: theme.colors.primary,
-                          }}
-                        >
-                          {new Intl.NumberFormat("vi-VN").format(
-                            item?.tongThanhToan ?? 0
-                          )}
-                        </Text>
-                        <Text
-                          ellipsizeMode="tail"
-                          numberOfLines={1}
-                          style={{
-                            textAlign: "right",
-                            color: theme.colors.greyOutline,
-                          }}
-                        >
-                          {item?.tenKhachHang}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <Icon
-                      type="antdesign"
-                      name="edit"
-                      size={24}
-                      style={{
-                        flex: 1,
-                      }}
-                      onPress={() => gotoEdit(item)}
-                    />
-                  </View>
-                </Pressable>
+                      />
+                    </Pressable>
+                  </ListItem.Content>
+                </ListItem.Swipeable>
               ))}
             </ScrollView>
           )}
@@ -293,15 +297,14 @@ const TempInvoice = () => {
             width: 70,
             height: 70,
             borderRadius: 35,
-            borderWidth: 2,
-            borderColor: theme.colors.primary,
+            backgroundColor: theme.colors.primary,
             justifyContent: "center",
           }}
         >
           <Icon
             type={IconType.MATERIAL}
             name="add"
-            color={theme.colors.primary}
+            color={theme.colors.white}
             size={50}
           ></Icon>
         </View>
@@ -343,12 +346,6 @@ const createStyles = (theme: Theme) =>
     },
     tabItemAdd: {
       backgroundColor: theme.colors.white,
-    },
-    itemInvoice: {
-      backgroundColor: theme.colors.white,
-      padding: 10,
-      borderBottomColor: theme.colors.greyOutline,
-      borderBottomWidth: 1,
     },
     contentInvoice: {
       flexDirection: "row",
