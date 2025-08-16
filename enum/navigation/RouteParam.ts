@@ -11,8 +11,10 @@ export type RootStackParamList = {
 };
 export type MainDrawerParamList = {
   SaleManagerStack: NavigatorScreenParams<SaleManagerStackParamList>;
+  InvoiceStack: NavigatorScreenParams<InvoiceStackParamList>;
   Customer: undefined;
   Dashboard: undefined;
+  Product: undefined;
 };
 
 export type SaleManagerStackParamList = {
@@ -23,4 +25,9 @@ export type SaleManagerStackParamList = {
 export type SaleManagerTabParamList = {
   TempInvoice: undefined;
   Product: undefined;
+};
+export type InvoiceStackParamList = {
+  Invoices: undefined;
+  ServicePackage: undefined;
+  ValueCard: undefined;
 };

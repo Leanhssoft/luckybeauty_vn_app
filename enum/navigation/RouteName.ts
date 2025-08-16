@@ -11,6 +11,7 @@ export enum ListAuthRoute {
 export enum MainNavigation {
   DASH_BOARD = "DashBoard",
   SALE_MANAGER_STACK = "SaleManagerStack",
+  INVOICE_STACK = "InvoiceStack",
   CUSTOMER = "Customer",
 }
 export enum SaleManagerStack {
