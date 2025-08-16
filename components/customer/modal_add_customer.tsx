@@ -192,7 +192,19 @@ const ModalAddCustomer = ({
                 />
               )}
             />
-            <TextFieldCustom
+            <TouchableOpacity onPress={showDateWheel}>
+              <Text
+                style={{
+                  padding: 8,
+                  borderRadius: 4,
+                  borderWidth: 1,
+                  borderColor: theme.colors.grey5,
+                }}
+              >
+                {dayjs(watch("ngaySinh") ?? new Date()).format("DD/MM/YYYY")}
+              </Text>
+            </TouchableOpacity>
+            {/* <TextFieldCustom
               label="Ngày sinh"
               variant="outlined"
               value={dayjs(watch("ngaySinh") ?? new Date()).format(
@@ -200,7 +212,7 @@ const ModalAddCustomer = ({
               )}
               onFocus={showDateWheel}
               showSoftInputOnFocus={false}
-            />
+            /> */}
 
             <View
               style={{ flexDirection: "row", gap: 16, alignItems: "center" }}
