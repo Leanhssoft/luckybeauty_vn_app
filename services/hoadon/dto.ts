@@ -279,3 +279,8 @@ export class HoaDonChiTietDto implements IHoaDonChiTietDto {
     });
   }
 }
+
+export interface IHoaDonDto_FullInfor extends IHoaDonDto {
+  daThanhToan?: number;
+  conNo?: number;
+}
