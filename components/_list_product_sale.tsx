@@ -321,7 +321,7 @@ const ListProductSale: FC<PropsListProductSale> = ({
             style={{
               paddingBottom: insets.bottom + 60,
             }}
-            onEndReachedThreshold={0.5}
+            onEndReachedThreshold={0.1}
             onEndReached={handleLoadMore}
             ListFooterComponent={renderFooter}
           />
