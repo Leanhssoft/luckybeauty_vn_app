@@ -3,6 +3,7 @@ import { theme } from "@/theme";
 import { ThemeProvider } from "@rneui/themed";
 import { Redirect, Slot } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 function MainLayout() {
   const { isLogin, isLoading } = useAppContext();
@@ -23,9 +24,11 @@ export default function RootLayout() {
   return (
     <AppProvider>
       <SQLiteProvider databaseName="expo-luckybeauty.db">
-        <ThemeProvider theme={theme}>
-          <Slot />
-        </ThemeProvider>
+        <GestureHandlerRootView>
+          <ThemeProvider theme={theme}>
+            <Slot />
+          </ThemeProvider>
+        </GestureHandlerRootView>
       </SQLiteProvider>
     </AppProvider>
   );
