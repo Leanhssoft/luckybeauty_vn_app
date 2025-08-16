@@ -9,3 +9,7 @@ export interface ICharDataDto {
   label: string;
   value: number;
 }
+export interface ILichHenDataDto {
+  tuan: string;
+  tuanNay: number;
+}

@@ -224,7 +224,6 @@ const TempInvoice = () => {
                           <Text
                             style={{
                               fontWeight: 500,
-                              color: theme.colors.primary,
                             }}
                           >
                             {item?.maHoaDon}
@@ -245,9 +244,8 @@ const TempInvoice = () => {
                         >
                           <Text
                             style={{
-                              fontWeight: 500,
+                              fontWeight: 600,
                               textAlign: "right",
-                              color: theme.colors.primary,
                             }}
                           >
                             {new Intl.NumberFormat("vi-VN").format(

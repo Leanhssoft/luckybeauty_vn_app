@@ -43,6 +43,13 @@ export default function Dashboard() {
       toDate: dayjs().endOf("week").add(1, "day").format("YYYY-MM-DD"),
       idChiNhanhs: [idChiNhanhCurrent],
     });
+  const [lichHen_ParamFilter, setLichHen_ParamFilter] =
+    useState<IParamSearchFromToDto>({
+      timeType: TypeTime.WEEK,
+      fromDate: dayjs().startOf("week").add(-1, "day").format("YYYY-MM-DD"),
+      toDate: dayjs().endOf("week").add(1, "day").format("YYYY-MM-DD"),
+      idChiNhanhs: [idChiNhanhCurrent],
+    });
 
   const arrFilterButton = [
     { id: TypeTime.WEEK, label: "Tuần" },
@@ -69,6 +76,10 @@ export default function Dashboard() {
   useEffect(() => {
     ThongKeSoLuong();
   }, [ThongKeSoLuong]);
+
+  const ThongKeLichHen = async () => {
+    const xx = await DashboardService.ThongKeLichHen(doanhThu_ParamFilter);
+  };
 
   const ThongKeDoanhThu = useCallback(async () => {
     const xx = await DashboardService.ThongKeDoanhThu(doanhThu_ParamFilter);

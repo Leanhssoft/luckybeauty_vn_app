@@ -169,7 +169,6 @@ export default function DrawerLayout() {
           name="(invoice-stack)"
           options={{
             headerShown: false,
-
             drawerLabel: "Hóa đơn",
             drawerIcon: ({ focused, color, size }) => (
               <Icon
@@ -194,14 +193,14 @@ export default function DrawerLayout() {
           }}
         />
         <Drawer.Screen
-          name="customer"
+          name="(customers)"
           options={{
-            title: "Khách hàng",
+            headerShown: false,
             drawerLabel: "Khách hàng",
             drawerIcon: ({ focused, color, size }) => (
               <Icon
                 type={IconType.MATERIAL}
-                name={"manage-accounts"}
+                name={"groups"}
                 color={focused ? theme.colors.primary : theme.colors.disabled}
               />
             ),
@@ -214,8 +213,8 @@ export default function DrawerLayout() {
             drawerLabel: "Quản trị",
             drawerIcon: ({ focused, color, size }) => (
               <Icon
-                type={IconType.FONT_AWESOME_5}
-                name={"user-friends"}
+                type={IconType.MATERIAL}
+                name={"manage-accounts"}
                 color={focused ? theme.colors.primary : theme.colors.disabled}
               />
             ),

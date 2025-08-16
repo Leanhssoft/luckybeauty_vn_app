@@ -13,6 +13,8 @@ export enum MainNavigation {
   SALE_MANAGER_STACK = "SaleManagerStack",
   INVOICE_STACK = "InvoiceStack",
   CUSTOMER = "Customer",
+  CUSTOMER_STACK = "CustomerStack",
+  MANAGER_SYSTEM_STACK = "ManagerSystemStack",
 }
 export enum SaleManagerStack {
   SALE_MANAGER_TAB = "SaleManagerTab",

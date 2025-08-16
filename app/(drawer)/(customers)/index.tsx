@@ -22,6 +22,7 @@ import {
   SearchBar,
   useTheme,
 } from "@rneui/themed";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -31,6 +32,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { RectButton } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const CustomerPage = () => {
@@ -186,7 +188,7 @@ const CustomerPage = () => {
     return (
       <ListItem.Swipeable
         bottomDivider={false}
-        containerStyle={{ paddingVertical: 8 }}
+        containerStyle={{ paddingHorizontal: 4, paddingVertical: 8 }}
         rightContent={(reset) => (
           <Button
             title="Xóa"
@@ -199,72 +201,74 @@ const CustomerPage = () => {
           />
         )}
       >
-        <ListItem.Content style={styles.customerItem}>
-          <TouchableOpacity
-            style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
-          >
-            <Avatar
-              rounded
-              size={"medium"}
-              title={CommonFunc.getFirstLetter(item?.tenKhachHang)}
-              containerStyle={{
-                backgroundColor:
-                  index % 4 === 1
-                    ? theme.colors.softBlue_background
-                    : index % 4 === 2
-                    ? theme.colors.softOrange_background
-                    : index % 4 === 3
-                    ? theme.colors.softPink_background
-                    : theme.colors.softTeal_background,
-              }}
-              titleStyle={{
-                fontSize: 18,
-                color:
-                  index % 4 === 1
-                    ? theme.colors.softBlue
-                    : index % 4 === 2
-                    ? theme.colors.softOrange
-                    : index % 4 === 3
-                    ? theme.colors.softPink
-                    : theme.colors.softTeal,
-              }}
-            />
-            <View style={{ gap: 4, alignItems: "center" }}>
-              <Text style={{ fontSize: 20, fontWeight: 600 }}>
-                {item?.tenKhachHang}
-              </Text>
-              {item?.soDienThoai && (
-                <Text style={{ color: theme.colors.grey4 }}>
-                  {item?.soDienThoai}
-                </Text>
-              )}
-            </View>
-          </TouchableOpacity>
-          <View style={styles.boxNumber}>
-            <View style={{ gap: 8 }}>
-              <Text>{item?.tenNhomKhach ?? "Nhóm mặc định"}</Text>
-              <Text>
-                Số dư thẻ:
-                <Text style={{ fontWeight: 600 }}>
-                  {` ${CommonFunc.formatCurrency(item?.soDuTheGiaTri ?? 0)}`}
-                </Text>
-              </Text>
-            </View>
-            <View style={{ gap: 8, justifyContent: "flex-start" }}>
-              <Text> Còn nợ</Text>
-              <Text
-                style={{
-                  color:
-                    (item?.conNo ?? 0) > 0
-                      ? theme.colors.error
-                      : theme.colors.black,
+        <RectButton onPress={() => router.push(`/details/${item?.id}`)}>
+          <ListItem.Content style={styles.customerItem}>
+            <TouchableOpacity
+              style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+            >
+              <Avatar
+                rounded
+                size={"medium"}
+                title={CommonFunc.getFirstLetter(item?.tenKhachHang)}
+                containerStyle={{
+                  backgroundColor:
+                    index % 4 === 1
+                      ? theme.colors.softBlue_background
+                      : index % 4 === 2
+                      ? theme.colors.softOrange_background
+                      : index % 4 === 3
+                      ? theme.colors.softPink_background
+                      : theme.colors.softTeal_background,
                 }}
-              >
-                {CommonFunc.formatCurrency(item?.conNo ?? 0)}
-              </Text>
+                titleStyle={{
+                  fontSize: 18,
+                  color:
+                    index % 4 === 1
+                      ? theme.colors.softBlue
+                      : index % 4 === 2
+                      ? theme.colors.softOrange
+                      : index % 4 === 3
+                      ? theme.colors.softPink
+                      : theme.colors.softTeal,
+                }}
+              />
+              <View style={{ gap: 4, alignItems: "center" }}>
+                <Text style={{ fontSize: 20, fontWeight: 600 }}>
+                  {item?.tenKhachHang}
+                </Text>
+                {item?.soDienThoai && (
+                  <Text style={{ color: theme.colors.grey4 }}>
+                    {item?.soDienThoai}
+                  </Text>
+                )}
+              </View>
+            </TouchableOpacity>
+            <View style={styles.boxNumber}>
+              <View style={{ gap: 8 }}>
+                <Text>{item?.tenNhomKhach ?? "Nhóm mặc định"}</Text>
+                <Text>
+                  Số dư thẻ:
+                  <Text style={{ fontWeight: 600 }}>
+                    {` ${CommonFunc.formatCurrency(item?.soDuTheGiaTri ?? 0)}`}
+                  </Text>
+                </Text>
+              </View>
+              <View style={{ gap: 8, alignItems: "center" }}>
+                <Text> Còn nợ</Text>
+                <Text
+                  style={{
+                    color:
+                      (item?.conNo ?? 0) > 0
+                        ? theme.colors.error
+                        : theme.colors.black,
+                  }}
+                >
+                  {CommonFunc.formatCurrency(item?.conNo ?? 0)}
+                </Text>
+              </View>
             </View>
-          </View>
-        </ListItem.Content>
+          </ListItem.Content>
+        </RectButton>
       </ListItem.Swipeable>
     );
   };

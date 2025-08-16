@@ -72,7 +72,6 @@ export default function Invoices() {
     };
     const data = await HoaDonService.GetListHoaDon(param);
     const dataNew = data?.items ?? [];
-    console.log("pảa", param, dataNew?.length);
 
     if (currentPage === 1) {
       setPageDataHoaDon({
@@ -262,39 +261,51 @@ export default function Invoices() {
           <View style={{ marginTop: 16, gap: 16 }}>
             <View style={{ gap: 8 }}>
               <Text style={{ fontWeight: 600 }}>Thời gian</Text>
-              <Text>Từ ngày</Text>
 
-              <DateTimePicker
-                value={new Date(paramSearchHoaDon?.fromDate ?? new Date())}
-                mode="date"
-                display="default"
-                onChange={(event: DateTimePickerEvent, date?: Date) =>
-                  setParamSearchHoaDon({
-                    ...paramSearchHoaDon,
-                    fromDate: dayjs(date).format("YYYY-MM-DD"),
-                  })
-                }
-                minimumDate={new Date(1950, 1, 1)}
-                timeZoneName="Asia/Ho_Chi_Minh"
-                locale="vi-VN"
-                is24Hour
-                textColor={theme.colors.black}
-              />
-
-              <DateTimePicker
-                value={new Date(paramSearchHoaDon?.fromDate ?? new Date())}
-                mode="date"
-                display="calendar"
-                onChange={(event: DateTimePickerEvent, date?: Date) =>
-                  setParamSearchHoaDon({
-                    ...paramSearchHoaDon,
-                    fromDate: dayjs(date).format("YYYY-MM-DD"),
-                  })
-                }
-                minimumDate={new Date(1950, 1, 1)}
-                timeZoneName="Asia/Ho_Chi_Minh"
-                is24Hour
-              />
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <View style={{ gap: 8 }}>
+                  <Text>Từ ngày</Text>
+                  <DateTimePicker
+                    value={new Date(paramSearchHoaDon?.fromDate ?? new Date())}
+                    mode="date"
+                    display="default"
+                    onChange={(event: DateTimePickerEvent, date?: Date) =>
+                      setParamSearchHoaDon({
+                        ...paramSearchHoaDon,
+                        fromDate: dayjs(date).format("YYYY-MM-DD"),
+                      })
+                    }
+                    minimumDate={new Date(1950, 1, 1)}
+                    timeZoneName="Asia/Ho_Chi_Minh"
+                    locale="vi-VN"
+                    is24Hour
+                  />
+                </View>
+                <View style={{ gap: 8 }}>
+                  <Text>Đến ngày</Text>
+                  <DateTimePicker
+                    value={new Date(paramSearchHoaDon?.toDate ?? new Date())}
+                    mode="date"
+                    display="default"
+                    onChange={(event: DateTimePickerEvent, date?: Date) =>
+                      setParamSearchHoaDon({
+                        ...paramSearchHoaDon,
+                        toDate: dayjs(date).format("YYYY-MM-DD"),
+                      })
+                    }
+                    minimumDate={new Date(1950, 1, 1)}
+                    timeZoneName="Asia/Ho_Chi_Minh"
+                    locale="vi-VN"
+                    is24Hour
+                  />
+                </View>
+              </View>
             </View>
           </View>
         </View>
