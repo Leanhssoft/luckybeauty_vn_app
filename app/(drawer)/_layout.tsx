@@ -131,6 +131,7 @@ export default function DrawerLayout() {
           headerStyle: { backgroundColor: "#f8f8f8" },
           headerTintColor: "#333",
           drawerActiveTintColor: "#007aff",
+          headerTitleAlign: "left",
           headerRight: () => <HeaderRight />,
         }}
       >
@@ -165,10 +166,10 @@ export default function DrawerLayout() {
           }}
         />
         <Drawer.Screen
-          name="(invoices-stack)"
+          name="(invoice-stack)"
           options={{
-            title: "Chọn loại hóa đơn",
-            headerTitleAlign: "left",
+            headerShown: false,
+
             drawerLabel: "Hóa đơn",
             drawerIcon: ({ focused, color, size }) => (
               <Icon
@@ -193,9 +194,24 @@ export default function DrawerLayout() {
           }}
         />
         <Drawer.Screen
-          name="customer/index"
+          name="customer"
           options={{
             title: "Khách hàng",
+            drawerLabel: "Khách hàng",
+            drawerIcon: ({ focused, color, size }) => (
+              <Icon
+                type={IconType.MATERIAL}
+                name={"manage-accounts"}
+                color={focused ? theme.colors.primary : theme.colors.disabled}
+              />
+            ),
+          }}
+        />
+        <Drawer.Screen
+          name="(manager-system)"
+          options={{
+            title: "Quản trị",
+            drawerLabel: "Quản trị",
             drawerIcon: ({ focused, color, size }) => (
               <Icon
                 type={IconType.FONT_AWESOME_5}
