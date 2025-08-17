@@ -88,6 +88,27 @@ class CommonFunc {
   formatCurrency = (value: number) => {
     return new Intl.NumberFormat("vi-VN").format(value);
   };
+  formatNumbertInput = (text: string, maxDecimal: number = 3) => {
+    // Chỉ giữ lại số và dấu phẩy
+    let raw = text.replace(/[^\d,]/g, "");
+
+    // Nếu người dùng nhập nhiều dấu phẩy thì chỉ giữ cái đầu tiên
+    let parts = raw.split(",");
+    let integer = parts[0] || "";
+    let decimal = parts[1] ?? "";
+
+    // Format phần nguyên: thêm dấu chấm mỗi 3 số
+    integer = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    // Nếu có nhập dấu phẩy thì luôn giữ lại
+    if (raw.includes(",")) {
+      // Giữ tối đa 4 chữ số thập phân
+      decimal = decimal.slice(0, 4);
+      return `${integer},${decimal}`;
+    }
+
+    return integer;
+  };
 }
 
 export default new CommonFunc();

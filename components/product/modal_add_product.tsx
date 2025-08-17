@@ -7,17 +7,16 @@ import { DiaryStatus } from "@/enum/DiaryStatus";
 import { IconType } from "@/enum/IconType";
 import { INhatKyThaoTacDto } from "@/services/nhat_ky_su_dung/INhatKyThaoTacDto";
 import NhatKyThaoTacService from "@/services/nhat_ky_su_dung/NhatKyThaoTacService";
-import { IProductBasic, ProductBasicDto } from "@/services/product/dto";
+import { IProductBasic, ProductDto } from "@/services/product/dto";
 import ProductService from "@/services/product/ProductService";
 import { IProductGroupDto } from "@/services/product_group/dto";
 import { useAppContext } from "@/store/react_context/AppProvider";
 import { PropModal } from "@/type/PropModal";
 import CommonFunc from "@/utils/CommonFunc";
-import { Button, Icon, useTheme } from "@rneui/themed";
+import { Button, Icon, Text, useTheme } from "@rneui/themed";
 import { useEffect, useState } from "react";
-import { Modal, TouchableOpacity, View } from "react-native";
+import { Modal, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { NumericFormat } from "react-number-format";
 import { TextFieldCustom } from "../text_filed_custom";
 
 const ModalAddProduct = ({
@@ -30,20 +29,26 @@ const ModalAddProduct = ({
   const insets = useSafeAreaInsets();
   const { chiNhanhCurrent } = useAppContext();
   const [isSaving, setIsSaving] = useState(false);
+  const [giaBan, setGiaBan] = useState("");
   const [isShowModalListProductGroup, setIsShowModalListProductGroup] =
     useState(false);
   const [errors, setErrors] = useState({ maHangHoa: "", tenHangHoa: "" });
-  const [objProduct, setObjProduct] = useState<ProductBasicDto>(
-    new ProductBasicDto({ idDonViQuyDoi: "" })
+  const [objProduct, setObjProduct] = useState<ProductDto>(
+    new ProductDto({ id: ApiConst.GUID_EMPTY })
   );
 
   useEffect(() => {
-    console.log("isShow ", isShow);
     if (isShow) {
-      setIsSaving(false);
-      //setObjProduct(new ProductBasicDto({ idDonViQuyDoi: "" }));
+      ResetData();
+      setObjProduct(new ProductDto({ id: ApiConst.GUID_EMPTY }));
     }
   }, [isShow]);
+
+  const ResetData = () => {
+    setIsSaving(false);
+    setGiaBan("");
+    setErrors({ maHangHoa: "", tenHangHoa: "" });
+  };
 
   const showModalProductGroup = () => {
     setIsShowModalListProductGroup(true);
@@ -59,13 +64,14 @@ const ModalAddProduct = ({
         objProduct?.maHangHoa ?? "",
         objProduct?.idDonViQuyDoi ?? ApiConst.GUID_EMPTY
       );
+      console.log("exists ", exists);
       if (exists) {
-        errors.maHangHoa = "Mã hàg hóa đã tồn tại";
+        errors.maHangHoa = "Mã sản phẩm đã tồn tại";
       }
     }
 
     if (CommonFunc.checkNull(objProduct?.tenHangHoa)) {
-      errors.tenHangHoa = "Vui lòng nhập tên hàng hóa";
+      errors.tenHangHoa = "Vui lòng nhập tên sản phẩm";
     }
     setErrors({ maHangHoa: errors.maHangHoa, tenHangHoa: errors.tenHangHoa });
 
@@ -84,17 +90,47 @@ const ModalAddProduct = ({
 
     if (isSaving) return;
 
-    const result = await ProductService.CreateOrOEdit(objProduct);
+    const input = { ...objProduct };
+    input.giaBan = CommonFunc.formatNumberToFloat(giaBan);
+    input.tenHangHoa_KhongDau = CommonFunc.convertString_toEnglish(
+      objProduct.tenHangHoa ?? ""
+    );
+    input.donViQuiDois = [
+      {
+        id: input.idDonViQuyDoi,
+        maHangHoa: input.maHangHoa,
+        tenDonViTinh: "",
+        tyLeChuyenDoi: 1,
+        giaBan: input.giaBan,
+        giaVon: input?.giaVon ?? 0,
+        laDonViTinhChuan: 1,
+      },
+    ];
+
+    const result = await ProductService.CreateOrOEdit(input);
+    console.log("input ", result);
+
     setIsSaving(false);
 
     if (result) {
+      const dvChuan = result?.donViQuiDois?.filter(
+        (x: any) => x.laDonViTinhChuan === 1
+      );
+      result.giaBan = input.giaBan;
+      if (dvChuan && dvChuan?.length > 0) {
+        result.maHangHoa = dvChuan[0].maHangHoa;
+        result.idDonViQuyDoi = dvChuan[0].id;
+      }
+
       const diary: INhatKyThaoTacDto = {
         idChiNhanh: chiNhanhCurrent?.id ?? "",
         loaiNhatKy: DiaryStatus.INSERT,
         chucNang: "Danh mục sản phẩm",
         noiDung: `Thêm mới sản phẩm '${result?.tenHangHoa} (${result?.maHangHoa})`,
-        noiDungChiTiet: `Thêm mới sản phẩm '${result?.tenHangHoa} (${result?.maHangHoa}) <br />- Giá bán: ${objProduct.giaBan}
-         <br />- Nhóm sản phẩm: ${objProduct.tenNhomHang}`,
+        noiDungChiTiet: `Thêm mới sản phẩm '${result?.tenHangHoa} (${
+          result?.maHangHoa
+        }) <br />- Giá bán: ${CommonFunc.formatNumbertInput(giaBan)}
+         <br />- Nhóm sản phẩm: ${objProduct?.tenNhomHang ?? ""}`,
       };
       await NhatKyThaoTacService.CreateNhatKyHoatDong(diary);
       onSave(result, ActionType.INSERT);
@@ -108,7 +144,12 @@ const ModalAddProduct = ({
 
   return (
     <Modal visible={isShow} animationType="slide" transparent={true}>
-      <BackDropView>
+      <BackDropView
+        style={{
+          backgroundColor: "rgba(0, 0, 0, 0.4)",
+          justifyContent: "flex-start",
+        }}
+      >
         <ModalContainer
           style={{
             position: "relative",
@@ -122,8 +163,9 @@ const ModalAddProduct = ({
 
           <View style={{ gap: 8, padding: 16 }}>
             <TextFieldCustom
-              label="Mã hàng hóa"
+              label="Mã sản phẩm"
               variant="outlined"
+              placeholder="Mã tự động"
               onChangeText={(txt) => {
                 setObjProduct({ ...objProduct, maHangHoa: txt });
                 setErrors({ ...errors, maHangHoa: "" });
@@ -135,7 +177,7 @@ const ModalAddProduct = ({
               helperText={errors?.maHangHoa}
             />
             <TextFieldCustom
-              label="Tên hàng hóa"
+              label="Tên sản phẩm"
               variant="outlined"
               onChangeText={(txt) => {
                 setObjProduct({ ...objProduct, tenHangHoa: txt });
@@ -147,25 +189,30 @@ const ModalAddProduct = ({
               helperText={errors?.tenHangHoa}
             />
 
-            <NumericFormat
-              value={objProduct.giaBan}
-              thousandSeparator={"."}
-              decimalSeparator={","}
-              decimalScale={4}
-              customInput={TextFieldCustom}
-              onChange={(txt) =>
-                setObjProduct({
-                  ...objProduct,
-                  giaBan: CommonFunc.formatNumberToFloat(txt),
-                })
-              }
+            <Text>Giá bán</Text>
+            <TextInput
+              keyboardType="numeric"
+              value={CommonFunc.formatNumbertInput(giaBan)}
+              style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 4,
+                padding: 12,
+                fontSize: 16,
+                color: "black",
+                textAlign: "right",
+              }}
+              onChangeText={(txt) => setGiaBan(txt)}
             />
 
-            <TouchableOpacity onPress={showModalProductGroup}>
+            <TouchableOpacity
+              onPress={showModalProductGroup}
+              style={{ marginTop: 12 }}
+            >
               <TextFieldCustom
                 label="Nhóm sản phẩm"
                 variant="outlined"
-                value={objProduct?.idNhomHangHoa ?? ""}
+                value={objProduct?.tenNhomHang ?? "Chọn nhóm"}
                 readOnly
                 endIcon={
                   <Icon

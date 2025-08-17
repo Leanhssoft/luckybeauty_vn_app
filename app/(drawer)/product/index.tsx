@@ -1,5 +1,4 @@
 import BottomButtonAdd from "@/components/_bottom_button_add";
-import BottomSheet from "@/components/_bottom_sheet";
 import { ConfirmOKCancel } from "@/components/confirm_ok_cancel";
 import PageEmpty from "@/components/page_empty";
 import AppConst from "@/const/AppConst";
@@ -28,7 +27,7 @@ import Reanimated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import ModalAddProduct from "./modal_add_product";
+import ModalAddProduct from "../../../components/product/modal_add_product";
 
 const Product = () => {
   const { theme } = useTheme();
@@ -40,7 +39,7 @@ const Product = () => {
   const isShowBoxFilter = useSharedValue(false);
   const [isShowBoxSearch, setIsShowBoxSearch] = useState(false);
   const [isShowModalAddProduct, setIsShowShowModalAddProduct] = useState(false);
-  const [isShowModalAddProductGroup, setIsShowModalAddProductGroup] =
+  const [isShowModalAdd_ProductGroup, setIsShowModalAdd_ProductGroup] =
     useState(false);
   const [isCheckMultipleProduct, setIsCheckMultipleProduct] = useState(false);
   const [arrIdQuyDoiChosed, setArrIdQuyDoiChosed] = useState<string[]>([]);
@@ -63,39 +62,6 @@ const Product = () => {
   const GetAllNhomSanPham = async () => {
     const data = await ProductGroupSevice.GetAllNhomHangHoa();
     setListGroupProduct([...data.items]);
-  };
-
-  const getListProduct = async (
-    currentPage: number,
-    textSearch: string = "",
-    arrIdNhomHang: string[] = []
-  ) => {
-    const param: IParamSearchProductDto = {
-      textSearch: textSearch,
-      currentPage: currentPage,
-      pageSize: AppConst.PAGE_SIZE,
-      idNhomHangHoas: arrIdNhomHang,
-    };
-    const data = await ProductService.GetListproduct(param);
-    const newData = data?.items ?? [];
-
-    if (currentPage === 1) {
-      setPageResultProduct((prev) => {
-        return {
-          ...prev,
-          items: [...newData],
-          totalCount: data?.totalCount,
-        };
-      });
-    } else {
-      setPageResultProduct((prev) => {
-        return {
-          ...prev,
-          items: [...prev.items, ...newData],
-          totalCount: prev.totalCount ?? 0,
-        };
-      });
-    }
   };
 
   useEffect(() => {
@@ -166,6 +132,8 @@ const Product = () => {
     setCurrentPage(() => currentPage + 1);
   };
 
+  const onLongPressProduct = () => {};
+
   function RightAction(
     progress: SharedValue<number>,
     drag: SharedValue<number>
@@ -202,7 +170,7 @@ const Product = () => {
           setProductChosed({ ...item });
         }}
       >
-        <RectButton style={styles.productItem}>
+        <RectButton style={styles.productItem} onLongPress={onLongPressProduct}>
           <View style={[styles.flexRow, styles.contentItem]}>
             <View style={{ gap: 4 }}>
               <Text>{item.tenHangHoa}</Text>
@@ -233,6 +201,10 @@ const Product = () => {
 
   const showModalAddNewProduct = () => {
     setIsShowShowModalAddProduct(true);
+  };
+
+  const showModalAddNew_ProductGroup = () => {
+    setIsShowModalAdd_ProductGroup(true);
   };
 
   const deleteProduct = async () => {
@@ -337,18 +309,26 @@ const Product = () => {
         )}
 
         <View>
-          <Text
-            style={{
-              fontWeight: 600,
-              textDecorationLine: "underline",
-              paddingTop: isShowBoxSearch ? 16 : 0,
-            }}
-          >
-            Nhóm sản phẩm
-          </Text>
-          <ScrollView horizontal style={{ marginTop: 8 }}>
-            <Button icon={{ name: "add", color: "white" }} />
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Text
+              style={{
+                fontWeight: 600,
+                textDecorationLine: "underline",
+                paddingTop: isShowBoxSearch ? 16 : 0,
+              }}
+            >
+              Nhóm sản phẩm
+            </Text>
+            <Icon
+              name="add-circle-outline"
+              type={IconType.IONICON}
+              size={30}
+              color={theme.colors.primary}
+              onPress={showModalAddNew_ProductGroup}
+            />
+          </View>
 
+          <ScrollView horizontal style={{ marginTop: 8 }}>
             {(listGroupProduct?.length ?? 0) > 0 && (
               <Button
                 containerStyle={{
@@ -402,29 +382,11 @@ const Product = () => {
       </View>
       <BottomButtonAdd onPress={showModalAddNewProduct} />
 
-      <BottomSheet isOpen={isShowBoxFilter} toggleSheet={toggleBoxFilter}>
-        <View
-          style={{
-            width: "100%",
-            height: "100%",
-          }}
-        >
-          <Text style={{ fontWeight: 700, fontSize: 16 }}>Lọc sản phẩm</Text>
-          <View style={{ marginTop: 16, gap: 16 }}>
-            <View style={{ gap: 8 }}>
-              <Text style={{ fontWeight: 600 }}>Thời gian</Text>
-
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              ></View>
-            </View>
-          </View>
+      {/* <ActionBottomNew visible={true}>
+        <View>
+          <Text>hi action</Text>
         </View>
-      </BottomSheet>
+      </ActionBottomNew> */}
     </View>
   );
 };
