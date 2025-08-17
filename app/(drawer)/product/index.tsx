@@ -20,6 +20,7 @@ import { FlatList, Platform, StyleSheet, View } from "react-native";
 import { RectButton, ScrollView } from "react-native-gesture-handler";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 
+import ModalAddProductGroup from "@/components/product_group/modal_add_produt_group";
 import { ActionType } from "@/enum/ActionType";
 import Reanimated, {
   SharedValue,
@@ -124,7 +125,7 @@ const Product = () => {
     setObjSimpleDialog({
       ...objSimpleDialog,
       isShow: true,
-      mes: `Bạn có chắc chắn muốn xóa hóa đơn ${productChosed?.tenHangHoa} không?`,
+      mes: `Bạn có chắc chắn muốn xóa sản phẩm ${productChosed?.tenHangHoa} không?`,
     });
   };
 
@@ -207,6 +208,11 @@ const Product = () => {
     setIsShowModalAdd_ProductGroup(true);
   };
 
+  const saveOKProductGroup = (item: IProductGroupDto) => {
+    setIsShowModalAdd_ProductGroup(false);
+    setListGroupProduct([item, ...listGroupProduct]);
+  };
+
   const deleteProduct = async () => {
     const deleteOK = await ProductService.DeleteProduct(
       productChosed?.idHangHoa ?? ""
@@ -255,6 +261,11 @@ const Product = () => {
         isShow={isShowModalAddProduct}
         onClose={() => setIsShowShowModalAddProduct(false)}
         onSave={saveOKProuduct}
+      />
+      <ModalAddProductGroup
+        isShow={isShowModalAdd_ProductGroup}
+        onClose={() => setIsShowModalAdd_ProductGroup(false)}
+        onSave={saveOKProductGroup}
       />
       <View style={{ padding: 8 }}>
         {isShowBoxSearch ? (

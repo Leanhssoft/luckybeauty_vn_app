@@ -7,5 +7,14 @@ class ProductGroupSevice {
     const xx = await api.get(`api/services/app/NhomHangHoa/GetNhomDichVu`);
     return xx;
   };
+  CreateNhomHangHoa = async (
+    input: IProductGroupDto
+  ): Promise<IProductGroupDto> => {
+    const xx = await api.post(
+      `api/services/app/NhomHangHoa/CreateNhomHangHoa`,
+      input
+    );
+    return xx;
+  };
 }
 export default new ProductGroupSevice();

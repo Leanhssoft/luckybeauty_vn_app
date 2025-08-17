@@ -126,8 +126,8 @@ const ModalAddProduct = ({
         idChiNhanh: chiNhanhCurrent?.id ?? "",
         loaiNhatKy: DiaryStatus.INSERT,
         chucNang: "Danh mục sản phẩm",
-        noiDung: `Thêm mới sản phẩm '${result?.tenHangHoa} (${result?.maHangHoa})`,
-        noiDungChiTiet: `Thêm mới sản phẩm '${result?.tenHangHoa} (${
+        noiDung: `Thêm mới sản phẩm ${result?.tenHangHoa} (${result?.maHangHoa})`,
+        noiDungChiTiet: `Thêm mới sản phẩm ${result?.tenHangHoa} (${
           result?.maHangHoa
         }) <br />- Giá bán: ${CommonFunc.formatNumbertInput(giaBan)}
          <br />- Nhóm sản phẩm: ${objProduct?.tenNhomHang ?? ""}`,
