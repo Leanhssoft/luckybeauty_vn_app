@@ -1,8 +1,13 @@
+import BottomButtonAdd from "@/components/_bottom_button_add";
 import BottomSheet from "@/components/_bottom_sheet";
 import { ConfirmOKCancel } from "@/components/confirm_ok_cancel";
+import PageEmpty from "@/components/page_empty";
 import AppConst from "@/const/AppConst";
+import { DiaryStatus } from "@/enum/DiaryStatus";
 import { IconType } from "@/enum/IconType";
 import { IPageResultDto } from "@/services/commonDto/IPageResultDto";
+import { INhatKyThaoTacDto } from "@/services/nhat_ky_su_dung/INhatKyThaoTacDto";
+import NhatKyThaoTacService from "@/services/nhat_ky_su_dung/NhatKyThaoTacService";
 import { IParamSearchProductDto, IProductBasic } from "@/services/product/dto";
 import ProductService from "@/services/product/ProductService";
 import { IProductGroupDto } from "@/services/product_group/dto";
@@ -11,23 +16,19 @@ import { useAppContext } from "@/store/react_context/AppProvider";
 import { IPropsSimpleDialog } from "@/type/IPropsSimpleDialog";
 import { Theme } from "@rneui/base";
 import { Button, Icon, SearchBar, Text, useTheme } from "@rneui/themed";
-import { useEffect, useState } from "react";
-import {
-  FlatList,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { FlatList, Platform, StyleSheet, View } from "react-native";
 import { RectButton, ScrollView } from "react-native-gesture-handler";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 
+import { ActionType } from "@/enum/ActionType";
 import Reanimated, {
   SharedValue,
   useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import ModalAddProduct from "./modal_add_product";
 
 const Product = () => {
   const { theme } = useTheme();
@@ -38,6 +39,9 @@ const Product = () => {
   const [textSearch, setTextSearch] = useState("");
   const isShowBoxFilter = useSharedValue(false);
   const [isShowBoxSearch, setIsShowBoxSearch] = useState(false);
+  const [isShowModalAddProduct, setIsShowShowModalAddProduct] = useState(false);
+  const [isShowModalAddProductGroup, setIsShowModalAddProductGroup] =
+    useState(false);
   const [isCheckMultipleProduct, setIsCheckMultipleProduct] = useState(false);
   const [arrIdQuyDoiChosed, setArrIdQuyDoiChosed] = useState<string[]>([]);
   const [arrIdNhomHangFilter, setArrIdNhomHangFilter] = useState<string[]>([]);
@@ -61,12 +65,16 @@ const Product = () => {
     setListGroupProduct([...data.items]);
   };
 
-  const getListProduct = async (currentPage: number) => {
+  const getListProduct = async (
+    currentPage: number,
+    textSearch: string = "",
+    arrIdNhomHang: string[] = []
+  ) => {
     const param: IParamSearchProductDto = {
       textSearch: textSearch,
       currentPage: currentPage,
       pageSize: AppConst.PAGE_SIZE,
-      idNhomHangHoas: arrIdNhomHangFilter,
+      idNhomHangHoas: arrIdNhomHang,
     };
     const data = await ProductService.GetListproduct(param);
     const newData = data?.items ?? [];
@@ -94,9 +102,47 @@ const Product = () => {
     GetAllNhomSanPham();
   }, []);
 
+  const GetListProduct = useCallback(async () => {
+    const param: IParamSearchProductDto = {
+      textSearch: textSearch,
+      currentPage: currentPage,
+      pageSize: AppConst.PAGE_SIZE,
+      idNhomHangHoas: arrIdNhomHangFilter,
+    };
+
+    console.log("param ", param);
+    const data = await ProductService.GetListproduct(param);
+    const newData = data?.items ?? [];
+
+    if (currentPage === 1) {
+      setPageResultProduct((prev) => {
+        return {
+          ...prev,
+          items: [...newData],
+          totalCount: data?.totalCount,
+        };
+      });
+    } else {
+      setPageResultProduct((prev) => {
+        return {
+          ...prev,
+          items: [...prev.items, ...newData],
+          totalCount: prev.totalCount ?? 0,
+        };
+      });
+    }
+  }, [currentPage, arrIdNhomHangFilter, textSearch]);
+
+  // useEffect(() => {
+  //   const getData = setTimeout(async () => {
+  //     setCurrentPage(1);
+  //   }, 2000);
+  //   return () => clearTimeout(getData);
+  // }, [textSearch]);
+
   useEffect(() => {
-    getListProduct(currentPage);
-  }, [currentPage]);
+    GetListProduct();
+  }, [GetListProduct]);
 
   const nhomHangHoa_clickAll = async () => {
     setArrIdNhomHangFilter([]);
@@ -151,6 +197,10 @@ const Product = () => {
         friction={2}
         renderRightActions={RightAction}
         containerStyle={{ overflow: "hidden" }}
+        onSwipeableOpen={(dỉrection) => {
+          // if (dỉrection === "right")
+          setProductChosed({ ...item });
+        }}
       >
         <RectButton style={styles.productItem}>
           <View style={[styles.flexRow, styles.contentItem]}>
@@ -181,9 +231,44 @@ const Product = () => {
     isShowBoxFilter.value = !isShowBoxFilter.value;
   };
 
-  const createNewProduct = () => {};
+  const showModalAddNewProduct = () => {
+    setIsShowShowModalAddProduct(true);
+  };
 
-  const deleteProduct = async () => {};
+  const deleteProduct = async () => {
+    const deleteOK = await ProductService.DeleteProduct(
+      productChosed?.idHangHoa ?? ""
+    );
+    if (deleteOK) {
+      const diary: INhatKyThaoTacDto = {
+        idChiNhanh: chiNhanhCurrent?.id ?? "",
+        loaiNhatKy: DiaryStatus.DELETE,
+        chucNang: "Danh mục hàng hóa",
+        noiDung: `Xóa hàng hóa '  ${productChosed?.tenHangHoa} (${productChosed?.maHangHoa})`,
+        noiDungChiTiet: `Xóa hàng hóa '  ${productChosed?.tenHangHoa} (${productChosed?.maHangHoa})`,
+      };
+      await NhatKyThaoTacService.CreateNhatKyHoatDong(diary);
+    }
+  };
+
+  const saveOKProuduct = (item: IProductBasic, actionid?: number) => {
+    setIsShowShowModalAddProduct(false);
+    switch (actionid ?? 0) {
+      case ActionType.INSERT:
+        {
+          setPageResultProduct({
+            items: [item, ...(pageResultProduct?.items ?? [])],
+            totalCount: (pageResultProduct?.totalCount ?? 0) + 1,
+            totalPage: 1, // not important
+          });
+        }
+        break;
+      case ActionType.UPDATE:
+        {
+        }
+        break;
+    }
+  };
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom }]}>
       <ConfirmOKCancel
@@ -193,6 +278,11 @@ const Product = () => {
         onClose={() =>
           setObjSimpleDialog({ ...objSimpleDialog, isShow: false })
         }
+      />
+      <ModalAddProduct
+        isShow={isShowModalAddProduct}
+        onClose={() => setIsShowShowModalAddProduct(false)}
+        onSave={saveOKProuduct}
       />
       <View style={{ padding: 8 }}>
         {isShowBoxSearch ? (
@@ -206,7 +296,7 @@ const Product = () => {
               paddingVertical: 0,
               backgroundColor: theme.colors.white,
               borderBottomWidth: 1,
-              borderBottomColor: "#ccc", // màu gạch dưới
+              borderBottomColor: theme.colors.grey5,
               height: 44,
               margin: 0,
             }}
@@ -246,19 +336,20 @@ const Product = () => {
           </View>
         )}
 
-        {(listGroupProduct?.length ?? 0) > 0 && (
-          <View>
-            <Text
-              style={{
-                fontWeight: 600,
-                textDecorationLine: "underline",
-                paddingTop: isShowBoxSearch ? 16 : 0,
-              }}
-            >
-              Nhóm sản phẩm
-            </Text>
+        <View>
+          <Text
+            style={{
+              fontWeight: 600,
+              textDecorationLine: "underline",
+              paddingTop: isShowBoxSearch ? 16 : 0,
+            }}
+          >
+            Nhóm sản phẩm
+          </Text>
+          <ScrollView horizontal style={{ marginTop: 8 }}>
+            <Button icon={{ name: "add", color: "white" }} />
 
-            <ScrollView horizontal style={{ marginTop: 8 }}>
+            {(listGroupProduct?.length ?? 0) > 0 && (
               <Button
                 containerStyle={{
                   paddingRight: 6,
@@ -277,58 +368,40 @@ const Product = () => {
                 title={"Tất cả"}
                 onPress={nhomHangHoa_clickAll}
               ></Button>
-              {listGroupProduct?.map((item) => (
-                <Button
-                  key={item?.id}
-                  title={item.tenNhomHang}
-                  containerStyle={{ padding: 6 }}
-                  titleStyle={{ fontSize: 14 }}
-                  buttonStyle={{
-                    borderRadius: 4,
-                    backgroundColor: arrIdNhomHangFilter?.includes(item?.id)
-                      ? theme.colors.primary
-                      : theme.colors.disabled,
-                  }}
-                  onPress={() => choseNhomHangHoa(item?.id)}
-                ></Button>
-              ))}
-            </ScrollView>
-          </View>
-        )}
+            )}
 
-        <FlatList
-          data={pageResultProduct?.items}
-          renderItem={productItem}
-          keyExtractor={(item) => item.idDonViQuyDoi}
-          onEndReachedThreshold={0.1}
-          onEndReached={handleLoadMore}
-        />
-      </View>
-      <TouchableOpacity
-        style={{
-          position: "absolute",
-          bottom: 40,
-          right: 20,
-        }}
-        onPress={createNewProduct}
-      >
-        <View
-          style={{
-            width: 70,
-            height: 70,
-            borderRadius: 35,
-            backgroundColor: theme.colors.primary,
-            justifyContent: "center",
-          }}
-        >
-          <Icon
-            type={IconType.MATERIAL}
-            name="add"
-            color={theme.colors.white}
-            size={50}
-          ></Icon>
+            {listGroupProduct?.map((item) => (
+              <Button
+                key={item?.id}
+                title={item.tenNhomHang}
+                containerStyle={{ padding: 6 }}
+                titleStyle={{ fontSize: 14 }}
+                buttonStyle={{
+                  borderRadius: 4,
+                  backgroundColor: arrIdNhomHangFilter?.includes(item?.id)
+                    ? theme.colors.primary
+                    : theme.colors.disabled,
+                }}
+                onPress={() => choseNhomHangHoa(item?.id)}
+              ></Button>
+            ))}
+          </ScrollView>
         </View>
-      </TouchableOpacity>
+
+        {(pageResultProduct?.totalCount ?? 0) === 0 ? (
+          <PageEmpty txt="Chưa có dữ liệu" />
+        ) : (
+          <FlatList
+            data={pageResultProduct?.items}
+            renderItem={productItem}
+            keyExtractor={(item) => item.idDonViQuyDoi}
+            onEndReachedThreshold={0.1}
+            onEndReached={handleLoadMore}
+          />
+        )}
+      </View>
+      <BottomButtonAdd onPress={showModalAddNewProduct} />
+
       <BottomSheet isOpen={isShowBoxFilter} toggleSheet={toggleBoxFilter}>
         <View
           style={{
