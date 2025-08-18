@@ -284,3 +284,10 @@ export interface IHoaDonDto_FullInfor extends IHoaDonDto {
   daThanhToan?: number;
   conNo?: number;
 }
+
+export interface DoanhThu_TheoChungTu {
+  idLoaiChungTu: number;
+  soHoaDon: number;
+  doanhThu: number;
+  conNo: number;
+}

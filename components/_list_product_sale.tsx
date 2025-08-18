@@ -214,9 +214,6 @@ const ListProductSale: FC<PropsListProductSale> = ({
             borderColor: theme.colors.greyOutline,
             padding: 0,
           }}
-          inputStyle={{
-            fontSize: 14,
-          }}
           onChangeText={(text) => {
             setTxtSearchProduct(text);
           }}
@@ -260,7 +257,6 @@ const ListProductSale: FC<PropsListProductSale> = ({
                       ? theme.colors.primary
                       : theme.colors.disabled,
                   }}
-                  titleStyle={{ fontSize: 14 }}
                   onPress={() => choseNhomHangHoa(item?.id)}
                 ></Button>
               ))}

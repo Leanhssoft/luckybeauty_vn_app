@@ -7,4 +7,6 @@ export interface IProductGroupDto {
   color?: string;
   thuTuHienThi?: number;
   laNhomHangHoa?: boolean;
+
+  tenNhomCha?: string;
 }

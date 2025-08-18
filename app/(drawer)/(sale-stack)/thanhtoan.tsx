@@ -313,7 +313,6 @@ export default function ThanhToan() {
             noiDungThu: noiDungThu,
             hachToanKinhDoanh: true,
           };
-          console.log("quyHD ", quyHD);
           const dataQuyHD = await SoQuyService.InsertQuyHoaDon(quyHD);
 
           const lstQuyCT = [];
@@ -720,7 +719,6 @@ export default function ThanhToan() {
             placeholder="Nội dung thanh toán"
             inputStyle={{
               fontStyle: "italic",
-              fontSize: 14,
             }}
             value={noiDungThu}
             onChangeText={(text) => setNoiDungThu(text)}

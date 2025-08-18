@@ -179,9 +179,6 @@ const TempInvoice = () => {
             }}
             placeholder="Tìm hóa đơn"
             containerStyle={styles.inputContainer}
-            inputStyle={{
-              fontSize: 14,
-            }}
           />
           {lstHoaDon?.length > 0 && (
             <ScrollView>

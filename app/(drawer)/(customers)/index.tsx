@@ -291,15 +291,11 @@ const CustomerPage = () => {
       <SearchBar
         placeholder="Tìm kiếm khách hàng"
         containerStyle={{
-          borderTopWidth: 0,
-          paddingVertical: 0,
-          paddingHorizontal: 16,
           backgroundColor: theme.colors.white,
         }}
         inputContainerStyle={{
           backgroundColor: theme.colors.white,
         }}
-        inputStyle={{ fontSize: 14 }}
         value={textSearch}
         onChangeText={(txt) => setTextSearch(txt)}
       />

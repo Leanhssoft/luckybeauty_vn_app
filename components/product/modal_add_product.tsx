@@ -17,6 +17,7 @@ import { Button, Icon, Text, useTheme } from "@rneui/themed";
 import { useEffect, useState } from "react";
 import { Modal, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import ModalListProductGroup from "../product_group/list_group_product";
 import { TextFieldCustom } from "../text_filed_custom";
 
 const ModalAddProduct = ({
@@ -64,7 +65,6 @@ const ModalAddProduct = ({
         objProduct?.maHangHoa ?? "",
         objProduct?.idDonViQuyDoi ?? ApiConst.GUID_EMPTY
       );
-      console.log("exists ", exists);
       if (exists) {
         errors.maHangHoa = "Mã sản phẩm đã tồn tại";
       }
@@ -108,8 +108,6 @@ const ModalAddProduct = ({
     ];
 
     const result = await ProductService.CreateOrOEdit(input);
-    console.log("input ", result);
-
     setIsSaving(false);
 
     if (result) {
@@ -137,13 +135,22 @@ const ModalAddProduct = ({
     }
   };
 
-  const saveOKProductGroup = async (
-    productGroup: IProductGroupDto,
-    actionid?: number
-  ) => {};
+  const onChoseProductGroup = async (item: IProductGroupDto) => {
+    setObjProduct({
+      ...objProduct,
+      idNhomHangHoa: item?.id,
+      tenNhomHang: item?.tenNhomHang,
+    });
+    setIsShowModalListProductGroup(false);
+  };
 
   return (
     <Modal visible={isShow} animationType="slide" transparent={true}>
+      <ModalListProductGroup
+        isShow={isShowModalListProductGroup}
+        onClose={() => setIsShowModalListProductGroup(false)}
+        onSave={onChoseProductGroup}
+      />
       <BackDropView
         style={{
           backgroundColor: "rgba(0, 0, 0, 0.4)",
@@ -219,6 +226,7 @@ const ModalAddProduct = ({
                     name="navigate-next"
                     type={IconType.MATERIAL}
                     size={30}
+                    onPress={() => setIsShowModalListProductGroup(true)}
                   />
                 }
               />

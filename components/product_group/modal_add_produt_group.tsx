@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import { Modal, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TextFieldCustom } from "../text_filed_custom";
+import ModalListProductGroup from "./list_group_product";
 
 const ModalAddProductGroup = ({
   isShow,
@@ -108,13 +109,22 @@ const ModalAddProductGroup = ({
     setIsSaving(false);
   };
 
-  const saveOKProductGroup = async (
-    productGroup: IProductGroupDto,
-    actionid?: number
-  ) => {};
+  const onChoseProductGroup = async (item: IProductGroupDto) => {
+    setObjProductGroup({
+      ...objProductGroup,
+      idParent: item.id,
+      tenNhomCha: item?.tenNhomHang,
+    });
+    setIsShowModalListProductGroup(false);
+  };
 
   return (
     <Modal visible={isShow} animationType="slide" transparent={true}>
+      <ModalListProductGroup
+        isShow={isShowModalListProductGroup}
+        onClose={() => setIsShowModalListProductGroup(false)}
+        onSave={onChoseProductGroup}
+      />
       <BackDropView
         style={{
           backgroundColor: "rgba(0, 0, 0, 0.4)",
@@ -153,7 +163,7 @@ const ModalAddProductGroup = ({
               <TextFieldCustom
                 label="Nhóm cha"
                 variant="outlined"
-                value={objProductGroup?.idParent ?? "Chọn nhóm"}
+                value={objProductGroup?.tenNhomCha ?? "Chọn nhóm"}
                 readOnly
                 endIcon={
                   <Icon

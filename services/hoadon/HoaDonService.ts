@@ -1,7 +1,12 @@
 import CommonFunc from "../../utils/CommonFunc";
 import api from "../api";
 import { IPageResultDto } from "../commonDto/IPageResultDto";
-import { HoaDonDto, IHoaDonChiTietDto, IHoaDonDto } from "./dto";
+import {
+  DoanhThu_TheoChungTu,
+  HoaDonDto,
+  IHoaDonChiTietDto,
+  IHoaDonDto,
+} from "./dto";
 import { IParamSearchHoaDondto } from "./IParamSearchHoaDondto";
 
 class HoaDonService {
@@ -48,6 +53,15 @@ class HoaDonService {
   ): Promise<IPageResultDto<IHoaDonDto>> => {
     const result = await api.post(
       `api/services/app/HoaDon/GetListHoaDon`,
+      param
+    );
+    return result;
+  };
+  GetDoanhThu_byLoaiChungTu = async (
+    param: IParamSearchHoaDondto
+  ): Promise<DoanhThu_TheoChungTu[]> => {
+    const result = await api.post(
+      `api/services/app/HoaDon/GetDoanhThu_byLoaiChungTu`,
       param
     );
     return result;

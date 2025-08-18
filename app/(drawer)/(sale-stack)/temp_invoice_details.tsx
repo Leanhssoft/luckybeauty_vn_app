@@ -397,9 +397,6 @@ export default function TempInvoiceDetails() {
               backgroundColor: theme.colors.white,
               borderRadius: 8,
             }}
-            inputStyle={{
-              fontSize: 14,
-            }}
             onChangeText={(text) => {
               setTxtSearchProduct(text);
             }}

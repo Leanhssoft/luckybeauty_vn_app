@@ -109,7 +109,6 @@ export default function ModalListCustomer({
             inputContainerStyle={{
               backgroundColor: "white",
             }}
-            inputStyle={{ fontSize: 14 }}
           />
           <FlatList
             data={lstCustomer}
@@ -130,10 +129,6 @@ export default function ModalListCustomer({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     searchBarConatiner: {
-      paddingLeft: 16,
-      paddingRight: 16,
-      borderTopWidth: 0,
-      paddingBottom: 0,
       backgroundColor: theme.colors.white,
     },
     modalContainer: {

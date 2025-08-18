@@ -223,7 +223,6 @@ const ModalChangePassWord = ({
                 borderRadius: 16,
                 borderColor: theme.colors.primary,
               }}
-              titleStyle={{ fontSize: 14 }}
               onPress={handleSubmit(agree)}
             />
           </View>

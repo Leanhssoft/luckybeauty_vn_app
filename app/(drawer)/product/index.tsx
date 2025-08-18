@@ -275,11 +275,9 @@ const Product = () => {
             searchIcon={{ name: "search", type: IconType.IONICON }}
             clearIcon={{ name: "close", type: IconType.IONICON }}
             containerStyle={{
-              borderTopWidth: 0,
-              paddingVertical: 0,
               backgroundColor: theme.colors.white,
-              borderBottomWidth: 1,
               borderBottomColor: theme.colors.grey5,
+              borderBottomWidth: 1,
               height: 44,
               margin: 0,
             }}
@@ -287,8 +285,8 @@ const Product = () => {
               backgroundColor: theme.colors.white,
               height: 32,
             }}
-            inputStyle={{ fontSize: 14 }}
             cancelButtonTitle="Huỷ"
+            showCancel
             value={textSearch}
             onChangeText={(txt) => setTextSearch(txt)}
             onCancel={() => setIsShowBoxSearch(false)}
@@ -347,7 +345,6 @@ const Product = () => {
                   paddingVertical: 6,
                   marginRight: 8,
                 }}
-                titleStyle={{ fontSize: 14 }}
                 buttonStyle={{
                   borderRadius: 4,
 
@@ -366,7 +363,6 @@ const Product = () => {
                 key={item?.id}
                 title={item.tenNhomHang}
                 containerStyle={{ padding: 6 }}
-                titleStyle={{ fontSize: 14 }}
                 buttonStyle={{
                   borderRadius: 4,
                   backgroundColor: arrIdNhomHangFilter?.includes(item?.id)

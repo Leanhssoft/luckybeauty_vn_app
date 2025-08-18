@@ -107,10 +107,6 @@ export const Modal_ListTaiKhoanNganHang = ({
           <SearchBar
             placeholder="Tìm kiếm"
             containerStyle={{
-              paddingLeft: 16,
-              paddingRight: 16,
-              borderTopWidth: 0,
-              paddingBottom: 0,
               backgroundColor: theme.colors.white,
             }}
             inputContainerStyle={{

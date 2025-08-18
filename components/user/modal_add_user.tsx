@@ -122,7 +122,6 @@ const ModalAddUser = ({ isShow, onClose, onSave }: PropModal<IUserDto>) => {
                 borderRadius: 16,
                 borderColor: theme.colors.primary,
               }}
-              titleStyle={{ fontSize: 14 }}
               onPress={agree}
             />
           </View>

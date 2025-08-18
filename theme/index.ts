@@ -14,9 +14,24 @@ export const theme = createTheme({
     ...customTitleColors,
     ...darkBackground,
   },
-  //   components: {
-  //     Button: {
-  //       raised: true,
-  //     },
-  //   },
+  components: {
+    Button: {
+      titleStyle: { fontSize: 16 },
+    },
+    SearchBar: {
+      inputStyle: {
+        fontSize: 14,
+      },
+      containerStyle: {
+        borderTopWidth: 0,
+        paddingVertical: 0,
+        paddingHorizontal: 16,
+      },
+    },
+    Input: {
+      inputStyle: {
+        fontSize: 14,
+      },
+    },
+  },
 });
