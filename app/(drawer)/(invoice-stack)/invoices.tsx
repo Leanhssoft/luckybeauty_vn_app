@@ -2,6 +2,7 @@ import BottomSheet from "@/components/_bottom_sheet";
 import { ConfirmOKCancel } from "@/components/confirm_ok_cancel";
 import AppConst from "@/const/AppConst";
 import { IconType } from "@/enum/IconType";
+import { InvoiceStatus } from "@/enum/InvoiceStatus";
 import { LoaiChungTu } from "@/enum/LoaiChungTu";
 import { IPageResultDto } from "@/services/commonDto/IPageResultDto";
 import { IHoaDonDto, IHoaDonDto_FullInfor } from "@/services/hoadon/dto";
@@ -10,16 +11,15 @@ import { IParamSearchHoaDondto } from "@/services/hoadon/IParamSearchHoaDondto";
 import { useAppContext } from "@/store/react_context/AppProvider";
 import { IPropsSimpleDialog } from "@/type/IPropsSimpleDialog";
 import CommonFunc from "@/utils/CommonFunc";
-import DateTimePicker, {
-  DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
 import { Theme } from "@rneui/base";
 import { Button, Icon, SearchBar, Text, useTheme } from "@rneui/themed";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { FlatList, RectButton } from "react-native-gesture-handler";
-import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
+import Swipeable, {
+  SwipeableMethods,
+} from "react-native-gesture-handler/ReanimatedSwipeable";
 
 import Reanimated, {
   SharedValue,
@@ -34,6 +34,7 @@ export default function Invoices() {
   const styles = createStyles(theme);
   const insets = useSafeAreaInsets();
   const { chiNhanhCurrent } = useAppContext();
+  const openRef = useRef<SwipeableMethods | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [textSearch, setTextSearch] = useState("");
 
@@ -44,7 +45,7 @@ export default function Invoices() {
   const [paramSearchHoaDon, setParamSearchHoaDon] =
     useState<IParamSearchHoaDondto>({
       textSearch: "",
-      idLoaiChungTu: LoaiChungTu.HOA_DON_BAN_LE,
+      idLoaiChungTus: [LoaiChungTu.HOA_DON_BAN_LE],
       currentPage: currentPage,
       pageSize: AppConst.PAGE_SIZE,
       idChiNhanhs: [chiNhanhCurrent?.id ?? ""],
@@ -52,6 +53,7 @@ export default function Invoices() {
       toDate: dayjs().endOf("month").add(1, "day").format("YYYY-MM-DD"),
       columnSort: "ngayLapHoaDon",
       typeSort: "desc",
+      trangThais: [InvoiceStatus.HOAN_THANH],
     });
 
   const [pageDataHoaDon, setPageDataHoaDon] = useState<
@@ -61,7 +63,7 @@ export default function Invoices() {
   const getListHoaDon = async (currentPage: number) => {
     const param: IParamSearchHoaDondto = {
       textSearch: "",
-      idLoaiChungTu: LoaiChungTu.HOA_DON_BAN_LE,
+      idLoaiChungTus: [LoaiChungTu.HOA_DON_BAN_LE],
       currentPage: currentPage,
       pageSize: AppConst.PAGE_SIZE,
       idChiNhanhs: [chiNhanhCurrent?.id ?? ""],
@@ -69,6 +71,7 @@ export default function Invoices() {
       toDate: dayjs().endOf("month").add(1, "day").format("YYYY-MM-DD"),
       columnSort: "ngayLapHoaDon",
       typeSort: "desc",
+      trangThais: [InvoiceStatus.HOAN_THANH],
     };
     const data = await HoaDonService.GetListHoaDon(param);
     const dataNew = data?.items ?? [];
@@ -99,7 +102,18 @@ export default function Invoices() {
   };
 
   const deleleInvoice = async () => {
-    HoaDonService.DeleteHoaDon(invoiceItemChosed?.id ?? "");
+    await HoaDonService.DeleteHoaDon(invoiceItemChosed?.id ?? "");
+    setPageDataHoaDon({
+      ...pageDataHoaDon,
+      items: pageDataHoaDon?.items?.filter(
+        (x) => x.id !== invoiceItemChosed?.id
+      ),
+      totalCount: (pageDataHoaDon?.totalCount ?? 0) - 1,
+    });
+    setObjSimpleDialog({
+      ...objSimpleDialog,
+      isShow: false,
+    });
   };
 
   const showConfirmDelete = () => {
@@ -139,11 +153,28 @@ export default function Invoices() {
   }
 
   const invoiceItem = ({ item }: { item: IHoaDonDto_FullInfor }) => {
+    let swipeableRef: SwipeableMethods | null = null;
+
     return (
       <Swipeable
         friction={2}
         renderRightActions={RightAction}
         containerStyle={{ overflow: "hidden" }}
+        onSwipeableOpen={() => {
+          setInvoiceItemChosed({ ...item });
+          if (openRef.current && openRef.current !== swipeableRef) {
+            openRef.current.close();
+          }
+          openRef.current = swipeableRef;
+        }}
+        ref={(ref) => {
+          if (ref) swipeableRef = ref;
+        }}
+        onSwipeableClose={() => {
+          if (openRef.current === swipeableRef) {
+            openRef.current = null;
+          }
+        }}
       >
         <RectButton style={styles.invoiceItem} onPress={gotoInvoiceDetails}>
           <View style={{ gap: 8 }}>
@@ -204,15 +235,11 @@ export default function Invoices() {
           <SearchBar
             placeholder="Tìm kiếm hóa đơn"
             containerStyle={{
-              borderTopWidth: 0,
-              paddingVertical: 0,
-              paddingHorizontal: 16,
               backgroundColor: theme.colors.white,
             }}
             inputContainerStyle={{
               backgroundColor: theme.colors.white,
             }}
-            inputStyle={{ fontSize: 14 }}
             value={textSearch}
             onChangeText={(txt) => setTextSearch(txt)}
           />
@@ -271,7 +298,7 @@ export default function Invoices() {
               >
                 <View style={{ gap: 8 }}>
                   <Text>Từ ngày</Text>
-                  <DateTimePicker
+                  {/* <DateTimePicker
                     value={new Date(paramSearchHoaDon?.fromDate ?? new Date())}
                     mode="date"
                     display="default"
@@ -285,11 +312,11 @@ export default function Invoices() {
                     timeZoneName="Asia/Ho_Chi_Minh"
                     locale="vi-VN"
                     is24Hour
-                  />
+                  /> */}
                 </View>
                 <View style={{ gap: 8 }}>
                   <Text>Đến ngày</Text>
-                  <DateTimePicker
+                  {/* <DateTimePicker
                     value={new Date(paramSearchHoaDon?.toDate ?? new Date())}
                     mode="date"
                     display="default"
@@ -303,7 +330,7 @@ export default function Invoices() {
                     timeZoneName="Asia/Ho_Chi_Minh"
                     locale="vi-VN"
                     is24Hour
-                  />
+                  /> */}
                 </View>
               </View>
             </View>

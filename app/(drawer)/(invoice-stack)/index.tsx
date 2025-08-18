@@ -8,7 +8,7 @@ import { Theme } from "@rneui/base";
 import { Icon, Text, useTheme } from "@rneui/themed";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -28,10 +28,10 @@ export default function InvoiceMenu() {
   const [doanhThu_TGT, setDoanhThu_TGT] = useState(0);
   const [conNo_TGT, setConNo_TGT] = useState(0);
 
-  const GetDoanhThu_byLoaiChungTu = async () => {
+  const GetDoanhThu_byLoaiChungTu = useCallback(async () => {
     const param: IParamSearchHoaDondto = {
       idChiNhanhs: [chiNhanhCurrent?.id ?? ""],
-      fromDate: dayjs().format("YYYY-MM-DD"),
+      fromDate: dayjs().startOf("month").format("YYYY-MM-DD"),
       toDate: dayjs().add(1, "day").format("YYYY-MM-DD"),
       idLoaiChungTus: [
         LoaiChungTu.HOA_DON_BAN_LE,
@@ -54,7 +54,7 @@ export default function InvoiceMenu() {
       setConNo_HDLe(0);
     }
     const gdv = data?.filter(
-      (x) => x.idLoaiChungTu === LoaiChungTu.HOA_DON_BAN_LE
+      (x) => x.idLoaiChungTu === LoaiChungTu.GOI_DICH_VU
     );
     if ((gdv?.length ?? 0) > 0) {
       setSoGDV(gdv[0].soHoaDon);
@@ -66,7 +66,7 @@ export default function InvoiceMenu() {
       setConNo_GDV(0);
     }
     const tgt = data?.filter(
-      (x) => x.idLoaiChungTu === LoaiChungTu.HOA_DON_BAN_LE
+      (x) => x.idLoaiChungTu === LoaiChungTu.THE_GIA_TRI
     );
     if ((tgt?.length ?? 0) > 0) {
       setSoTGT(tgt[0].soHoaDon);
@@ -77,7 +77,11 @@ export default function InvoiceMenu() {
       setDoanhThu_TGT(0);
       setConNo_TGT(0);
     }
-  };
+  }, [chiNhanhCurrent?.id ?? ""]);
+
+  useEffect(() => {
+    GetDoanhThu_byLoaiChungTu();
+  }, [GetDoanhThu_byLoaiChungTu]);
 
   return (
     <View
