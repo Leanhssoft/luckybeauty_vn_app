@@ -209,7 +209,7 @@ export default function DrawerLayout() {
         <Drawer.Screen
           name="(manager-system)"
           options={{
-            title: "Quản trị",
+            headerShown: false,
             drawerLabel: "Quản trị",
             drawerIcon: ({ focused, color, size }) => (
               <Icon

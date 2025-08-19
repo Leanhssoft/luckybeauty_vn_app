@@ -13,26 +13,39 @@ export default function ManagerSystemMenu() {
 
   return (
     <View style={[styles.container]}>
-      <View style={{ padding: 16 }}>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          <TouchableOpacity style={styles.card}>
-            <Icon name="account-group" type={IconType.MATERIAL_COMMUNITY} />
-            <Text>Nhóm người dùng</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.card}>
-            <Icon name="person-circle-outline" type={IconType.IONICON} />
-            <Text>Người dùng</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.card}>
-            <Icon name="cloud-outline" type={IconType.IONICON} />
-            <Text>Tenant</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.card}>
-            <Icon name="color-filter-outline" type={IconType.IONICON} />
-            <Text>Brandname SMS</Text>
-          </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.tabs}
+        onPress={() =>
+          route.navigate("/(drawer)/(manager-system)/role_permission")
+        }
+      >
+        <View style={styles.boxLeft}>
+          <Icon name="account-group" type={IconType.MATERIAL_COMMUNITY} />
+          <Text>Quyền & vai trò</Text>
         </View>
-      </View>
+        <Icon name="chevron-forward" type={IconType.IONICON} />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.tabs}>
+        <View style={styles.boxLeft}>
+          <Icon name="person-circle-outline" type={IconType.IONICON} />
+          <Text>Người dùng</Text>
+        </View>
+        <Icon name="chevron-forward" type={IconType.IONICON} />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.tabs}>
+        <View style={styles.boxLeft}>
+          <Icon name="cloud-outline" type={IconType.IONICON} />
+          <Text>Tenant</Text>
+        </View>
+        <Icon name="chevron-forward" type={IconType.IONICON} />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.tabs}>
+        <View style={styles.boxLeft}>
+          <Icon name="color-filter-outline" type={IconType.IONICON} />
+          <Text>Brandname SMS</Text>
+        </View>
+        <Icon name="chevron-forward" type={IconType.IONICON} />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -43,14 +56,17 @@ const createStyles = (theme: Theme) =>
       flex: 1,
       backgroundColor: theme.colors.background,
     },
-    card: {
-      width: "48%",
-      aspectRatio: 1, // giúp width = height, tự động vuông
-      borderRadius: 4,
-      borderWidth: 1,
+
+    tabs: {
+      borderBottomWidth: 1,
       borderColor: theme.colors.primary,
-      // marginBottom: 10,
-      padding: 8,
+      padding: 16,
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    boxLeft: {
+      flexDirection: "row",
       alignItems: "center",
+      gap: 8,
     },
   });

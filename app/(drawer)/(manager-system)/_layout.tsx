@@ -18,7 +18,7 @@ export default function ManagerSystemStack() {
       <Stack.Screen
         name="index"
         options={{
-          headerShown: false,
+          headerShown: true,
           headerLeft: () => (
             <TouchableOpacity onPress={() => navigationDrawer.openDrawer()}>
               <Icon
@@ -33,9 +33,22 @@ export default function ManagerSystemStack() {
         }}
       />
       <Stack.Screen
+        name="role_permission"
+        options={{
+          title: "Quyền & vai trò",
+          headerShown: true,
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => route.back()}>
+              <Icon name="arrow-back-ios" size={24} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <Stack.Screen
         name="user"
         options={{
           title: "Người dùng",
+          headerShown: true,
           headerLeft: () => (
             <TouchableOpacity onPress={() => route.back()}>
               <Icon name="arrow-back-ios" size={24} />
