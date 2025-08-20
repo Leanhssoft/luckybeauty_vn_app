@@ -77,7 +77,7 @@ const HeaderRight = () => {
         gap: 4,
       }}
     >
-      <Icon name="location-outline" type={IconType.IONICON} />
+      <Icon name="location-outline" type={IconType.IONICON} size={20} />
       <Dropdown
         options={lstChiNhanhByUser?.map((x) => {
           return { id: x.id, text: x.tenChiNhanh } as ISelect;
@@ -88,7 +88,7 @@ const HeaderRight = () => {
         }}
         onSelect={changeChiNhanh}
       />
-      <Icon name="bell-outline" type={IconType.MATERIAL_COMMUNITY} />
+      <Icon name="bell-outline" type={IconType.MATERIAL_COMMUNITY} size={20} />
     </View>
   );
 };

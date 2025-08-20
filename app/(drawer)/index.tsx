@@ -1,4 +1,5 @@
 import { IconType } from "@/enum/IconType";
+import CommonFunc from "@/utils/CommonFunc";
 import { Theme } from "@rneui/base";
 import { Icon, Text, useTheme } from "@rneui/themed";
 import dayjs from "dayjs";
@@ -17,11 +18,11 @@ import { IParamSearchFromToDto } from "../../services/commonDto/IParamSearchFrom
 import DashboardService from "../../services/dashboard/DashboardService";
 import { useAppContext } from "../../store/react_context/AppProvider";
 import ChartsFunc, { ChartAxisConfig } from "../../utils/ChartsFunc";
+const screenWidth = Dimensions.get("window").width;
 
 export default function Dashboard() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const screenWidth = Dimensions.get("window").width;
   const styles = createStyles(theme);
   const firstLoad = useRef(true);
   const firstLoad2 = useRef(true);
@@ -31,6 +32,7 @@ export default function Dashboard() {
   const [thucThu, setThucThu] = useState(0);
   const [soCuocHen, setSoCuocHen] = useState(0);
   const [soKhachMoi, setSoKhachMoi] = useState(0);
+  const [tongDoanhThu, setTongDoanhThu] = useState(0);
   const [doanhThu_TypeTime, setDoanhThu_TypeTime] = useState(0);
   const [dataDoanhThu, setDataDoanhThu] = useState<barDataItem[]>([]);
   const [barChartAxistConfig, setBarChartAxistConfig] =
@@ -90,6 +92,9 @@ export default function Dashboard() {
 
   const ThongKeDoanhThu = useCallback(async () => {
     const xx = await DashboardService.ThongKeDoanhThu(doanhThu_ParamFilter);
+
+    const tong = xx.reduce((total, item) => total + item.value, 0);
+    setTongDoanhThu(tong);
 
     let timeThis = "";
     switch (doanhThu_ParamFilter?.timeType) {
@@ -245,7 +250,13 @@ export default function Dashboard() {
           <View style={{ flexDirection: "row", gap: 16 }}>
             <View style={[styles.card, { gap: 8 }]}>
               <Icon name="attach-money" type={IconType.MATERIAL} size={15} />
-              <Text>100.000.000</Text>
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.5}
+              >
+                2.000.000.000
+              </Text>
               <Text style={{ fontSize: 10 }}>Thực thu</Text>
             </View>
             <View style={[styles.card, { gap: 8 }]}>
@@ -254,12 +265,12 @@ export default function Dashboard() {
                 type={IconType.IONICON}
                 size={15}
               />
-              <Text>100.000.000</Text>
+              <Text>{CommonFunc.formatCurrency(doanhThu)}</Text>
               <Text style={{ fontSize: 10 }}>Doanh thu</Text>
             </View>
             <View style={[styles.card, { gap: 8 }]}>
               <Icon name="calendar-outline" type={IconType.IONICON} size={15} />
-              <Text>100.000.000</Text>
+              <Text>{CommonFunc.formatCurrency(soCuocHen)}</Text>
               <Text style={{ fontSize: 10 }}>Lịch hẹn</Text>
             </View>
             <View style={[styles.card, { gap: 8 }]}>
@@ -268,7 +279,7 @@ export default function Dashboard() {
                 type={IconType.MATERIAL_COMMUNITY}
                 size={15}
               />
-              <Text>100.000.000</Text>
+              <Text>{CommonFunc.formatCurrency(soKhachMoi)}</Text>
               <Text style={{ fontSize: 10 }}>Sinh nhật</Text>
             </View>
           </View>
@@ -283,7 +294,14 @@ export default function Dashboard() {
               alignItems: "center",
             }}
           >
-            <Text style={{ fontSize: 12 }}>1.500.000.000</Text>
+            {tongDoanhThu > 0 ? (
+              <Text style={{ fontSize: 12 }}>
+                {CommonFunc.formatCurrency(tongDoanhThu)}
+              </Text>
+            ) : (
+              <Text>{""}</Text>
+            )}
+
             <View
               style={{
                 flexDirection: "row",
@@ -541,6 +559,7 @@ const createStyles = (theme: Theme) =>
       paddingHorizontal: 8,
       paddingVertical: 16,
       height: 60,
+      width: (screenWidth - 80) / 4,
       backgroundColor: "#E8E8E8",
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 0.5 },
