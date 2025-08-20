@@ -9,6 +9,7 @@ export const theme = createTheme({
   lightColors: {
     ...customTitleColors,
     ...lightBackground,
+    background: "#ffff",
   },
   darkColors: {
     ...customTitleColors,
@@ -16,11 +17,16 @@ export const theme = createTheme({
   },
   components: {
     Button: {
-      titleStyle: { fontSize: 16 },
+      titleStyle: { fontSize: 12 },
+    },
+    Text: {
+      style: {
+        fontSize: 11,
+      },
     },
     SearchBar: {
       inputStyle: {
-        fontSize: 14,
+        fontSize: 11,
       },
       containerStyle: {
         borderTopWidth: 0,
@@ -30,7 +36,7 @@ export const theme = createTheme({
     },
     Input: {
       inputStyle: {
-        fontSize: 14,
+        fontSize: 11,
       },
     },
   },

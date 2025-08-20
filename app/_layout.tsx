@@ -3,6 +3,7 @@ import { theme } from "@/theme";
 import { ThemeProvider } from "@rneui/themed";
 import { Redirect, Slot } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
+import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 function MainLayout() {
@@ -27,6 +28,7 @@ export default function RootLayout() {
         <GestureHandlerRootView>
           <ThemeProvider theme={theme}>
             <Slot />
+            <StatusBar style="light" />
           </ThemeProvider>
         </GestureHandlerRootView>
       </SQLiteProvider>
