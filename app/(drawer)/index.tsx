@@ -184,6 +184,12 @@ export default function Dashboard() {
       firstLoad.current = false;
       return;
     }
+    setParamSearch((prev) => {
+      return {
+        ...prev,
+        idChiNhanhs: [idChiNhanhCurrent],
+      };
+    });
     setDoanhThu_ParamFilter((prev) => ({
       ...prev,
       idChiNhanhs: [idChiNhanhCurrent],
@@ -553,7 +559,10 @@ export default function Dashboard() {
             </View>
           </View>
           {(dataDoanhThu?.length ?? 0) === 0 ? (
-            <PageEmpty txt=" Không có dữ liệu để hiển thị" />
+            <PageEmpty
+              txt=" Không có dữ liệu để hiển thị"
+              style={{ height: 80 }}
+            />
           ) : (
             <>
               <View style={{ width: charWidth }}>
