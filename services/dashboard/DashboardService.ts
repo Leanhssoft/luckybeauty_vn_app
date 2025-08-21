@@ -1,6 +1,6 @@
 import api from "../api";
 import { IParamSearchFromToDto } from "../commonDto/IParamSearchFromToDto";
-import { ICharDataDto, ILichHenDataDto, IThongKeSoLuongDto } from "./dto";
+import { ICharDataDto, IThongKeSoLuongDto } from "./dto";
 
 class DashboardService {
   ThongKeSoLuong = async (
@@ -31,10 +31,10 @@ class DashboardService {
   };
   ThongKeLichHen = async (
     input: IParamSearchFromToDto
-  ): Promise<ILichHenDataDto[]> => {
+  ): Promise<ICharDataDto[]> => {
     try {
       const xx = await api.post(
-        `api/services/app/Dashboard/ThongKeLichHen`,
+        `api/services/app/Dashboard/ThongKeLichHen2`,
         input
       );
       return xx;

@@ -1,3 +1,6 @@
+import Popover from "@/components/_popover";
+import PageEmpty from "@/components/page_empty";
+import { DateType } from "@/enum/DateType";
 import { IconType } from "@/enum/IconType";
 import CommonFunc from "@/utils/CommonFunc";
 import { Theme } from "@rneui/base";
@@ -6,12 +9,20 @@ import dayjs from "dayjs";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dimensions,
+  findNodeHandle,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  UIManager,
   View,
 } from "react-native";
-import { BarChart, barDataItem, LineChart } from "react-native-gifted-charts";
+import {
+  BarChart,
+  barDataItem,
+  CurveType,
+  LineChart,
+  lineDataItem,
+} from "react-native-gifted-charts";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TypeTime } from "../../enum/TypeTime";
 import { IParamSearchFromToDto } from "../../services/commonDto/IParamSearchFromToDto";
@@ -25,7 +36,6 @@ export default function Dashboard() {
   const insets = useSafeAreaInsets();
   const styles = createStyles(theme);
   const firstLoad = useRef(true);
-  const firstLoad2 = useRef(true);
   const { chiNhanhCurrent } = useAppContext();
   const idChiNhanhCurrent = chiNhanhCurrent?.id ?? "";
   const [doanhThu, setDoanhThu] = useState(0);
@@ -33,17 +43,24 @@ export default function Dashboard() {
   const [soCuocHen, setSoCuocHen] = useState(0);
   const [soKhachMoi, setSoKhachMoi] = useState(0);
   const [tongDoanhThu, setTongDoanhThu] = useState(0);
-  const [doanhThu_TypeTime, setDoanhThu_TypeTime] = useState(0);
+  const [labelFilterDate, setLabelFilterDate] = useState(
+    `Hôm nay, ${dayjs().format("DD/MM/YYYY")}`
+  );
   const [dataDoanhThu, setDataDoanhThu] = useState<barDataItem[]>([]);
+  const [dataLichHen, setDataLichHen] = useState<lineDataItem[]>([]);
   const [barChartAxistConfig, setBarChartAxistConfig] =
     useState<ChartAxisConfig>();
 
-  const Card = ({ title, value }: { title: string; value: string }) => (
-    <View style={styles.card}>
-      <Text style={{ fontSize: 18 }}>{title}</Text>
-      <Text style={styles.number}>{value}</Text>
-    </View>
-  );
+  const [isShowDropdownDate, setIsShowDropdownDate] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const targetRef = useRef<View>(null);
+
+  const [paramSearch, setParamSearch] = useState<IParamSearchFromToDto>({
+    dateType: DateType.HOM_NAY,
+    fromDate: dayjs().format("YYYY-MM-DD"),
+    toDate: dayjs().add(1, "day").format("YYYY-MM-DD"),
+    idChiNhanhs: [idChiNhanhCurrent],
+  });
 
   const [doanhThu_ParamFilter, setDoanhThu_ParamFilter] =
     useState<IParamSearchFromToDto>({
@@ -66,29 +83,39 @@ export default function Dashboard() {
     { id: TypeTime.YEAR, label: "Năm" },
   ];
 
-  const ThongKeSoLuong = useCallback(async () => {
-    const input: IParamSearchFromToDto = {
-      fromDate: dayjs().format("YYYY-MM-DD"),
-      toDate: dayjs().format("YYYY-MM-DD"),
-      idChiNhanhs: [idChiNhanhCurrent],
-    };
-    const xx = await DashboardService.ThongKeSoLuong(input);
+  const arrDateFilter = [
+    { id: DateType.HOM_NAY, label: "Hôm nay" },
+    { id: DateType.HOM_QUA, label: "Hôm qua" },
+    { id: DateType.THANG_NAY, label: "Tháng này" },
+    { id: DateType.THANG_TRUOC, label: "Tháng trước" },
+    { id: DateType.TUY_CHON, label: "Tùy chỉnh" },
+  ];
 
+  const ThongKeSoLuong = useCallback(async () => {
+    const xx = await DashboardService.ThongKeSoLuong(paramSearch);
     if (xx !== null) {
       setDoanhThu(xx.tongDoanhThu);
       setThucThu(xx.tongThucThu);
       setSoCuocHen(xx.tongLichHen);
       setSoKhachMoi(xx.tongKhachHangSinhNhat); //todo
     }
-  }, [idChiNhanhCurrent]);
+  }, [paramSearch]);
 
   useEffect(() => {
     ThongKeSoLuong();
   }, [ThongKeSoLuong]);
 
-  const ThongKeLichHen = async () => {
-    const xx = await DashboardService.ThongKeLichHen(doanhThu_ParamFilter);
-  };
+  const ThongKeLichHen = useCallback(async () => {
+    const xx = await DashboardService.ThongKeLichHen(lichHen_ParamFilter);
+    const data = xx?.map((x) => {
+      return {
+        label: x.label,
+        value: x.value,
+        dataPointText: x.value.toString(),
+      } as lineDataItem;
+    });
+    setDataLichHen([...data]);
+  }, [lichHen_ParamFilter]);
 
   const ThongKeDoanhThu = useCallback(async () => {
     const xx = await DashboardService.ThongKeDoanhThu(doanhThu_ParamFilter);
@@ -145,15 +172,23 @@ export default function Dashboard() {
   }, [doanhThu_ParamFilter]);
 
   useEffect(() => {
+    ThongKeLichHen();
+  }, [ThongKeLichHen]);
+
+  useEffect(() => {
     ThongKeDoanhThu();
   }, [ThongKeDoanhThu]); // Chỉ trigger khi filter thực sự thay đổi
 
   useEffect(() => {
-    if (firstLoad2.current) {
-      firstLoad2.current = false;
+    if (firstLoad.current) {
+      firstLoad.current = false;
       return;
     }
     setDoanhThu_ParamFilter((prev) => ({
+      ...prev,
+      idChiNhanhs: [idChiNhanhCurrent],
+    }));
+    setLichHen_ParamFilter((prev) => ({
       ...prev,
       idChiNhanhs: [idChiNhanhCurrent],
     }));
@@ -166,6 +201,67 @@ export default function Dashboard() {
   useEffect(() => {
     PageLoad();
   }, []);
+
+  const SoLuong_changeTypeTime = (newVal: string) => {
+    switch (newVal) {
+      case DateType.HOM_NAY:
+        {
+          setParamSearch({
+            ...paramSearch,
+            dateType: newVal,
+            fromDate: dayjs().format("YYYY-MM-DD"),
+            toDate: dayjs().add(1, "day").format("YYYY-MM-DD"),
+          });
+          setLabelFilterDate(`Hôm nay, ${dayjs().format("DD/MM/YYYY")}`);
+        }
+        break;
+      case DateType.HOM_QUA:
+        {
+          setParamSearch({
+            ...paramSearch,
+            dateType: newVal,
+            fromDate: dayjs().add(-1, "day").format("YYYY-MM-DD"),
+            toDate: dayjs().format("YYYY-MM-DD"),
+          });
+          setLabelFilterDate(
+            `Hôm qua, ${dayjs().add(-1, "day").format("DD/MM/YYYY")}`
+          );
+        }
+        break;
+      case DateType.THANG_NAY:
+        {
+          setParamSearch({
+            ...paramSearch,
+            dateType: newVal,
+            fromDate: dayjs().startOf("month").format("YYYY-MM-DD"),
+            toDate: dayjs().endOf("month").add(1, "day").format("YYYY-MM-DD"),
+          });
+          setLabelFilterDate(
+            `Tháng ${dayjs().startOf("month").format("MM/YYYY")}`
+          );
+        }
+        break;
+      case DateType.THANG_TRUOC:
+        {
+          setParamSearch({
+            ...paramSearch,
+            dateType: newVal,
+            fromDate: dayjs()
+              .startOf("month")
+              .add(-1, "month")
+              .format("YYYY-MM-DD"),
+            toDate: dayjs().endOf("month").add(-1, "day").format("YYYY-MM-DD"),
+          });
+          setLabelFilterDate(
+            `Tháng ${dayjs()
+              .startOf("month")
+              .add(-1, "month")
+              .format("MM/YYYY")}`
+          );
+        }
+        break;
+    }
+  };
 
   const DoanhThu_changeTypeTime = (newVal: number) => {
     switch (newVal) {
@@ -209,78 +305,189 @@ export default function Dashboard() {
     }
   };
 
-  const lineData = [
-    { value: 0, dataPointText: "0" },
-    { value: 20, dataPointText: "20" },
-    { value: 18, dataPointText: "18" },
-    { value: 40, dataPointText: "40" },
-    { value: 36, dataPointText: "36" },
-    { value: 15, dataPointText: "15" },
-    { value: 54, dataPointText: "54" },
-    { value: 42, dataPointText: "42" },
-  ];
+  const LichHen_changeTypeTime = (newVal: number) => {
+    switch (newVal) {
+      case TypeTime.WEEK:
+        {
+          setLichHen_ParamFilter({
+            ...lichHen_ParamFilter,
+            timeType: newVal,
+            fromDate: dayjs().startOf("week").format("YYYY-MM-DD"),
+            toDate: dayjs().endOf("week").add(1, "day").format("YYYY-MM-DD"),
+          });
+        }
+        break;
+      case TypeTime.MONTH:
+        {
+          setLichHen_ParamFilter({
+            ...lichHen_ParamFilter,
+            timeType: newVal,
+            fromDate: dayjs().startOf("year").format("YYYY-MM-DD"),
+            toDate: dayjs().endOf("month").add(1, "day").format("YYYY-MM-DD"),
+          });
+        }
+        break;
+      case TypeTime.YEAR:
+        {
+          setLichHen_ParamFilter({
+            ...lichHen_ParamFilter,
+            timeType: newVal,
+            fromDate: dayjs()
+              .startOf("year")
+              .subtract(-6, "year")
+              .format("YYYY-MM-DD"),
+            toDate: dayjs()
+              .endOf("year")
+              .subtract(-6, "year")
+              .add(1, "day")
+              .format("YYYY-MM-DD"),
+          });
+        }
+        break;
+    }
+  };
 
   const initialSpacing = 20;
   const barWidth = 12;
-  const barChartWidth = screenWidth - 80;
+  const charWidth = screenWidth - 80;
   const numberOfBars = dataDoanhThu.length;
-
   const spacing =
-    numberOfBars < 3 ? 50 : (barChartWidth - initialSpacing) / numberOfBars;
+    numberOfBars < 3 ? 50 : (charWidth - initialSpacing) / numberOfBars;
+
+  const showPopover = () => {
+    if (targetRef.current) {
+      targetRef.current.measureInWindow((x, y, width, height) => {
+        setPosition({ x, y, width, height });
+        setIsShowDropdownDate(true);
+      });
+    }
+  };
+  const measurePosition = () => {
+    const handle = findNodeHandle(targetRef.current);
+    if (handle) {
+      UIManager.measure(handle, (x, y, width, height, pageX, pageY) => {
+        setPosition({ x: pageX, y: pageY, width, height });
+      });
+    }
+  };
 
   return (
     <ScrollView style={[styles.container]}>
       <View style={{ gap: 24 }}>
         <View style={{ gap: 16 }}>
-          <View
-            style={{
-              paddingHorizontal: 10,
-              paddingVertical: 8,
-              borderRadius: 4,
-              backgroundColor: "#66646626",
-              width: 175,
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexDirection: "row",
-            }}
-          >
-            <Text>Hôm nay, 01/08/2025</Text>
-            <Icon name="chevron-down" type={IconType.IONICON} size={12} />
+          <View ref={targetRef} onLayout={measurePosition}>
+            <TouchableOpacity
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 8,
+                borderRadius: 4,
+                backgroundColor: "#66646626",
+                width: 175,
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexDirection: "row",
+              }}
+              onPress={showPopover}
+            >
+              <Text style={{ fontSize: 12 }}>{labelFilterDate}</Text>
+              <Icon name="chevron-down" type={IconType.IONICON} size={12} />
+            </TouchableOpacity>
+            <Popover
+              visible={isShowDropdownDate}
+              onClose={() => setIsShowDropdownDate(false)}
+              position={position}
+            >
+              <View>
+                {arrDateFilter?.map((x) => (
+                  <TouchableOpacity
+                    style={{ padding: 8 }}
+                    key={x.id}
+                    onPress={() => SoLuong_changeTypeTime(x.id)}
+                  >
+                    <Text
+                      style={{
+                        color:
+                          x.id === paramSearch?.dateType
+                            ? theme.colors.primary
+                            : theme.colors.black,
+                      }}
+                    >
+                      {x.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </Popover>
           </View>
+
           <View style={{ flexDirection: "row", gap: 16 }}>
-            <View style={[styles.card, { gap: 8 }]}>
-              <Icon name="attach-money" type={IconType.MATERIAL} size={15} />
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.5}
-              >
-                2.000.000.000
-              </Text>
-              <Text style={{ fontSize: 10 }}>Thực thu</Text>
+            <View style={[styles.card]}>
+              <Icon
+                name="attach-money"
+                type={IconType.MATERIAL}
+                size={25}
+                color={theme.colors.primary}
+              />
+              <View style={{ gap: 10 }}>
+                <Text>Thực thu</Text>
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.5}
+                  style={styles.number}
+                >
+                  {CommonFunc.formatCurrency(thucThu)}
+                </Text>
+              </View>
             </View>
-            <View style={[styles.card, { gap: 8 }]}>
+            <View style={[styles.card]}>
               <Icon
                 name="bar-chart-outline"
                 type={IconType.IONICON}
-                size={15}
+                size={25}
+                color={theme.colors.primary}
               />
-              <Text>{CommonFunc.formatCurrency(doanhThu)}</Text>
-              <Text style={{ fontSize: 10 }}>Doanh thu</Text>
+              <View style={{ gap: 10 }}>
+                <Text>Doanh thu</Text>
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.5}
+                  style={styles.number}
+                >
+                  {CommonFunc.formatCurrency(doanhThu)}
+                </Text>
+              </View>
             </View>
-            <View style={[styles.card, { gap: 8 }]}>
-              <Icon name="calendar-outline" type={IconType.IONICON} size={15} />
-              <Text>{CommonFunc.formatCurrency(soCuocHen)}</Text>
-              <Text style={{ fontSize: 10 }}>Lịch hẹn</Text>
+          </View>
+          <View style={{ flexDirection: "row", gap: 16 }}>
+            <View style={[styles.card]}>
+              <Icon
+                name="calendar-outline"
+                type={IconType.IONICON}
+                size={25}
+                color={theme.colors.primary}
+              />
+              <View style={{ gap: 10 }}>
+                <Text>Lịch hẹn</Text>
+                <Text style={styles.number}>
+                  {CommonFunc.formatCurrency(soCuocHen)}
+                </Text>
+              </View>
             </View>
-            <View style={[styles.card, { gap: 8 }]}>
+            <View style={[styles.card]}>
               <Icon
                 name="cake-variant-outline"
                 type={IconType.MATERIAL_COMMUNITY}
-                size={15}
+                size={25}
+                color={theme.colors.primary}
               />
-              <Text>{CommonFunc.formatCurrency(soKhachMoi)}</Text>
-              <Text style={{ fontSize: 10 }}>Sinh nhật</Text>
+              <View style={{ gap: 10 }}>
+                <Text>Sinh nhật</Text>
+                <Text style={styles.number}>
+                  {CommonFunc.formatCurrency(soKhachMoi)}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -307,97 +514,52 @@ export default function Dashboard() {
                 flexDirection: "row",
               }}
             >
-              <TouchableOpacity
-                style={{
-                  width: 54,
-                  backgroundColor:
-                    doanhThu_ParamFilter?.timeType === TypeTime.WEEK
-                      ? theme.colors.primary
-                      : theme.colors.disabled,
-                  paddingHorizontal: 6,
-                  paddingVertical: 6,
-                  borderTopLeftRadius: 4,
-                  borderBottomLeftRadius: 4,
-                }}
-                onPress={() => DoanhThu_changeTypeTime(TypeTime.WEEK)}
-              >
-                <Text
-                  style={{
-                    color:
-                      doanhThu_ParamFilter?.timeType === TypeTime.WEEK
-                        ? theme.colors.white
-                        : theme.colors.black,
-                    textAlign: "center",
-                  }}
+              {arrFilterButton?.map((x, index) => (
+                <TouchableOpacity
+                  key={x.id}
+                  style={[
+                    styles.button,
+                    {
+                      backgroundColor:
+                        doanhThu_ParamFilter?.timeType === x.id
+                          ? theme.colors.primary
+                          : theme.colors.disabled,
+                    },
+                    {
+                      borderTopLeftRadius: index === 0 ? 4 : 0,
+                      borderBottomLeftRadius: index === 0 ? 4 : 0,
+                    },
+                    {
+                      borderTopRightRadius: index === 2 ? 4 : 0,
+                      borderBottomRightRadius: index === 2 ? 4 : 0,
+                    },
+                  ]}
+                  onPress={() => DoanhThu_changeTypeTime(x.id)}
                 >
-                  Tuần
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={{
-                  width: 54,
-                  paddingHorizontal: 6,
-                  paddingVertical: 6,
-                  backgroundColor:
-                    doanhThu_ParamFilter?.timeType === TypeTime.MONTH
-                      ? theme.colors.primary
-                      : theme.colors.disabled,
-                  borderRightColor: "#ccc",
-                  borderRightWidth: 1,
-                }}
-                onPress={() => DoanhThu_changeTypeTime(TypeTime.MONTH)}
-              >
-                <Text
-                  style={{
-                    textAlign: "center",
-                    color:
-                      doanhThu_ParamFilter?.timeType === TypeTime.MONTH
-                        ? theme.colors.white
-                        : theme.colors.black,
-                  }}
-                >
-                  Tháng
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={{
-                  width: 54,
-                  padding: 6,
-                  backgroundColor:
-                    doanhThu_ParamFilter?.timeType === TypeTime.YEAR
-                      ? theme.colors.primary
-                      : theme.colors.disabled,
-                  borderTopRightRadius: 4,
-                  borderBottomRightRadius: 4,
-                }}
-                onPress={() => DoanhThu_changeTypeTime(TypeTime.YEAR)}
-              >
-                <Text
-                  style={{
-                    textAlign: "center",
-                    color:
-                      doanhThu_ParamFilter?.timeType === TypeTime.YEAR
-                        ? theme.colors.white
-                        : theme.colors.black,
-                  }}
-                >
-                  Năm
-                </Text>
-              </TouchableOpacity>
+                  <Text
+                    style={{
+                      color:
+                        doanhThu_ParamFilter?.timeType === x.id
+                          ? theme.colors.white
+                          : theme.colors.black,
+                      textAlign: "center",
+                      fontSize: 11,
+                    }}
+                  >
+                    {x.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
           {(dataDoanhThu?.length ?? 0) === 0 ? (
-            <View>
-              <Text style={{ textAlign: "center", paddingVertical: 40 }}>
-                Không có dữ liệu để hiển thị
-              </Text>
-            </View>
+            <PageEmpty txt=" Không có dữ liệu để hiển thị" />
           ) : (
             <>
-              <View style={{ width: barChartWidth }}>
+              <View style={{ width: charWidth }}>
                 <BarChart
                   data={dataDoanhThu}
-                  width={barChartWidth}
+                  width={charWidth}
                   frontColor={theme.colors.primary}
                   maxValue={barChartAxistConfig?.maxValue}
                   noOfSections={barChartAxistConfig?.noOfSections}
@@ -415,13 +577,12 @@ export default function Dashboard() {
                     marginRight: 10, // đẩy chữ vào trong một chút
                     transform: [{ translateX: 10 }],
                   }}
-                  // xAxisLabelTextStyle={{ color: "transparent" }}
                 />
               </View>
             </>
           )}
         </View>
-        <View style={{ gap: 16 }}>
+        <View style={{ gap: 16, flex: 1 }}>
           <Text style={styles.title}>Lịch hẹn</Text>
           <View
             style={{
@@ -430,106 +591,81 @@ export default function Dashboard() {
               alignItems: "center",
             }}
           >
-            <Text>Số lượng</Text>
+            {(dataLichHen?.length ?? 0) > 0 ? (
+              <Text>Số lượng</Text>
+            ) : (
+              <Text>{""}</Text>
+            )}
             <View
               style={{
                 flexDirection: "row",
               }}
             >
-              <TouchableOpacity
-                style={{
-                  width: 54,
-                  backgroundColor:
-                    lichHen_ParamFilter?.timeType === TypeTime.WEEK
-                      ? theme.colors.primary
-                      : theme.colors.disabled,
-                  paddingHorizontal: 6,
-                  paddingVertical: 6,
-                  borderTopLeftRadius: 4,
-                  borderBottomLeftRadius: 4,
-                }}
-                onPress={() => DoanhThu_changeTypeTime(TypeTime.WEEK)}
-              >
-                <Text
-                  style={{
-                    color:
-                      lichHen_ParamFilter?.timeType === TypeTime.WEEK
-                        ? theme.colors.white
-                        : theme.colors.black,
-                    textAlign: "center",
-                  }}
+              {arrFilterButton?.map((x, index) => (
+                <TouchableOpacity
+                  key={x.id}
+                  style={[
+                    styles.button,
+                    {
+                      backgroundColor:
+                        lichHen_ParamFilter?.timeType === x.id
+                          ? theme.colors.primary
+                          : theme.colors.disabled,
+                    },
+                    {
+                      borderTopLeftRadius: index === 0 ? 4 : 0,
+                      borderBottomLeftRadius: index === 0 ? 4 : 0,
+                    },
+                    {
+                      borderTopRightRadius: index === 2 ? 4 : 0,
+                      borderBottomRightRadius: index === 2 ? 4 : 0,
+                    },
+                  ]}
+                  onPress={() => LichHen_changeTypeTime(x.id)}
                 >
-                  Tuần
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={{
-                  width: 54,
-                  paddingHorizontal: 6,
-                  paddingVertical: 6,
-                  backgroundColor:
-                    lichHen_ParamFilter?.timeType === TypeTime.MONTH
-                      ? theme.colors.primary
-                      : theme.colors.disabled,
-                  borderRightColor: "#ccc",
-                  borderRightWidth: 1,
-                }}
-                onPress={() => DoanhThu_changeTypeTime(TypeTime.MONTH)}
-              >
-                <Text
-                  style={{
-                    textAlign: "center",
-                    color:
-                      lichHen_ParamFilter?.timeType === TypeTime.MONTH
-                        ? theme.colors.white
-                        : theme.colors.black,
-                  }}
-                >
-                  Tháng
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={{
-                  width: 54,
-                  padding: 6,
-                  backgroundColor:
-                    lichHen_ParamFilter?.timeType === TypeTime.YEAR
-                      ? theme.colors.primary
-                      : theme.colors.disabled,
-                  borderTopRightRadius: 4,
-                  borderBottomRightRadius: 4,
-                }}
-                onPress={() => DoanhThu_changeTypeTime(TypeTime.YEAR)}
-              >
-                <Text
-                  style={{
-                    textAlign: "center",
-                    color:
-                      lichHen_ParamFilter?.timeType === TypeTime.YEAR
-                        ? theme.colors.white
-                        : theme.colors.black,
-                  }}
-                >
-                  Năm
-                </Text>
-              </TouchableOpacity>
+                  <Text
+                    style={{
+                      color:
+                        lichHen_ParamFilter?.timeType === x.id
+                          ? theme.colors.white
+                          : theme.colors.black,
+                      textAlign: "center",
+                      fontSize: 11,
+                    }}
+                  >
+                    {x.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
-          <LineChart
-            data={lineData}
-            initialSpacing={0}
-            width={screenWidth - 80}
-            textFontSize={13}
-            textColor1={theme.colors.primary}
-            thickness={2}
-            color={theme.colors.primary}
-            spacing={(screenWidth - 40) / (lineData.length - 1)}
-            textShiftY={-8}
-            textShiftX={-10}
-            xAxisLabelTexts={["T2", "T3", "T4", "T5", "T6", "T7", "CN"]}
-            yAxisTextStyle={{ fontSize: 11 }}
-            xAxisLabelTextStyle={{ fontSize: 11 }}
-          />
+          {(dataLichHen?.length ?? 0) === 0 ? (
+            <PageEmpty
+              txt="Không có dữ liệu để hiển thị"
+              style={{ height: 80 }}
+            />
+          ) : (
+            <LineChart
+              data={dataLichHen}
+              initialSpacing={0}
+              width={charWidth}
+              textFontSize={13}
+              textColor1={theme.colors.primary}
+              thickness={2}
+              curved
+              curveType={CurveType.CUBIC}
+              color={theme.colors.primary}
+              spacing={
+                (dataLichHen?.length ?? 0) < 2
+                  ? 30
+                  : charWidth / (dataLichHen.length - 1)
+              }
+              textShiftY={-8}
+              textShiftX={-10}
+              yAxisTextStyle={{ fontSize: 11 }}
+              xAxisLabelTextStyle={{ fontSize: 11 }}
+            />
+          )}
         </View>
       </View>
     </ScrollView>
@@ -550,54 +686,30 @@ const createStyles = (theme: Theme) =>
     },
     barCharTtopLabel: {
       color: theme.colors.primary,
-      fontSize: 14,
+      fontSize: 12,
       marginBottom: 6,
     },
     card: {
+      flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: 8,
-      paddingVertical: 16,
-      height: 60,
-      width: (screenWidth - 80) / 4,
-      backgroundColor: "#E8E8E8",
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 0.5 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3, // tương đương với Blur
+      gap: 16,
+      padding: 14,
+      height: 85,
+      width: (screenWidth - 48) / 2,
+      backgroundColor: "#E5F3FF",
+      // shadowColor: "#000",
+      // shadowOffset: { width: 0, height: 0.5 },
+      // shadowOpacity: 0.25,
+      // shadowRadius: 3, // tương đương với Blur
     },
     title: { fontSize: 16, fontWeight: 700 },
-    upContainer: {
-      backgroundColor: theme.colors.primary,
-      padding: 16,
-    },
-    downContainer: {
-      backgroundColor: theme.colors.white,
-      padding: 16,
-      paddingBottom: 0,
-    },
-    summaryRow: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      gap: 16,
-    },
-    summaryBox: {
-      borderRadius: 10,
-      backgroundColor: "white",
-      padding: 16,
-      elevation: 2,
-    },
-    filterRow: {
-      justifyContent: "space-between",
+    button: {
+      width: 54,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
     },
     number: {
-      color: theme.colors.primary,
-      fontSize: 20,
+      fontSize: 16,
       fontWeight: "bold",
-      marginTop: 8,
-    },
-    buttonGroup: {
-      flexDirection: "row",
-      alignItems: "center",
     },
   });

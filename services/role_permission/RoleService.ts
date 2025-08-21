@@ -4,6 +4,12 @@ import { IPageResultDto } from "../commonDto/IPageResultDto";
 import { IRoleDto } from "./IRoleDto";
 
 class RoleService {
+  GetRoleForEdit = async (roleId: number): Promise<IRoleDto | null> => {
+    const data = await api.get(
+      `api/services/app/Role/GetRoleForEdit?Id=${roleId}`
+    );
+    return data;
+  };
   GetAll = async (
     input: IPagedRequestDto
   ): Promise<IPageResultDto<IRoleDto> | null> => {

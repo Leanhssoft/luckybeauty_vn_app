@@ -28,7 +28,7 @@ export default function RootLayout() {
         <GestureHandlerRootView>
           <ThemeProvider theme={theme}>
             <Slot />
-            <StatusBar style="light" />
+            <StatusBar style="light" backgroundColor="yelow" />
           </ThemeProvider>
         </GestureHandlerRootView>
       </SQLiteProvider>

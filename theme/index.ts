@@ -17,16 +17,16 @@ export const theme = createTheme({
   },
   components: {
     Button: {
-      titleStyle: { fontSize: 12 },
+      titleStyle: { fontSize: 14 },
     },
     Text: {
       style: {
-        fontSize: 11,
+        fontSize: 14,
       },
     },
     SearchBar: {
       inputStyle: {
-        fontSize: 11,
+        fontSize: 14,
       },
       containerStyle: {
         borderTopWidth: 0,
@@ -36,7 +36,7 @@ export const theme = createTheme({
     },
     Input: {
       inputStyle: {
-        fontSize: 11,
+        fontSize: 14,
       },
     },
   },

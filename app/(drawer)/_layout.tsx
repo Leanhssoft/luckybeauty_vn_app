@@ -11,6 +11,7 @@ import { Drawer } from "expo-router/drawer";
 import { useEffect, useRef, useState } from "react";
 import { findNodeHandle, StyleSheet, UIManager, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+const appLogo = require("../../assets/images/app-logo.png");
 
 // export const unstable_settings = {
 //   drawer: {
@@ -74,7 +75,6 @@ const HeaderRight = () => {
         flexDirection: "row",
         alignItems: "center",
         paddingRight: 16,
-        gap: 4,
       }}
     >
       <Icon name="location-outline" type={IconType.IONICON} size={20} />
@@ -102,6 +102,27 @@ const createStyle = (theme: Theme) =>
     },
   });
 
+function LogoTitle() {
+  const { theme } = useTheme();
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        gap: 8,
+        alignItems: "baseline",
+        marginLeft: -10,
+      }}
+    >
+      <Image source={appLogo} style={{ width: 30, height: 30 }} />
+      <Text
+        style={{ fontSize: 18, fontWeight: 600, color: theme.colors.primary }}
+      >
+        Lucky Beauty
+      </Text>
+    </View>
+  );
+}
+
 export default function DrawerLayout() {
   const { theme } = useTheme();
   const { isLogin, isLoading } = useAppContext();
@@ -109,35 +130,12 @@ export default function DrawerLayout() {
   if (isLoading) return null;
   if (!isLogin) return <Redirect href="/(auth)/login" />;
 
-  function LogoTitle() {
-    return (
-      <View
-        style={{
-          flexDirection: "row",
-          gap: 8,
-          alignItems: "baseline",
-          marginLeft: -10,
-        }}
-      >
-        <Image
-          source={require("../../assets/images/app-logo.png")}
-          style={{ width: 30, height: 30 }}
-        />
-        <Text
-          style={{ fontSize: 18, fontWeight: 600, color: theme.colors.primary }}
-        >
-          Lucky Beauty
-        </Text>
-      </View>
-    );
-  }
-
   // return <Slot />;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
         screenOptions={{
-          headerStyle: { backgroundColor: "#f8f8f8" },
+          headerStyle: { backgroundColor: theme.colors.background },
           headerTintColor: "#333",
           drawerActiveTintColor: "#007aff",
           headerTitleAlign: "left",
