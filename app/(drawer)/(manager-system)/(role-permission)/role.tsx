@@ -5,10 +5,11 @@ import RoleService from "@/services/role_permission/RoleService";
 import CommonFunc from "@/utils/CommonFunc";
 import { Theme } from "@rneui/base";
 import { Avatar, Button, Icon, Input, Text, useTheme } from "@rneui/themed";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
-export default function RolePermission() {
+export default function Role() {
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const [isClickAdd, setIsClickAdd] = useState(false);
@@ -88,7 +89,18 @@ export default function RolePermission() {
       <View style={{ marginTop: 24, gap: 16 }}>
         {listRole?.map((x) => (
           <View style={[styles.flexRow, { gap: 16 }]} key={x.id}>
-            <TouchableOpacity style={styles.card}>
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() =>
+                router.navigate({
+                  pathname:
+                    "/(drawer)/(manager-system)/(role-permission)/permission",
+                  params: {
+                    id: x.id,
+                  },
+                })
+              }
+            >
               <Text
                 style={{ textAlign: "center", fontSize: 18, fontWeight: 600 }}
               >
@@ -107,7 +119,14 @@ export default function RolePermission() {
                 />
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={{ flex: 4 }}>
+            <TouchableOpacity
+              style={{ flex: 4 }}
+              onPress={() =>
+                router.navigate(
+                  "/(drawer)/(manager-system)/(role-permission)/permission"
+                )
+              }
+            >
               <View style={[styles.flexRow]}>
                 <Text style={{ fontSize: 12, color: theme.colors.primary }}>
                   Cài đặt quyền

@@ -16,7 +16,7 @@ export default function ManagerSystemMenu() {
       <TouchableOpacity
         style={styles.tabs}
         onPress={() =>
-          route.navigate("/(drawer)/(manager-system)/role_permission")
+          route.navigate("/(drawer)/(manager-system)/(role-permission)/role")
         }
       >
         <View style={styles.boxLeft}>

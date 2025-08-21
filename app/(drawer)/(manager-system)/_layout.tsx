@@ -33,15 +33,9 @@ export default function ManagerSystemStack() {
         }}
       />
       <Stack.Screen
-        name="role_permission"
+        name="(role-permission)"
         options={{
-          title: "Quyền & vai trò",
-          headerShown: true,
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => route.back()}>
-              <Icon name="arrow-back-ios" size={24} />
-            </TouchableOpacity>
-          ),
+          headerShown: false,
         }}
       />
       <Stack.Screen
