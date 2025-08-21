@@ -15,8 +15,8 @@ import { useAppContext } from "@/store/react_context/AppProvider";
 import { IPropsSimpleDialog } from "@/type/IPropsSimpleDialog";
 import { Theme } from "@rneui/base";
 import { Button, Icon, SearchBar, Text, useTheme } from "@rneui/themed";
-import { useCallback, useEffect, useState } from "react";
-import { FlatList, Platform, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FlatList, Platform, StyleSheet, TextInput, View } from "react-native";
 import { RectButton, ScrollView } from "react-native-gesture-handler";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 
@@ -35,6 +35,7 @@ const Product = () => {
   const styles = createStyles(theme);
   const insets = useSafeAreaInsets();
   const { chiNhanhCurrent } = useAppContext();
+  const searchRef = useRef<TextInput | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [textSearch, setTextSearch] = useState("");
   const isShowBoxFilter = useSharedValue(false);
@@ -100,12 +101,19 @@ const Product = () => {
     }
   }, [currentPage, arrIdNhomHangFilter, textSearch]);
 
-  // useEffect(() => {
-  //   const getData = setTimeout(async () => {
-  //     setCurrentPage(1);
-  //   }, 2000);
-  //   return () => clearTimeout(getData);
-  // }, [textSearch]);
+  useEffect(() => {
+    const getData = setTimeout(async () => {
+      setCurrentPage(1);
+    }, 2000);
+    return () => clearTimeout(getData);
+  }, [textSearch]);
+
+  const onShowBoxSearch = () => {
+    setIsShowBoxSearch(true);
+    setTimeout(() => {
+      searchRef.current?.focus();
+    }, 100);
+  };
 
   useEffect(() => {
     GetListProduct();
@@ -270,6 +278,7 @@ const Product = () => {
       <View style={{ padding: 8 }}>
         {isShowBoxSearch ? (
           <SearchBar
+            ref={searchRef}
             placeholder="Tìm kiếm sản phẩm"
             platform={Platform.OS === "ios" ? "ios" : "android"}
             searchIcon={{ name: "search", type: IconType.IONICON }}
@@ -306,7 +315,7 @@ const Product = () => {
               <Icon
                 name="search"
                 type={IconType.MATERIAL}
-                onPress={() => setIsShowBoxSearch(true)}
+                onPress={onShowBoxSearch}
               />
               {/* <Icon
                 name="filter"

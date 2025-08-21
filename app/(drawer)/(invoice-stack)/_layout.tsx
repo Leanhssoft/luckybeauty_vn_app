@@ -55,7 +55,11 @@ export default function InvoiceStack() {
 
           headerLeft: () => (
             <TouchableOpacity onPress={() => route.back()}>
-              <Icon name="arrow-back-ios" size={24} />
+              <Icon
+                name="arrow-back-ios"
+                size={24}
+                style={{ paddingTop: insets.top }}
+              />
             </TouchableOpacity>
           ),
         }}

@@ -18,6 +18,7 @@ export default function InvoiceMenu() {
   const insest = useSafeAreaInsets();
   const route = useRouter();
   const { chiNhanhCurrent } = useAppContext();
+  const idChiNhanh = chiNhanhCurrent?.id ?? "";
   const [soHDLe, setSoHDLe] = useState(0);
   const [doanhThu_HDLe, setDoanhThu_HDLe] = useState(0);
   const [conNo_HDLe, setConNo_HDLe] = useState(0);
@@ -30,7 +31,7 @@ export default function InvoiceMenu() {
 
   const GetDoanhThu_byLoaiChungTu = useCallback(async () => {
     const param: IParamSearchHoaDondto = {
-      idChiNhanhs: [chiNhanhCurrent?.id ?? ""],
+      idChiNhanhs: [idChiNhanh],
       fromDate: dayjs().startOf("month").format("YYYY-MM-DD"),
       toDate: dayjs().add(1, "day").format("YYYY-MM-DD"),
       idLoaiChungTus: [
@@ -77,7 +78,7 @@ export default function InvoiceMenu() {
       setDoanhThu_TGT(0);
       setConNo_TGT(0);
     }
-  }, [chiNhanhCurrent?.id ?? ""]);
+  }, [idChiNhanh]);
 
   useEffect(() => {
     GetDoanhThu_byLoaiChungTu();

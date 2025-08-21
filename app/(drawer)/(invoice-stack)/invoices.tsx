@@ -1,9 +1,11 @@
 import BottomSheet from "@/components/_bottom_sheet";
+import Radio from "@/components/_radio";
 import { ConfirmOKCancel } from "@/components/confirm_ok_cancel";
 import AppConst from "@/const/AppConst";
 import { IconType } from "@/enum/IconType";
 import { InvoiceStatus } from "@/enum/InvoiceStatus";
 import { LoaiChungTu } from "@/enum/LoaiChungTu";
+import { TrangThaiNo } from "@/enum/TrangThaiNo";
 import { IPageResultDto } from "@/services/commonDto/IPageResultDto";
 import { IHoaDonDto, IHoaDonDto_FullInfor } from "@/services/hoadon/dto";
 import HoaDonService from "@/services/hoadon/HoaDonService";
@@ -11,11 +13,20 @@ import { IParamSearchHoaDondto } from "@/services/hoadon/IParamSearchHoaDondto";
 import { useAppContext } from "@/store/react_context/AppProvider";
 import { IPropsSimpleDialog } from "@/type/IPropsSimpleDialog";
 import CommonFunc from "@/utils/CommonFunc";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { Theme } from "@rneui/base";
 import { Button, Icon, SearchBar, Text, useTheme } from "@rneui/themed";
 import dayjs from "dayjs";
-import { useEffect, useRef, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Platform,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { FlatList, RectButton } from "react-native-gesture-handler";
 import Swipeable, {
   SwipeableMethods,
@@ -34,12 +45,16 @@ export default function Invoices() {
   const styles = createStyles(theme);
   const insets = useSafeAreaInsets();
   const { chiNhanhCurrent } = useAppContext();
+  const idChiNhanhCurrent = chiNhanhCurrent?.id ?? "";
+  const inputRef = useRef<TextInput | null>(null);
   const openRef = useRef<SwipeableMethods | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [textSearch, setTextSearch] = useState("");
 
   const isShowBoxFilter = useSharedValue(false);
   const [isShowBoxSearch, setIsShowBoxSearch] = useState(false);
+  const [isShowDateFromPickker, setIsShowDateFromPickker] = useState(false);
+  const [isShowDateToPickker, setIsShowDateToPickker] = useState(false);
   const [objSimpleDialog, setObjSimpleDialog] = useState<IPropsSimpleDialog>();
   const [invoiceItemChosed, setInvoiceItemChosed] = useState<IHoaDonDto>();
   const [paramSearchHoaDon, setParamSearchHoaDon] =
@@ -50,23 +65,26 @@ export default function Invoices() {
       pageSize: AppConst.PAGE_SIZE,
       idChiNhanhs: [chiNhanhCurrent?.id ?? ""],
       fromDate: dayjs().startOf("month").format("YYYY-MM-DD"),
-      toDate: dayjs().endOf("month").add(1, "day").format("YYYY-MM-DD"),
+      toDate: dayjs().endOf("month").format("YYYY-MM-DD"),
       columnSort: "ngayLapHoaDon",
       typeSort: "desc",
       trangThais: [InvoiceStatus.HOAN_THANH],
+      trangThaiNos: [TrangThaiNo.CON_NO, TrangThaiNo.HET_NO],
     });
+
+  const lenTrangThaiNo = paramSearchHoaDon?.trangThaiNos?.length ?? 0;
 
   const [pageDataHoaDon, setPageDataHoaDon] = useState<
     IPageResultDto<IHoaDonDto>
   >({ items: [], totalCount: 0, totalPage: 0 });
 
-  const getListHoaDon = async (currentPage: number) => {
+  const GetListHoaDon = useCallback(async () => {
     const param: IParamSearchHoaDondto = {
-      textSearch: "",
+      textSearch: textSearch,
       idLoaiChungTus: [LoaiChungTu.HOA_DON_BAN_LE],
       currentPage: currentPage,
       pageSize: AppConst.PAGE_SIZE,
-      idChiNhanhs: [chiNhanhCurrent?.id ?? ""],
+      idChiNhanhs: [idChiNhanhCurrent],
       fromDate: dayjs().startOf("month").format("YYYY-MM-DD"),
       toDate: dayjs().endOf("month").add(1, "day").format("YYYY-MM-DD"),
       columnSort: "ngayLapHoaDon",
@@ -77,25 +95,34 @@ export default function Invoices() {
     const dataNew = data?.items ?? [];
 
     if (currentPage === 1) {
-      setPageDataHoaDon({
-        items: dataNew,
-        totalCount: data?.totalCount ?? 0,
-        totalPage: Math.ceil((data?.totalCount ?? 0) / AppConst.PAGE_SIZE),
+      setPageDataHoaDon((prev) => {
+        return {
+          items: dataNew,
+          totalCount: data?.totalCount ?? 0,
+          totalPage: Math.ceil((data?.totalCount ?? 0) / AppConst.PAGE_SIZE),
+        };
       });
     } else {
-      setPageDataHoaDon({
-        items: [...(pageDataHoaDon?.items ?? []), ...dataNew],
-        totalCount: pageDataHoaDon?.totalCount ?? 0,
-        totalPage: Math.ceil(
-          (pageDataHoaDon?.totalCount ?? 0) / AppConst.PAGE_SIZE
-        ),
+      setPageDataHoaDon((prev) => {
+        return {
+          items: [...(prev?.items ?? []), ...dataNew],
+          totalCount: prev?.totalCount ?? 0,
+          totalPage: Math.ceil((prev?.totalCount ?? 0) / AppConst.PAGE_SIZE),
+        };
       });
     }
-  };
+  }, [currentPage, idChiNhanhCurrent]);
 
   useEffect(() => {
-    getListHoaDon(currentPage);
-  }, [currentPage]);
+    const getData = setTimeout(async () => {
+      setCurrentPage(1);
+    }, 2000);
+    return () => clearTimeout(getData);
+  }, [textSearch]);
+
+  useEffect(() => {
+    GetListHoaDon();
+  }, [GetListHoaDon]);
 
   const handleLoadMore = () => {
     setCurrentPage(() => currentPage + 1);
@@ -220,6 +247,38 @@ export default function Invoices() {
     isShowBoxFilter.value = !isShowBoxFilter.value;
   };
 
+  const changeTrangThaiNo = (arr: number[]) => {
+    setParamSearchHoaDon({ ...paramSearchHoaDon, trangThaiNos: arr });
+  };
+
+  const applyFilter = async () => {
+    isShowBoxFilter.value = !isShowBoxFilter.value;
+    const param: IParamSearchHoaDondto = {
+      textSearch: "",
+      idLoaiChungTus: [LoaiChungTu.HOA_DON_BAN_LE],
+      currentPage: 1,
+      pageSize: AppConst.PAGE_SIZE,
+      idChiNhanhs: [idChiNhanhCurrent],
+      fromDate: dayjs(paramSearchHoaDon?.fromDate ?? new Date()).format(
+        "YYYY-MM-DD"
+      ),
+      toDate: dayjs(paramSearchHoaDon?.toDate ?? new Date())
+        .add(1, "day")
+        .format("YYYY-MM-DD"),
+      columnSort: "ngayLapHoaDon",
+      typeSort: "desc",
+      trangThais: [InvoiceStatus.HOAN_THANH],
+      trangThaiNos: paramSearchHoaDon?.trangThaiNos ?? [],
+    };
+    console.log("param ", param);
+    const data = await HoaDonService.GetListHoaDon(param);
+    setPageDataHoaDon({
+      items: data?.items,
+      totalCount: data?.totalCount,
+      totalPage: data?.totalPage,
+    });
+  };
+
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom }]}>
       <ConfirmOKCancel
@@ -234,14 +293,26 @@ export default function Invoices() {
         {isShowBoxSearch ? (
           <SearchBar
             placeholder="Tìm kiếm hóa đơn"
+            platform={Platform.OS === "ios" ? "ios" : "android"}
+            searchIcon={{ name: "search", type: IconType.IONICON }}
+            clearIcon={{ name: "close", type: IconType.IONICON }}
+            ref={inputRef}
             containerStyle={{
               backgroundColor: theme.colors.white,
+              borderBottomColor: theme.colors.grey5,
+              borderBottomWidth: 1,
+              height: 44,
+              margin: 0,
             }}
             inputContainerStyle={{
+              height: 32,
               backgroundColor: theme.colors.white,
             }}
             value={textSearch}
             onChangeText={(txt) => setTextSearch(txt)}
+            showCancel
+            cancelButtonTitle="Huỷ"
+            onCancel={() => setIsShowBoxSearch(false)}
           />
         ) : (
           <View
@@ -258,7 +329,12 @@ export default function Invoices() {
               <Icon
                 name="search"
                 type={IconType.MATERIAL}
-                onPress={() => setIsShowBoxSearch(true)}
+                onPress={() => {
+                  setIsShowBoxSearch(true);
+                  setTimeout(() => {
+                    inputRef.current?.focus(); // focus into searchbox
+                  }, 100);
+                }}
               />
               <Icon
                 name="filter"
@@ -278,14 +354,15 @@ export default function Invoices() {
         />
       </View>
       <BottomSheet isOpen={isShowBoxFilter} toggleSheet={toggleBoxFilter}>
-        <View
-          style={{
-            width: "100%",
-            height: "100%",
-          }}
-        >
+        <View style={{ width: "100%", position: "relative" }}>
+          <Icon
+            name="close"
+            type={IconType.IONICON}
+            containerStyle={{ position: "absolute", top: -8, right: 0 }}
+            onPress={toggleBoxFilter}
+          />
           <Text style={{ fontWeight: 700, fontSize: 16 }}>Lọc hóa đơn</Text>
-          <View style={{ marginTop: 16, gap: 16 }}>
+          <View style={{ marginTop: 24, gap: 16 }}>
             <View style={{ gap: 8 }}>
               <Text style={{ fontWeight: 600 }}>Thời gian</Text>
 
@@ -293,46 +370,178 @@ export default function Invoices() {
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: "space-between",
+                  justifyContent: "space-evenly",
                 }}
               >
-                <View style={{ gap: 8 }}>
-                  <Text>Từ ngày</Text>
-                  {/* <DateTimePicker
+                {Platform.OS === "ios" ? (
+                  <DateTimePicker
                     value={new Date(paramSearchHoaDon?.fromDate ?? new Date())}
                     mode="date"
                     display="default"
-                    onChange={(event: DateTimePickerEvent, date?: Date) =>
+                    onChange={(event: DateTimePickerEvent, date?: Date) => {
                       setParamSearchHoaDon({
                         ...paramSearchHoaDon,
                         fromDate: dayjs(date).format("YYYY-MM-DD"),
-                      })
-                    }
+                      });
+                      setIsShowDateFromPickker(false);
+                    }}
                     minimumDate={new Date(1950, 1, 1)}
                     timeZoneName="Asia/Ho_Chi_Minh"
                     locale="vi-VN"
-                    is24Hour
-                  /> */}
-                </View>
-                <View style={{ gap: 8 }}>
-                  <Text>Đến ngày</Text>
-                  {/* <DateTimePicker
+                    style={{ backgroundColor: "#ffff" }}
+                  />
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      onPress={() => setIsShowDateFromPickker(true)}
+                    >
+                      <Text
+                        style={{
+                          padding: 8,
+                          borderRadius: 4,
+                          borderWidth: 1,
+                          borderColor: theme.colors.grey5,
+                        }}
+                      >
+                        {dayjs(
+                          paramSearchHoaDon?.fromDate ?? new Date()
+                        ).format("DD/MM/YYYY")}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {isShowDateFromPickker && (
+                      <DateTimePicker
+                        value={
+                          new Date(paramSearchHoaDon?.fromDate ?? new Date())
+                        }
+                        mode="date"
+                        display="default"
+                        onChange={(event: DateTimePickerEvent, date?: Date) => {
+                          setParamSearchHoaDon({
+                            ...paramSearchHoaDon,
+                            fromDate: dayjs(date).format("YYYY-MM-DD"),
+                          });
+                          setIsShowDateFromPickker(false);
+                        }}
+                        minimumDate={new Date(1950, 1, 1)}
+                        timeZoneName="Asia/Ho_Chi_Minh"
+                      />
+                    )}
+                  </>
+                )}
+
+                <Text> đến</Text>
+                {Platform.OS === "ios" ? (
+                  <DateTimePicker
                     value={new Date(paramSearchHoaDon?.toDate ?? new Date())}
                     mode="date"
                     display="default"
-                    onChange={(event: DateTimePickerEvent, date?: Date) =>
+                    onChange={(event: DateTimePickerEvent, date?: Date) => {
                       setParamSearchHoaDon({
                         ...paramSearchHoaDon,
                         toDate: dayjs(date).format("YYYY-MM-DD"),
-                      })
-                    }
+                      });
+                      setIsShowDateFromPickker(false);
+                    }}
                     minimumDate={new Date(1950, 1, 1)}
                     timeZoneName="Asia/Ho_Chi_Minh"
                     locale="vi-VN"
-                    is24Hour
-                  /> */}
-                </View>
+                    style={{ backgroundColor: "#ffff" }}
+                  />
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      onPress={() => setIsShowDateToPickker(true)}
+                    >
+                      <Text
+                        style={{
+                          padding: 8,
+                          borderRadius: 4,
+                          borderWidth: 1,
+                          borderColor: theme.colors.grey5,
+                        }}
+                      >
+                        {dayjs(paramSearchHoaDon?.toDate ?? new Date()).format(
+                          "DD/MM/YYYY"
+                        )}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {isShowDateToPickker && (
+                      <DateTimePicker
+                        value={
+                          new Date(paramSearchHoaDon?.toDate ?? new Date())
+                        }
+                        mode="date"
+                        display="default"
+                        onChange={(event: DateTimePickerEvent, date?: Date) => {
+                          setParamSearchHoaDon({
+                            ...paramSearchHoaDon,
+                            toDate: dayjs(date).format("YYYY-MM-DD"),
+                          });
+                          setIsShowDateFromPickker(false);
+                        }}
+                        minimumDate={new Date(1950, 1, 1)}
+                        timeZoneName="Asia/Ho_Chi_Minh"
+                      />
+                    )}
+                  </>
+                )}
               </View>
+            </View>
+            <Text style={{ fontWeight: 600 }}>Trạng thái nợ</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 24,
+                justifyContent: "center",
+                marginLeft: 20,
+              }}
+            >
+              <Radio
+                isSelected={lenTrangThaiNo === 2}
+                label="Tất cả"
+                onPressRdo={() =>
+                  changeTrangThaiNo([TrangThaiNo.CON_NO, TrangThaiNo.HET_NO])
+                }
+              />
+              <Radio
+                isSelected={
+                  lenTrangThaiNo === 1 &&
+                  (paramSearchHoaDon?.trangThaiNos?.filter(
+                    (x) => x === TrangThaiNo.CON_NO
+                  )?.length ?? 0) > 0
+                }
+                label="Còn nợ"
+                onPressRdo={() => changeTrangThaiNo([TrangThaiNo.CON_NO])}
+              />
+              <Radio
+                isSelected={
+                  lenTrangThaiNo === 1 &&
+                  (paramSearchHoaDon?.trangThaiNos?.filter(
+                    (x) => x === TrangThaiNo.HET_NO
+                  )?.length ?? 0) > 0
+                }
+                label="Hết nợ"
+                onPressRdo={() => changeTrangThaiNo([TrangThaiNo.HET_NO])}
+              />
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                gap: 8,
+                marginTop: 16,
+              }}
+            >
+              <Button
+                title={"Hủy bỏ"}
+                color={"error"}
+                onPress={toggleBoxFilter}
+              />
+              <Button title={"Áp dụng"} onPress={applyFilter} />
             </View>
           </View>
         </View>

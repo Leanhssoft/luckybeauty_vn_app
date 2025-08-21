@@ -70,7 +70,7 @@ export default function BottomSheet({
 const sheetStyles = StyleSheet.create({
   sheet: {
     padding: 16,
-    height: 150,
+    height: "auto",
     width: "100%",
     position: "absolute",
     bottom: 0,
