@@ -1,4 +1,5 @@
 import Popover from "@/components/_popover";
+import DateRangePicker from "@/components/date_range_picker";
 import PageEmpty from "@/components/page_empty";
 import { DateType } from "@/enum/DateType";
 import { IconType } from "@/enum/IconType";
@@ -52,13 +53,15 @@ export default function Dashboard() {
     useState<ChartAxisConfig>();
 
   const [isShowDropdownDate, setIsShowDropdownDate] = useState(false);
+  const [isShowDateRange, setIsShowDateRange] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0, width: 0, height: 0 });
-  const targetRef = useRef<View>(null);
+  const dropdownRef = useRef<View>(null);
+  const datetimeRef = useRef<View>(null);
 
   const [paramSearch, setParamSearch] = useState<IParamSearchFromToDto>({
     dateType: DateType.HOM_NAY,
     fromDate: dayjs().format("YYYY-MM-DD"),
-    toDate: dayjs().add(1, "day").format("YYYY-MM-DD"),
+    toDate: dayjs().format("YYYY-MM-DD"),
     idChiNhanhs: [idChiNhanhCurrent],
   });
 
@@ -66,14 +69,14 @@ export default function Dashboard() {
     useState<IParamSearchFromToDto>({
       timeType: TypeTime.WEEK,
       fromDate: dayjs().startOf("week").add(-1, "day").format("YYYY-MM-DD"),
-      toDate: dayjs().endOf("week").add(1, "day").format("YYYY-MM-DD"),
+      toDate: dayjs().endOf("week").format("YYYY-MM-DD"),
       idChiNhanhs: [idChiNhanhCurrent],
     });
   const [lichHen_ParamFilter, setLichHen_ParamFilter] =
     useState<IParamSearchFromToDto>({
       timeType: TypeTime.WEEK,
       fromDate: dayjs().startOf("week").add(-1, "day").format("YYYY-MM-DD"),
-      toDate: dayjs().endOf("week").add(1, "day").format("YYYY-MM-DD"),
+      toDate: dayjs().endOf("week").format("YYYY-MM-DD"),
       idChiNhanhs: [idChiNhanhCurrent],
     });
 
@@ -209,6 +212,7 @@ export default function Dashboard() {
   }, []);
 
   const SoLuong_changeTypeTime = (newVal: string) => {
+    setIsShowDropdownDate(false);
     switch (newVal) {
       case DateType.HOM_NAY:
         {
@@ -216,7 +220,7 @@ export default function Dashboard() {
             ...paramSearch,
             dateType: newVal,
             fromDate: dayjs().format("YYYY-MM-DD"),
-            toDate: dayjs().add(1, "day").format("YYYY-MM-DD"),
+            toDate: dayjs().format("YYYY-MM-DD"),
           });
           setLabelFilterDate(`Hôm nay, ${dayjs().format("DD/MM/YYYY")}`);
         }
@@ -227,11 +231,36 @@ export default function Dashboard() {
             ...paramSearch,
             dateType: newVal,
             fromDate: dayjs().add(-1, "day").format("YYYY-MM-DD"),
-            toDate: dayjs().format("YYYY-MM-DD"),
+            toDate: dayjs().add(-1, "day").format("YYYY-MM-DD"),
           });
           setLabelFilterDate(
             `Hôm qua, ${dayjs().add(-1, "day").format("DD/MM/YYYY")}`
           );
+        }
+        break;
+      case DateType.TUAN_NAY:
+        {
+          setParamSearch({
+            ...paramSearch,
+            dateType: newVal,
+            fromDate: dayjs().startOf("week").format("YYYY-MM-DD"),
+            toDate: dayjs().endOf("week").format("YYYY-MM-DD"),
+          });
+          setLabelFilterDate(`Tuần này`);
+        }
+        break;
+      case DateType.TUAN_TRUOC:
+        {
+          setParamSearch({
+            ...paramSearch,
+            dateType: newVal,
+            fromDate: dayjs()
+              .startOf("week")
+              .add(-1, "week")
+              .format("YYYY-MM-DD"),
+            toDate: dayjs().endOf("week").add(-1, "week").format("YYYY-MM-DD"),
+          });
+          setLabelFilterDate(`Tuần trước`);
         }
         break;
       case DateType.THANG_NAY:
@@ -240,7 +269,7 @@ export default function Dashboard() {
             ...paramSearch,
             dateType: newVal,
             fromDate: dayjs().startOf("month").format("YYYY-MM-DD"),
-            toDate: dayjs().endOf("month").add(1, "day").format("YYYY-MM-DD"),
+            toDate: dayjs().endOf("month").format("YYYY-MM-DD"),
           });
           setLabelFilterDate(
             `Tháng ${dayjs().startOf("month").format("MM/YYYY")}`
@@ -256,7 +285,10 @@ export default function Dashboard() {
               .startOf("month")
               .add(-1, "month")
               .format("YYYY-MM-DD"),
-            toDate: dayjs().endOf("month").add(-1, "day").format("YYYY-MM-DD"),
+            toDate: dayjs()
+              .endOf("month")
+              .add(-1, "month")
+              .format("YYYY-MM-DD"),
           });
           setLabelFilterDate(
             `Tháng ${dayjs()
@@ -264,6 +296,11 @@ export default function Dashboard() {
               .add(-1, "month")
               .format("MM/YYYY")}`
           );
+        }
+        break;
+      case DateType.TUY_CHON:
+        {
+          setIsShowDateRange(true);
         }
         break;
     }
@@ -277,7 +314,7 @@ export default function Dashboard() {
             ...doanhThu_ParamFilter,
             timeType: newVal,
             fromDate: dayjs().startOf("week").format("YYYY-MM-DD"),
-            toDate: dayjs().endOf("week").add(1, "day").format("YYYY-MM-DD"),
+            toDate: dayjs().endOf("week").format("YYYY-MM-DD"),
           });
         }
         break;
@@ -287,7 +324,7 @@ export default function Dashboard() {
             ...doanhThu_ParamFilter,
             timeType: newVal,
             fromDate: dayjs().startOf("year").format("YYYY-MM-DD"),
-            toDate: dayjs().endOf("month").add(1, "day").format("YYYY-MM-DD"),
+            toDate: dayjs().endOf("month").format("YYYY-MM-DD"),
           });
         }
         break;
@@ -303,7 +340,6 @@ export default function Dashboard() {
             toDate: dayjs()
               .endOf("year")
               .subtract(-6, "year")
-              .add(1, "day")
               .format("YYYY-MM-DD"),
           });
         }
@@ -319,7 +355,7 @@ export default function Dashboard() {
             ...lichHen_ParamFilter,
             timeType: newVal,
             fromDate: dayjs().startOf("week").format("YYYY-MM-DD"),
-            toDate: dayjs().endOf("week").add(1, "day").format("YYYY-MM-DD"),
+            toDate: dayjs().endOf("week").format("YYYY-MM-DD"),
           });
         }
         break;
@@ -329,7 +365,7 @@ export default function Dashboard() {
             ...lichHen_ParamFilter,
             timeType: newVal,
             fromDate: dayjs().startOf("year").format("YYYY-MM-DD"),
-            toDate: dayjs().endOf("month").add(1, "day").format("YYYY-MM-DD"),
+            toDate: dayjs().endOf("month").format("YYYY-MM-DD"),
           });
         }
         break;
@@ -345,7 +381,7 @@ export default function Dashboard() {
             toDate: dayjs()
               .endOf("year")
               .subtract(-6, "year")
-              .add(1, "day")
+
               .format("YYYY-MM-DD"),
           });
         }
@@ -360,16 +396,16 @@ export default function Dashboard() {
   const spacing =
     numberOfBars < 3 ? 50 : (charWidth - initialSpacing) / numberOfBars;
 
-  const showPopover = () => {
-    if (targetRef.current) {
-      targetRef.current.measureInWindow((x, y, width, height) => {
+  const showDropdownDate = () => {
+    if (dropdownRef.current) {
+      dropdownRef.current.measureInWindow((x, y, width, height) => {
         setPosition({ x, y, width, height });
         setIsShowDropdownDate(true);
       });
     }
   };
   const measurePosition = () => {
-    const handle = findNodeHandle(targetRef.current);
+    const handle = findNodeHandle(dropdownRef.current);
     if (handle) {
       UIManager.measure(handle, (x, y, width, height, pageX, pageY) => {
         setPosition({ x: pageX, y: pageY, width, height });
@@ -377,11 +413,20 @@ export default function Dashboard() {
     }
   };
 
+  const onApplyDateRange = (from: string, to: string) => {
+    setParamSearch({ ...paramSearch, fromDate: from, toDate: to });
+    setIsShowDateRange(false);
+
+    setLabelFilterDate(
+      dayjs(from).format("DD/MM/YYYY") + " - " + dayjs(to).format("DD/MM/YYYY")
+    );
+  };
+
   return (
     <ScrollView style={[styles.container]}>
       <View style={{ gap: 24 }}>
         <View style={{ gap: 16 }}>
-          <View ref={targetRef} onLayout={measurePosition}>
+          <View ref={dropdownRef} onLayout={measurePosition}>
             <TouchableOpacity
               style={{
                 paddingHorizontal: 10,
@@ -393,7 +438,7 @@ export default function Dashboard() {
                 alignItems: "center",
                 flexDirection: "row",
               }}
-              onPress={showPopover}
+              onPress={showDropdownDate}
             >
               <Text style={{ fontSize: 12 }}>{labelFilterDate}</Text>
               <Icon name="chevron-down" type={IconType.IONICON} size={12} />
@@ -402,6 +447,7 @@ export default function Dashboard() {
               visible={isShowDropdownDate}
               onClose={() => setIsShowDropdownDate(false)}
               position={position}
+              POPUP_WIDTH={175}
             >
               <View>
                 {arrDateFilter?.map((x) => (
@@ -423,6 +469,19 @@ export default function Dashboard() {
                   </TouchableOpacity>
                 ))}
               </View>
+            </Popover>
+            <Popover
+              visible={isShowDateRange}
+              onClose={() => setIsShowDateRange(false)}
+              position={position}
+              POPUP_WIDTH={screenWidth - 20}
+            >
+              <DateRangePicker
+                from={paramSearch?.fromDate ?? ""}
+                to={paramSearch?.toDate ?? ""}
+                onChangeDate={onApplyDateRange}
+                onClose={() => setIsShowDateRange(false)}
+              />
             </Popover>
           </View>
 
@@ -656,7 +715,7 @@ export default function Dashboard() {
           ) : (
             <LineChart
               data={dataLichHen}
-              initialSpacing={0}
+              initialSpacing={20}
               width={charWidth}
               textFontSize={13}
               textColor1={theme.colors.primary}

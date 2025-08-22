@@ -8,15 +8,17 @@ import {
 } from "react-native";
 
 interface PopoverProps {
+  POPUP_WIDTH?: number;
   visible: boolean;
   onClose: () => void;
   position: { x: number; y: number; width: number; height: number };
   children: React.ReactNode;
 }
 
-const POPUP_WIDTH = 200;
+//const POPUP_WIDTH = 200;
 
 const Popover: React.FC<PopoverProps> = ({
+  POPUP_WIDTH = 200,
   visible,
   onClose,
   position,
@@ -33,7 +35,9 @@ const Popover: React.FC<PopoverProps> = ({
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
-            <View style={[styles.popover, { top, left }]}>{children}</View>
+            <View style={[styles.popover, { width: POPUP_WIDTH, top, left }]}>
+              {children}
+            </View>
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
@@ -49,7 +53,6 @@ const styles = StyleSheet.create({
   },
   popover: {
     position: "absolute",
-    width: POPUP_WIDTH,
     backgroundColor: "white",
     borderRadius: 10,
     padding: 10,
