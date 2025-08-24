@@ -40,11 +40,17 @@ export default function Role() {
       return;
     }
     const input: IRoleDto = {
-      id: 0,
+      id: -1,
       name: roleName,
       displayName: roleName,
+      grantedPermissions: [],
     };
     const data = await RoleService.CreateOrUpdateRole(input);
+    if (data !== null) {
+      input.id = data.id;
+      setListRole([input, ...listRole]);
+      setIsClickAdd(false);
+    }
   };
   return (
     <View style={styles.container}>

@@ -1,6 +1,7 @@
 import api from "../api";
 import { IPagedRequestDto } from "../commonDto/IPagedRequestDto";
 import { IPageResultDto } from "../commonDto/IPageResultDto";
+import { IUserBasic } from "../user/IUserBasic";
 import { IRoleDto } from "./IRoleDto";
 
 class RoleService {
@@ -16,13 +17,18 @@ class RoleService {
     const data = await api.get(`api/services/app/Role/GetAll`, input);
     return data;
   };
-  CreateOrUpdateRole = async (input: IRoleDto): Promise<boolean> => {
-    const data = await api.get(
+  CreateOrUpdateRole = async (input: IRoleDto): Promise<IRoleDto | null> => {
+    const data = await api.post(
       `api/services/app/Role/CreateOrUpdateRole`,
       input
     );
-    console.log("CreateOrUpdateRole ", data);
-    return data?.status === "success";
+    return data;
+  };
+  GetListUser_byRole = async (roleId: number): Promise<IUserBasic> => {
+    const data = await api.get(
+      `api/services/app/Role/GetListUser_byRole?id=${roleId}`
+    );
+    return data;
   };
 }
 

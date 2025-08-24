@@ -9,13 +9,7 @@ export default function RolePermissionStack() {
         name="role"
         options={() => ({
           title: "Vai trò",
-          gestureEnabled: true,
           drawerLockMode: "locked-closed", // chặn Drawer gesture
-          //   headerLeft: () => (
-          //     <TouchableOpacity onPress={() => router.back()}>
-          //       <Icon name="arrow-back-ios" size={24} />
-          //     </TouchableOpacity>
-          //   ),
           headerLeft: ({ canGoBack }) =>
             canGoBack ? (
               <TouchableOpacity onPress={() => router.back()}>
@@ -28,7 +22,7 @@ export default function RolePermissionStack() {
         name="permission"
         options={() => ({
           title: "Cài đặt quyền",
-          gestureEnabled: true,
+          headerTitleAlign: "left",
           drawerLockMode: "locked-closed", // chặn Drawer gesture
           headerLeft: ({ canGoBack }) =>
             canGoBack ? (
