@@ -89,18 +89,7 @@ export default function Role() {
       <View style={{ marginTop: 24, gap: 16 }}>
         {listRole?.map((x) => (
           <View style={[styles.flexRow, { gap: 16 }]} key={x.id}>
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() =>
-                router.navigate({
-                  pathname:
-                    "/(drawer)/(manager-system)/(role-permission)/permission",
-                  params: {
-                    id: x.id,
-                  },
-                })
-              }
-            >
+            <TouchableOpacity style={styles.card}>
               <Text
                 style={{ textAlign: "center", fontSize: 18, fontWeight: 600 }}
               >
@@ -122,9 +111,13 @@ export default function Role() {
             <TouchableOpacity
               style={{ flex: 4 }}
               onPress={() =>
-                router.navigate(
-                  "/(drawer)/(manager-system)/(role-permission)/permission"
-                )
+                router.navigate({
+                  pathname:
+                    "/(drawer)/(manager-system)/(role-permission)/permission",
+                  params: {
+                    id: x.id.toString(),
+                  },
+                })
               }
             >
               <View style={[styles.flexRow]}>
