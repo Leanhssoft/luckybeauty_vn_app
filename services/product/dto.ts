@@ -12,6 +12,7 @@ export interface IDonViQuyDoiDto {
 }
 
 export interface IProductBasic {
+  id: string;
   idHangHoa: string;
   idDonViQuyDoi: string;
   idNhomHangHoa?: string | null;

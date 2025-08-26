@@ -31,6 +31,7 @@ const ModalAddProduct = ({
   const { chiNhanhCurrent } = useAppContext();
   const [isSaving, setIsSaving] = useState(false);
   const [giaBan, setGiaBan] = useState("");
+  const [titleModal, setTitleModal] = useState("");
   const [isShowModalListProductGroup, setIsShowModalListProductGroup] =
     useState(false);
   const [errors, setErrors] = useState({ maHangHoa: "", tenHangHoa: "" });
@@ -40,8 +41,28 @@ const ModalAddProduct = ({
 
   useEffect(() => {
     if (isShow) {
-      ResetData();
-      setObjProduct(new ProductDto({ id: ApiConst.GUID_EMPTY }));
+      if (CommonFunc.checkNull_OrEmpty(objUpdate?.idDonViQuyDoi ?? "")) {
+        setTitleModal("Sản phẩm mới");
+        ResetData();
+        setObjProduct(new ProductDto({ id: ApiConst.GUID_EMPTY }));
+      } else {
+        setTitleModal("Sửa đổi sản phẩm");
+        setGiaBan((objUpdate?.giaBan ?? 0).toString());
+
+        setObjProduct((prev) => {
+          return {
+            ...prev,
+            id: objUpdate?.id ?? "",
+            idHangHoa: objUpdate?.id ?? "",
+            idDonViQuyDoi: objUpdate?.idDonViQuyDoi ?? "",
+            maHangHoa: objUpdate?.maHangHoa ?? "",
+            tenHangHoa: objUpdate?.tenHangHoa ?? "",
+            giaBan: objUpdate?.giaBan ?? 0,
+            idNhomHangHoa: objUpdate?.idNhomHangHoa ?? "",
+            tenNhomHang: objUpdate?.tenNhomHang ?? "",
+          };
+        });
+      }
     }
   }, [isShow]);
 
@@ -87,7 +108,7 @@ const ModalAddProduct = ({
       return false;
     }
     setIsSaving(true);
-
+    console.log("check ", check, isSaving);
     if (isSaving) return;
 
     const input = { ...objProduct };
@@ -106,7 +127,7 @@ const ModalAddProduct = ({
         laDonViTinhChuan: 1,
       },
     ];
-
+    console.log("input ", input);
     const result = await ProductService.CreateOrOEdit(input);
     setIsSaving(false);
 
@@ -120,17 +141,37 @@ const ModalAddProduct = ({
         result.idDonViQuyDoi = dvChuan[0].id;
       }
 
-      const diary: INhatKyThaoTacDto = {
-        idChiNhanh: chiNhanhCurrent?.id ?? "",
-        loaiNhatKy: DiaryStatus.INSERT,
-        chucNang: "Danh mục sản phẩm",
-        noiDung: `Thêm mới sản phẩm ${result?.tenHangHoa} (${result?.maHangHoa})`,
-        noiDungChiTiet: `Thêm mới sản phẩm ${result?.tenHangHoa} (${
-          result?.maHangHoa
-        }) <br />- Giá bán: ${CommonFunc.formatNumbertInput(giaBan)}
+      if (CommonFunc.checkNull_OrEmpty(objUpdate?.idDonViQuyDoi)) {
+        const diary: INhatKyThaoTacDto = {
+          idChiNhanh: chiNhanhCurrent?.id ?? "",
+          loaiNhatKy: DiaryStatus.INSERT,
+          chucNang: "Danh mục sản phẩm",
+          noiDung: `Thêm mới sản phẩm ${result?.tenHangHoa} (${result?.maHangHoa})`,
+          noiDungChiTiet: `Thêm mới sản phẩm ${result?.tenHangHoa} (${
+            result?.maHangHoa
+          }) <br />- Giá bán: ${CommonFunc.formatNumbertInput(giaBan)}
          <br />- Nhóm sản phẩm: ${objProduct?.tenNhomHang ?? ""}`,
-      };
-      await NhatKyThaoTacService.CreateNhatKyHoatDong(diary);
+        };
+        await NhatKyThaoTacService.CreateNhatKyHoatDong(diary);
+      } else {
+        const diary: INhatKyThaoTacDto = {
+          idChiNhanh: chiNhanhCurrent?.id ?? "",
+          loaiNhatKy: DiaryStatus.UPDATE,
+          chucNang: "Danh mục sản phẩm",
+          noiDung: `Cập nhật sản phẩm ${result?.tenHangHoa} (${result?.maHangHoa})`,
+          noiDungChiTiet: `Cập nhật sản phẩm ${result?.tenHangHoa} (${
+            result?.maHangHoa
+          }) <br />- Giá bán: ${CommonFunc.formatNumbertInput(giaBan)}
+          <br />- Nhóm sản phẩm: ${objProduct?.tenNhomHang ?? ""}
+          <br /> Thông tin cũ: 
+          <br /> Mã sản phẩm ${objUpdate?.maHangHoa}
+          <br /> Tên sản phẩm ${objUpdate?.tenHangHoa}
+          <br /> Giá bán ${CommonFunc.formatCurrency(objUpdate?.giaBan ?? 0)}
+          <br /> Thuộc nhóm ${objUpdate?.tenNhomHang}`,
+        };
+        await NhatKyThaoTacService.CreateNhatKyHoatDong(diary);
+      }
+
       onSave(result, ActionType.INSERT);
     }
   };
@@ -151,19 +192,14 @@ const ModalAddProduct = ({
         onClose={() => setIsShowModalListProductGroup(false)}
         onSave={onChoseProductGroup}
       />
-      <BackDropView
-        style={{
-          backgroundColor: "rgba(0, 0, 0, 0.4)",
-          justifyContent: "flex-start",
-        }}
-      >
+      <BackDropView>
         <ModalContainer
           style={{
             position: "relative",
           }}
         >
           <TitleModal
-            title="Sản phẩm mới"
+            title={titleModal}
             onClose={onClose}
             style={{ backgroundColor: theme.colors.primary }}
           />
@@ -186,6 +222,7 @@ const ModalAddProduct = ({
             <TextFieldCustom
               label="Tên sản phẩm"
               variant="outlined"
+              value={objProduct?.tenHangHoa}
               onChangeText={(txt) => {
                 setObjProduct({ ...objProduct, tenHangHoa: txt });
                 setErrors({ ...errors, tenHangHoa: "" });
@@ -219,7 +256,11 @@ const ModalAddProduct = ({
               <TextFieldCustom
                 label="Nhóm sản phẩm"
                 variant="outlined"
-                value={objProduct?.tenNhomHang ?? "Chọn nhóm"}
+                value={
+                  CommonFunc.checkNull(objProduct?.tenNhomHang)
+                    ? "Chọn nhóm"
+                    : objProduct?.tenNhomHang
+                }
                 readOnly
                 endIcon={
                   <Icon
@@ -234,7 +275,9 @@ const ModalAddProduct = ({
 
             <View style={{ paddingTop: 20, gap: 8 }}>
               <Button radius={"md"} onPress={onSaveProduct}>
-                Thêm mới sản phẩm
+                {CommonFunc.checkNull_OrEmpty(objUpdate?.idDonViQuyDoi ?? "")
+                  ? "Thêm mới"
+                  : "Cập nhật "}
               </Button>
             </View>
           </View>

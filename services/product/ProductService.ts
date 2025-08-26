@@ -51,10 +51,12 @@ class ProductSevice {
     const data = await api.post(`api/services/app/HangHoa/CreateOrEdit`, input);
     return data;
   };
-  DeleteProduct = async (idHangHoa: string): Promise<boolean> => {
-    if (CommonFunc.checkNull_OrEmpty(idHangHoa)) return false;
-    await api.post(`api/services/app/HangHoa/Delete`, idHangHoa);
-    return true;
+  DeleteProduct = async (idHangHoa: string): Promise<ProductDto | null> => {
+    if (CommonFunc.checkNull_OrEmpty(idHangHoa)) return null;
+    const data = await api.post(
+      `api/services/app/HangHoa/Delete?id=${idHangHoa}`
+    );
+    return data;
   };
   DeleteMultipleProduct = async (arrIdHangHoa: string[]): Promise<boolean> => {
     if (arrIdHangHoa?.length === 0) return false;

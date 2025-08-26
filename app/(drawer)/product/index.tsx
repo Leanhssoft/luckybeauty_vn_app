@@ -16,9 +16,19 @@ import { IPropsSimpleDialog } from "@/type/IPropsSimpleDialog";
 import { Theme } from "@rneui/base";
 import { Button, Icon, SearchBar, Text, useTheme } from "@rneui/themed";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FlatList, Platform, StyleSheet, TextInput, View } from "react-native";
+import {
+  findNodeHandle,
+  FlatList,
+  Platform,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { RectButton, ScrollView } from "react-native-gesture-handler";
-import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
+import Swipeable, {
+  SwipeableMethods,
+} from "react-native-gesture-handler/ReanimatedSwipeable";
 
 import ModalAddProductGroup from "@/components/product_group/modal_add_produt_group";
 import { ActionType } from "@/enum/ActionType";
@@ -36,10 +46,13 @@ const Product = () => {
   const insets = useSafeAreaInsets();
   const { chiNhanhCurrent } = useAppContext();
   const searchRef = useRef<TextInput | null>(null);
+  const openRef = useRef<SwipeableMethods | null>(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [textSearch, setTextSearch] = useState("");
   const isShowBoxFilter = useSharedValue(false);
   const [isShowBoxSearch, setIsShowBoxSearch] = useState(false);
+  const [isShowPopoverAction, setIsShowPopoverAction] = useState(false);
   const [isShowModalAddProduct, setIsShowShowModalAddProduct] = useState(false);
   const [isShowModalAdd_ProductGroup, setIsShowModalAdd_ProductGroup] =
     useState(false);
@@ -135,13 +148,131 @@ const Product = () => {
       isShow: true,
       mes: `Bạn có chắc chắn muốn xóa sản phẩm ${productChosed?.tenHangHoa} không?`,
     });
+    openRef?.current?.close();
   };
 
   const handleLoadMore = () => {
     setCurrentPage(() => currentPage + 1);
   };
 
-  const onLongPressProduct = () => {};
+  const dropdownRef = useRef<View>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0, width: 0, height: 0 });
+
+  const showPopoverAction = () => {
+    if (dropdownRef.current) {
+      dropdownRef.current.measureInWindow((x, y, width, height) => {
+        setPosition({ x, y, width, height });
+        setIsShowPopoverAction(true);
+      });
+    }
+  };
+  const measurePosition = () => {
+    const handle = findNodeHandle(dropdownRef.current);
+    if (handle) {
+      dropdownRef?.current?.measureInWindow((x, y, width, height) => {
+        setPosition({ x, y, width, height });
+      });
+    }
+  };
+
+  const onLongPressProduct = (ref: View | null, item: IProductBasic) => {
+    ref?.measureInWindow((x, y, width, height) => {
+      setPosition({ x, y, width, height });
+      setProductChosed(item);
+      setIsShowPopoverAction(true);
+    });
+  };
+
+  const onPressAction = (type: number) => {};
+
+  const arrAction = [
+    { id: ActionType.UPDATE, label: "Sửa" },
+    { id: ActionType.DELETE, label: "Xóa" },
+  ];
+
+  const toggleBoxFilter = () => {
+    isShowBoxFilter.value = !isShowBoxFilter.value;
+  };
+
+  const showModalAddNewProduct = () => {
+    setIsShowShowModalAddProduct(true);
+    setProductChosed(null);
+    openRef?.current?.close();
+  };
+  const showModalUpdatewProduct = () => {
+    setIsShowShowModalAddProduct(true);
+    openRef?.current?.close();
+  };
+
+  const showModalAddNew_ProductGroup = () => {
+    setIsShowModalAdd_ProductGroup(true);
+  };
+
+  const saveOKProductGroup = (item: IProductGroupDto) => {
+    setIsShowModalAdd_ProductGroup(false);
+    setListGroupProduct([item, ...listGroupProduct]);
+  };
+
+  const deleteProduct = async () => {
+    console.log("productChosed?.id ", productChosed?.id);
+    const deleteOK = await ProductService.DeleteProduct(
+      productChosed?.id ?? ""
+    );
+    if (deleteOK !== null) {
+      const diary: INhatKyThaoTacDto = {
+        idChiNhanh: chiNhanhCurrent?.id ?? "",
+        loaiNhatKy: DiaryStatus.DELETE,
+        chucNang: "Danh mục hàng hóa",
+        noiDung: `Xóa hàng hóa '  ${productChosed?.tenHangHoa} (${productChosed?.maHangHoa})`,
+        noiDungChiTiet: `Xóa hàng hóa '  ${productChosed?.tenHangHoa} (${productChosed?.maHangHoa})`,
+      };
+      await NhatKyThaoTacService.CreateNhatKyHoatDong(diary);
+      setPageResultProduct({
+        ...pageResultProduct,
+        totalCount: pageResultProduct?.totalCount - 1,
+        items: pageResultProduct?.items?.filter(
+          (x) => x.idDonViQuyDoi !== productChosed?.idDonViQuyDoi
+        ),
+      });
+    }
+    setObjSimpleDialog({ ...objSimpleDialog, isShow: false });
+  };
+
+  const saveOKProuduct = (item: IProductBasic, actionid?: number) => {
+    setIsShowShowModalAddProduct(false);
+    switch (actionid ?? 0) {
+      case ActionType.INSERT:
+        {
+          setPageResultProduct({
+            items: [item, ...(pageResultProduct?.items ?? [])],
+            totalCount: (pageResultProduct?.totalCount ?? 0) + 1,
+            totalPage: 1, // not important
+          });
+        }
+        break;
+      case ActionType.UPDATE:
+        {
+          setPageResultProduct({
+            ...pageResultProduct,
+            items: pageResultProduct?.items?.map((x) => {
+              if (x.idDonViQuyDoi === item.idDonViQuyDoi) {
+                return {
+                  ...x,
+                  maHangHoa: item?.maHangHoa,
+                  tenHangHoa: item?.tenHangHoa,
+                  tenNhomHang: item?.tenNhomHang,
+                  idNhomHangHoa: item?.idNhomHangHoa,
+                  giaBan: item?.giaBan,
+                };
+              } else {
+                return x;
+              }
+            }),
+          });
+        }
+        break;
+    }
+  };
 
   function RightAction(
     progress: SharedValue<number>,
@@ -154,32 +285,63 @@ const Product = () => {
     }, []);
 
     return (
-      <Reanimated.View style={styleAnimation}>
-        <Button
-          title="Xóa"
+      <Reanimated.View style={[styleAnimation, { flexDirection: "row" }]}>
+        <TouchableOpacity
+          style={[styles.action, { backgroundColor: theme.colors.primary }]}
+          onPress={showModalUpdatewProduct}
+        >
+          <Icon
+            name="note-edit"
+            type={IconType.MATERIAL_COMMUNITY}
+            color={theme.colors.white}
+            size={18}
+          />
+          <Text style={styles.actionText}>Sửa</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.action, { backgroundColor: theme.colors.error }]}
           onPress={showConfirmDelete}
-          icon={{ name: "delete", color: "white" }}
-          buttonStyle={{
-            minHeight: "100%",
-            height: "100%",
-            backgroundColor: "red",
-          }}
-        />
+        >
+          <Icon
+            name="delete"
+            type={IconType.MATERIAL_COMMUNITY}
+            color={theme.colors.white}
+            size={18}
+          />
+          <Text style={styles.actionText}>Xóa</Text>
+        </TouchableOpacity>
       </Reanimated.View>
     );
   }
   const productItem = ({ item }: { item: IProductBasic }) => {
+    let swipeableRef: SwipeableMethods | null = null;
+
     return (
       <Swipeable
         friction={2}
+        dragOffsetFromRightEdge={100}
         renderRightActions={RightAction}
         containerStyle={{ overflow: "hidden" }}
-        onSwipeableOpen={(dỉrection) => {
-          // if (dỉrection === "right")
+        onSwipeableOpen={() => {
           setProductChosed({ ...item });
+          if (openRef.current && openRef.current !== swipeableRef) {
+            openRef.current.close();
+          }
+          openRef.current = swipeableRef;
+        }}
+        ref={(ref) => {
+          if (ref) swipeableRef = ref;
+        }}
+        onSwipeableClose={() => {
+          if (openRef.current === swipeableRef) {
+            openRef.current = null;
+          }
         }}
       >
-        <RectButton style={styles.productItem} onLongPress={onLongPressProduct}>
+        <RectButton
+          style={styles.productItem}
+          onLongPress={() => onLongPressProduct(dropdownRef.current, item)}
+        >
           <View style={[styles.flexRow, styles.contentItem]}>
             <View style={{ gap: 4 }}>
               <Text>{item.tenHangHoa}</Text>
@@ -204,57 +366,6 @@ const Product = () => {
     );
   };
 
-  const toggleBoxFilter = () => {
-    isShowBoxFilter.value = !isShowBoxFilter.value;
-  };
-
-  const showModalAddNewProduct = () => {
-    setIsShowShowModalAddProduct(true);
-  };
-
-  const showModalAddNew_ProductGroup = () => {
-    setIsShowModalAdd_ProductGroup(true);
-  };
-
-  const saveOKProductGroup = (item: IProductGroupDto) => {
-    setIsShowModalAdd_ProductGroup(false);
-    setListGroupProduct([item, ...listGroupProduct]);
-  };
-
-  const deleteProduct = async () => {
-    const deleteOK = await ProductService.DeleteProduct(
-      productChosed?.idHangHoa ?? ""
-    );
-    if (deleteOK) {
-      const diary: INhatKyThaoTacDto = {
-        idChiNhanh: chiNhanhCurrent?.id ?? "",
-        loaiNhatKy: DiaryStatus.DELETE,
-        chucNang: "Danh mục hàng hóa",
-        noiDung: `Xóa hàng hóa '  ${productChosed?.tenHangHoa} (${productChosed?.maHangHoa})`,
-        noiDungChiTiet: `Xóa hàng hóa '  ${productChosed?.tenHangHoa} (${productChosed?.maHangHoa})`,
-      };
-      await NhatKyThaoTacService.CreateNhatKyHoatDong(diary);
-    }
-  };
-
-  const saveOKProuduct = (item: IProductBasic, actionid?: number) => {
-    setIsShowShowModalAddProduct(false);
-    switch (actionid ?? 0) {
-      case ActionType.INSERT:
-        {
-          setPageResultProduct({
-            items: [item, ...(pageResultProduct?.items ?? [])],
-            totalCount: (pageResultProduct?.totalCount ?? 0) + 1,
-            totalPage: 1, // not important
-          });
-        }
-        break;
-      case ActionType.UPDATE:
-        {
-        }
-        break;
-    }
-  };
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom }]}>
       <ConfirmOKCancel
@@ -269,6 +380,7 @@ const Product = () => {
         isShow={isShowModalAddProduct}
         onClose={() => setIsShowShowModalAddProduct(false)}
         onSave={saveOKProuduct}
+        objUpdate={productChosed as unknown as undefined}
       />
       <ModalAddProductGroup
         isShow={isShowModalAdd_ProductGroup}
@@ -436,5 +548,16 @@ const createStyles = (theme: Theme) =>
     contentItem: {
       flex: 1,
       justifyContent: "space-between",
+    },
+    action: {
+      justifyContent: "center",
+      height: "100%",
+      width: 70,
+      gap: 4,
+    },
+    actionText: {
+      textAlign: "center",
+      color: theme.colors.white,
+      fontSize: 14,
     },
   });
