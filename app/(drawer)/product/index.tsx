@@ -17,7 +17,6 @@ import { Theme } from "@rneui/base";
 import { Button, Icon, SearchBar, Text, useTheme } from "@rneui/themed";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  findNodeHandle,
   FlatList,
   Platform,
   StyleSheet,
@@ -25,20 +24,36 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { RectButton, ScrollView } from "react-native-gesture-handler";
+import { Pressable, ScrollView } from "react-native-gesture-handler";
 import Swipeable, {
   SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
 
 import ModalAddProductGroup from "@/components/product_group/modal_add_produt_group";
 import { ActionType } from "@/enum/ActionType";
-import Reanimated, {
+import {
+  default as Animated,
+  default as Reanimated,
+  runOnJS,
   SharedValue,
   useAnimatedStyle,
   useSharedValue,
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ModalAddProduct from "../../../components/product/modal_add_product";
+
+interface IPosition {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+type ProductItemProps = {
+  item: IProductBasic;
+  onLongPress: (ref: View, item: IProductBasic) => void;
+};
 
 const Product = () => {
   const { theme } = useTheme();
@@ -91,7 +106,7 @@ const Product = () => {
       idNhomHangHoas: arrIdNhomHangFilter,
     };
 
-    console.log("param ", param);
+    // console.log("param ", param);
     const data = await ProductService.GetListproduct(param);
     const newData = data?.items ?? [];
 
@@ -107,7 +122,13 @@ const Product = () => {
       setPageResultProduct((prev) => {
         return {
           ...prev,
-          items: [...prev.items, ...newData],
+          items: [
+            ...prev.items,
+            ...newData.filter(
+              (x) =>
+                !prev.items.some((y) => y.idDonViQuyDoi === x.idDonViQuyDoi)
+            ),
+          ],
           totalCount: prev.totalCount ?? 0,
         };
       });
@@ -155,33 +176,57 @@ const Product = () => {
     setCurrentPage(() => currentPage + 1);
   };
 
-  const dropdownRef = useRef<View>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [position, setPosition] = useState<IPosition | null>({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
+  const scale = useSharedValue(1);
+  const overlayOpacity = useSharedValue(0);
+  const actionOpacity = useSharedValue(0);
+  const actionTranslateY = useSharedValue(-10);
 
-  const showPopoverAction = () => {
-    if (dropdownRef.current) {
-      dropdownRef.current.measureInWindow((x, y, width, height) => {
-        setPosition({ x, y, width, height });
-        setIsShowPopoverAction(true);
-      });
-    }
-  };
-  const measurePosition = () => {
-    const handle = findNodeHandle(dropdownRef.current);
-    if (handle) {
-      dropdownRef?.current?.measureInWindow((x, y, width, height) => {
-        setPosition({ x, y, width, height });
-      });
-    }
-  };
+  // action style
+  const actionStyle = useAnimatedStyle(() => ({
+    opacity: actionOpacity.value,
+    transform: [{ translateY: actionTranslateY.value }],
+  }));
 
-  const onLongPressProduct = (ref: View | null, item: IProductBasic) => {
-    ref?.measureInWindow((x, y, width, height) => {
+  const onLongPressProduct = (ref: View, item: IProductBasic) => {
+    ref.measureInWindow((x, y, width, height) => {
       setPosition({ x, y, width, height });
       setProductChosed(item);
-      setIsShowPopoverAction(true);
+
+      // start animation
+      scale.value = withTiming(1.05, { duration: 180 });
+      overlayOpacity.value = withTiming(0.5, { duration: 180 });
+
+      actionOpacity.value = withTiming(1, { duration: 200 });
+      actionTranslateY.value = withTiming(0, { duration: 200 });
     });
   };
+
+  const onPressOutProduct = () => {
+    scale.value = withTiming(1, { duration: 150 }, () => {
+      runOnJS(setProductChosed)(null);
+      runOnJS(setPosition)(null);
+    });
+    overlayOpacity.value = withTiming(0, { duration: 150 });
+
+    actionOpacity.value = withTiming(0, { duration: 120 });
+    actionTranslateY.value = withTiming(-10, { duration: 120 });
+  };
+
+  // overlay style
+  const overlayStyle = useAnimatedStyle(() => ({
+    opacity: overlayOpacity.value,
+  }));
+
+  // clone item style
+  const cloneStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   const onPressAction = (type: number) => {};
 
@@ -189,10 +234,6 @@ const Product = () => {
     { id: ActionType.UPDATE, label: "Sửa" },
     { id: ActionType.DELETE, label: "Xóa" },
   ];
-
-  const toggleBoxFilter = () => {
-    isShowBoxFilter.value = !isShowBoxFilter.value;
-  };
 
   const showModalAddNewProduct = () => {
     setIsShowShowModalAddProduct(true);
@@ -214,7 +255,6 @@ const Product = () => {
   };
 
   const deleteProduct = async () => {
-    console.log("productChosed?.id ", productChosed?.id);
     const deleteOK = await ProductService.DeleteProduct(
       productChosed?.id ?? ""
     );
@@ -238,9 +278,9 @@ const Product = () => {
     setObjSimpleDialog({ ...objSimpleDialog, isShow: false });
   };
 
-  const saveOKProuduct = (item: IProductBasic, actionid?: number) => {
+  const saveOKProuduct = (item: IProductBasic, btnRightActionid?: number) => {
     setIsShowShowModalAddProduct(false);
-    switch (actionid ?? 0) {
+    switch (btnRightActionid ?? 0) {
       case ActionType.INSERT:
         {
           setPageResultProduct({
@@ -287,7 +327,10 @@ const Product = () => {
     return (
       <Reanimated.View style={[styleAnimation, { flexDirection: "row" }]}>
         <TouchableOpacity
-          style={[styles.action, { backgroundColor: theme.colors.primary }]}
+          style={[
+            styles.btnRightAction,
+            { backgroundColor: theme.colors.primary },
+          ]}
           onPress={showModalUpdatewProduct}
         >
           <Icon
@@ -296,10 +339,13 @@ const Product = () => {
             color={theme.colors.white}
             size={18}
           />
-          <Text style={styles.actionText}>Sửa</Text>
+          <Text style={styles.btnRightActionText}>Sửa</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.action, { backgroundColor: theme.colors.error }]}
+          style={[
+            styles.btnRightAction,
+            { backgroundColor: theme.colors.error },
+          ]}
           onPress={showConfirmDelete}
         >
           <Icon
@@ -308,14 +354,17 @@ const Product = () => {
             color={theme.colors.white}
             size={18}
           />
-          <Text style={styles.actionText}>Xóa</Text>
+          <Text style={styles.btnRightActionText}>Xóa</Text>
         </TouchableOpacity>
       </Reanimated.View>
     );
   }
-  const productItem = ({ item }: { item: IProductBasic }) => {
-    let swipeableRef: SwipeableMethods | null = null;
 
+  const ProductItem = ({ item, onLongPress }: ProductItemProps) => {
+    let swipeableRef: SwipeableMethods | null = null;
+    const itemRef = useRef<View>(null); // ref riêng cho mỗi item
+    const { theme } = useTheme();
+    const isSelected = item.id === productChosed?.id;
     return (
       <Swipeable
         friction={2}
@@ -338,11 +387,16 @@ const Product = () => {
           }
         }}
       >
-        <RectButton
+        <Pressable
           style={styles.productItem}
-          onLongPress={() => onLongPressProduct(dropdownRef.current, item)}
+          onLongPress={() => {
+            if (itemRef.current) {
+              onLongPress(itemRef.current, item);
+            }
+          }}
+          onPressOut={onPressOutProduct}
         >
-          <View style={[styles.flexRow, styles.contentItem]}>
+          <View style={[styles.flexRow, styles.contentItem]} ref={itemRef}>
             <View style={{ gap: 4 }}>
               <Text>{item.tenHangHoa}</Text>
               <Text
@@ -361,7 +415,7 @@ const Product = () => {
               {new Intl.NumberFormat("vi-VN").format(item.giaBan)}
             </Text>
           </View>
-        </RectButton>
+        </Pressable>
       </Swipeable>
     );
   };
@@ -501,18 +555,137 @@ const Product = () => {
         ) : (
           <FlatList
             data={pageResultProduct?.items}
-            renderItem={productItem}
+            // renderItem={productItem}
+            renderItem={({ item }) => (
+              <ProductItem item={item} onLongPress={onLongPressProduct} />
+            )}
             keyExtractor={(item) => item.idDonViQuyDoi}
             onEndReachedThreshold={0.1}
             onEndReached={handleLoadMore}
           />
+        )}
+        {productChosed && position && (
+          <>
+            {/* Overlay mờ */}
+            <Animated.View
+              style={[StyleSheet.absoluteFill, styles.overlay, overlayStyle]}
+              pointerEvents="auto"
+            >
+              {/* bắt sự kiện tap ngoài clone */}
+              <Pressable
+                style={StyleSheet.absoluteFill}
+                onPress={onPressOutProduct}
+              />
+            </Animated.View>
+
+            {/* Item nổi bật */}
+            <Animated.View
+              style={[
+                styles.clone,
+                {
+                  top: position.y,
+                  left: position.x,
+                  width: position.width,
+                  height: position.height,
+                },
+                cloneStyle,
+              ]}
+            >
+              <View style={[styles.flexRow, styles.contentItem]}>
+                <View style={{ gap: 4 }}>
+                  <Text>{productChosed.tenHangHoa}</Text>
+                  <Text
+                    style={{
+                      color: theme.colors.success,
+                    }}
+                  >
+                    {productChosed.maHangHoa}
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    fontWeight: 500,
+                  }}
+                >
+                  {new Intl.NumberFormat("vi-VN").format(productChosed.giaBan)}
+                </Text>
+              </View>
+            </Animated.View>
+
+            <Animated.View
+              style={[
+                styles.actionMenu,
+                {
+                  top: position.y - 45,
+                  left: position.x,
+                },
+                actionStyle,
+              ]}
+              // style={{
+              //   top: position.y - 45,
+              //   left: position.x,
+              //   position: "absolute",
+              //   borderRadius: 8,
+              //   padding: 10,
+              //   elevation: 4,
+              //   backgroundColor: theme.colors.background,
+              //   shadowColor: "#000",
+              //   shadowOffset: { width: 0, height: 0.5 },
+              //   shadowOpacity: 0.25,
+              //   shadowRadius: 3,
+              //   zIndex: 11,
+              //   width: 150,
+              // }}
+            >
+              <TouchableOpacity
+                style={[styles.flexRow, styles.dropdownItemAction]}
+                onPress={showModalUpdatewProduct}
+              >
+                <Icon
+                  name="note-edit-outline"
+                  type={IconType.MATERIAL_COMMUNITY}
+                  size={18}
+                />
+                <Text>Sửa</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.flexRow,
+                  styles.dropdownItemAction,
+                  {
+                    borderBottomWidth: 1,
+                    borderBottomColor: theme.colors.grey5,
+                  },
+                ]}
+                onPress={showConfirmDelete}
+              >
+                <Icon
+                  name="delete-outline"
+                  type={IconType.MATERIAL_COMMUNITY}
+                  size={18}
+                />
+                <Text>Xóa</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.flexRow, styles.dropdownItemAction]}
+                onPress={() => setIsCheckMultipleProduct(true)}
+              >
+                <Icon
+                  name="check"
+                  type={IconType.MATERIAL_COMMUNITY}
+                  size={18}
+                />
+                <Text>Chọn nhiều</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </>
         )}
       </View>
       <BottomButtonAdd onPress={showModalAddNewProduct} />
 
       {/* <ActionBottomNew visible={true}>
         <View>
-          <Text>hi action</Text>
+          <Text>hi btnRightAction</Text>
         </View>
       </ActionBottomNew> */}
     </View>
@@ -549,15 +722,43 @@ const createStyles = (theme: Theme) =>
       flex: 1,
       justifyContent: "space-between",
     },
-    action: {
+    btnRightAction: {
       justifyContent: "center",
       height: "100%",
       width: 70,
       gap: 4,
     },
-    actionText: {
+    btnRightActionText: {
       textAlign: "center",
       color: theme.colors.white,
       fontSize: 14,
+    },
+    dropdownItemAction: {
+      padding: 8,
+      gap: 4,
+    },
+    overlay: {
+      backgroundColor: "black",
+    },
+    clone: {
+      position: "absolute",
+      backgroundColor: "white",
+      borderRadius: 8,
+      elevation: 6,
+      padding: 12,
+      zIndex: 10,
+    },
+    actionMenu: {
+      position: "absolute",
+      backgroundColor: "white",
+      padding: 10,
+      borderRadius: 8,
+      elevation: 5,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      zIndex: 15,
+      gap: 8,
     },
   });
