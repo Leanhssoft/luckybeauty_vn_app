@@ -6,7 +6,7 @@ import { useAppContext } from "@/store/react_context/AppProvider";
 import { Theme } from "@rneui/base";
 import { Icon, useTheme } from "@rneui/themed";
 import { useEffect, useRef, useState } from "react";
-import { findNodeHandle, StyleSheet, UIManager, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import Dropdown from "../dropdown";
 
 const HeaderRight = () => {
@@ -44,12 +44,10 @@ const HeaderRight = () => {
     }
   };
   const measurePosition = () => {
-    const handle = findNodeHandle(targetRef.current);
-    if (handle) {
-      UIManager.measure(handle, (x, y, width, height, pageX, pageY) => {
-        setPosition({ x: pageX, y: pageY, width, height });
-      });
-    }
+    targetRef?.current?.measure((x, y, width, height) => {
+      setPosition({ x, y, width, height });
+      setVisible(true);
+    });
   };
 
   const hidePopover = () => setVisible(false);

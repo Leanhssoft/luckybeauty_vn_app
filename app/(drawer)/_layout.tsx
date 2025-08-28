@@ -1,15 +1,14 @@
-import Dropdown from "@/components/dropdown";
+import Popover from "@/components/_popover";
 import { IconType } from "@/enum/IconType";
 import { IChiNhanhBasicDto } from "@/services/chi_nhanh/ChiNhanhDto";
 import ChiNhanhService from "@/services/chi_nhanh/ChiNhanhService";
-import { ISelect } from "@/services/commonDto/ISelect";
 import { useAppContext } from "@/store/react_context/AppProvider";
 import { Theme } from "@rneui/base";
 import { Icon, Image, Text, useTheme } from "@rneui/themed";
 import { Redirect } from "expo-router";
 import { Drawer } from "expo-router/drawer";
 import { useEffect, useRef, useState } from "react";
-import { findNodeHandle, StyleSheet, UIManager, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 const appLogo = require("../../assets/images/app-logo.png");
 
@@ -47,8 +46,9 @@ const HeaderRight = () => {
     GetListChiNhanhByUserLogin();
   }, []);
 
-  const changeChiNhanh = (item: ISelect) => {
-    setChiNhanhCurrent({ id: item.id, tenChiNhanh: item.text });
+  const changeChiNhanh = (item: IChiNhanhBasicDto) => {
+    setChiNhanhCurrent({ id: item.id, tenChiNhanh: item.tenChiNhanh });
+    setVisible(false);
   };
 
   const showPopover = () => {
@@ -60,15 +60,11 @@ const HeaderRight = () => {
     }
   };
   const measurePosition = () => {
-    const handle = findNodeHandle(targetRef.current);
-    if (handle) {
-      UIManager.measure(handle, (x, y, width, height, pageX, pageY) => {
-        setPosition({ x: pageX, y: pageY, width, height });
-      });
-    }
+    targetRef.current?.measure((x, y, width, height, pageX, pageY) => {
+      setPosition({ x, y, width, height });
+    });
   };
 
-  const hidePopover = () => setVisible(false);
   return (
     <View
       style={{
@@ -76,19 +72,45 @@ const HeaderRight = () => {
         alignItems: "center",
         paddingRight: 16,
       }}
+      ref={targetRef}
+      onLayout={measurePosition}
     >
-      <Icon name="location-outline" type={IconType.IONICON} size={20} />
-      <Dropdown
-        options={lstChiNhanhByUser?.map((x) => {
-          return { id: x.id, text: x.tenChiNhanh } as ISelect;
-        })}
-        itemSelected={{
-          id: chiNhanhCurrent?.id ?? "",
-          text: chiNhanhCurrent?.tenChiNhanh ?? "",
-        }}
-        onSelect={changeChiNhanh}
-      />
-      <Icon name="bell-outline" type={IconType.MATERIAL_COMMUNITY} size={20} />
+      <TouchableOpacity
+        style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+        onPress={showPopover}
+      >
+        <Icon name="location-outline" type={IconType.IONICON} size={18} />
+        <Text>{chiNhanhCurrent?.tenChiNhanh}</Text>
+        <Icon name="chevron-down" type={IconType.IONICON} size={14} />
+      </TouchableOpacity>
+      <Popover
+        visible={visible}
+        onClose={() => setVisible(false)}
+        position={position}
+        POPUP_WIDTH={150}
+      >
+        <View>
+          {lstChiNhanhByUser?.map((x) => (
+            <TouchableOpacity
+              style={{ padding: 8 }}
+              key={x.id}
+              onPress={() => changeChiNhanh(x)}
+            >
+              <Text
+                style={{
+                  color:
+                    x.id === chiNhanhCurrent?.id
+                      ? theme.colors.primary
+                      : theme.colors.black,
+                }}
+              >
+                {x.tenChiNhanh}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </Popover>
+      <Icon name="bell-outline" type={IconType.MATERIAL_COMMUNITY} size={18} />
     </View>
   );
 };

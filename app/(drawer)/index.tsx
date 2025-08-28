@@ -10,11 +10,9 @@ import dayjs from "dayjs";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dimensions,
-  findNodeHandle,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  UIManager,
   View,
 } from "react-native";
 import {
@@ -56,7 +54,6 @@ export default function Dashboard() {
   const [isShowDateRange, setIsShowDateRange] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const dropdownRef = useRef<View>(null);
-  const datetimeRef = useRef<View>(null);
 
   const [paramSearch, setParamSearch] = useState<IParamSearchFromToDto>({
     dateType: DateType.HOM_NAY,
@@ -405,12 +402,9 @@ export default function Dashboard() {
     }
   };
   const measurePosition = () => {
-    const handle = findNodeHandle(dropdownRef.current);
-    if (handle) {
-      UIManager.measure(handle, (x, y, width, height, pageX, pageY) => {
-        setPosition({ x: pageX, y: pageY, width, height });
-      });
-    }
+    dropdownRef.current?.measure((x, y, width, height, pageX, pageY) => {
+      setPosition({ x, y, width, height });
+    });
   };
 
   const onApplyDateRange = (from: string, to: string) => {
