@@ -5,6 +5,7 @@ import { Redirect, Slot } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function MainLayout() {
   const { isLogin, isLoading } = useAppContext();
@@ -21,14 +22,16 @@ function MainLayout() {
 
 export default function RootLayout() {
   // const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
+  // const { theme } = useTheme();
 
   return (
     <AppProvider>
       <SQLiteProvider databaseName="expo-luckybeauty.db">
         <GestureHandlerRootView>
           <ThemeProvider theme={theme}>
+            <StatusBar style="dark" />
             <Slot />
-            <StatusBar style="light" backgroundColor="yelow" />
           </ThemeProvider>
         </GestureHandlerRootView>
       </SQLiteProvider>
