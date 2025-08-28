@@ -143,7 +143,7 @@ export default function Invoices() {
     });
   };
 
-  const showConfirmDelete = () => {
+  const showConfirmDelete = (item?: IHoaDonDto) => {
     setObjSimpleDialog({
       ...objSimpleDialog,
       isShow: true,
@@ -155,7 +155,8 @@ export default function Invoices() {
 
   function RightAction(
     progress: SharedValue<number>,
-    drag: SharedValue<number>
+    drag: SharedValue<number>,
+    item: IHoaDonDto
   ) {
     const styleAnimation = useAnimatedStyle(() => {
       return {
@@ -167,7 +168,10 @@ export default function Invoices() {
       <Reanimated.View style={styleAnimation}>
         <Button
           title="Xóa"
-          onPress={showConfirmDelete}
+          onPress={() => {
+            setInvoiceItemChosed(item);
+            showConfirmDelete(item);
+          }}
           icon={{ name: "delete", color: "white" }}
           buttonStyle={{
             minHeight: "100%",
@@ -185,10 +189,11 @@ export default function Invoices() {
     return (
       <Swipeable
         friction={2}
-        renderRightActions={RightAction}
+        renderRightActions={(progress, drag) =>
+          RightAction(progress, drag, item)
+        }
         containerStyle={{ overflow: "hidden" }}
         onSwipeableOpen={() => {
-          setInvoiceItemChosed(item);
           if (openRef.current && openRef.current !== swipeableRef?.current) {
             openRef.current.close();
           }

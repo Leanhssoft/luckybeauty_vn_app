@@ -164,11 +164,17 @@ const Product = () => {
     setCurrentPage(1);
   };
 
-  const showConfirmDelete = () => {
+  const showConfirmDelete = (itemChosed?: IProductBasic) => {
+    let tenHangHoa = "";
+    if (itemChosed) {
+      tenHangHoa = itemChosed?.tenHangHoa ?? "";
+    } else {
+      tenHangHoa = productChosed?.tenHangHoa ?? "";
+    }
     setObjSimpleDialog({
       ...objSimpleDialog,
       isShow: true,
-      mes: `Bạn có chắc chắn muốn xóa sản phẩm ${productChosed?.tenHangHoa} không?`,
+      mes: `Bạn có chắc chắn muốn xóa sản phẩm ${tenHangHoa} không?`,
     });
   };
 
@@ -325,7 +331,8 @@ const Product = () => {
 
   function RightAction(
     progress: SharedValue<number>,
-    drag: SharedValue<number>
+    drag: SharedValue<number>,
+    item: IProductBasic
   ) {
     const styleAnimation = useAnimatedStyle(() => {
       return {
@@ -340,7 +347,10 @@ const Product = () => {
             styles.btnRightAction,
             { backgroundColor: theme.colors.primary },
           ]}
-          onPress={showModalUpdatewProduct}
+          onPress={() => {
+            setProductChosed(item);
+            showModalUpdatewProduct();
+          }}
         >
           <Icon
             name="note-edit"
@@ -355,7 +365,10 @@ const Product = () => {
             styles.btnRightAction,
             { backgroundColor: theme.colors.error },
           ]}
-          onPress={showConfirmDelete}
+          onPress={() => {
+            setProductChosed(item);
+            showConfirmDelete(item);
+          }}
         >
           <Icon
             name="delete"
@@ -377,10 +390,11 @@ const Product = () => {
       <Swipeable
         friction={2}
         dragOffsetFromRightEdge={100}
-        renderRightActions={RightAction}
+        renderRightActions={(progress, drag) =>
+          RightAction(progress, drag, item)
+        }
         containerStyle={{ overflow: "hidden" }}
         onSwipeableOpen={() => {
-          setProductChosed(item);
           if (openRef.current && openRef.current !== swipeableRef.current) {
             openRef.current.close();
           }
@@ -645,7 +659,7 @@ const Product = () => {
                     borderBottomColor: theme.colors.grey5,
                   },
                 ]}
-                onPress={showConfirmDelete}
+                onPress={() => showConfirmDelete}
               >
                 <Icon
                   name="delete-outline"
