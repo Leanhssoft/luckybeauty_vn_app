@@ -159,9 +159,9 @@ export default function Invoices() {
   ) {
     const styleAnimation = useAnimatedStyle(() => {
       return {
-        transform: [{ translateX: progress.value }], // ví dụ
+        transform: [{ translateX: drag.value + 80 }],
       };
-    }, []); // 👈 dependency array cố định
+    }, []);
 
     return (
       <Reanimated.View style={styleAnimation}>
@@ -179,8 +179,8 @@ export default function Invoices() {
     );
   }
 
-  const invoiceItem = ({ item }: { item: IHoaDonDto_FullInfor }) => {
-    let swipeableRef: SwipeableMethods | null = null;
+  const InvoiceItem = ({ item }: { item: IHoaDonDto_FullInfor }) => {
+    const swipeableRef = useRef<SwipeableMethods | null>(null);
 
     return (
       <Swipeable
@@ -188,17 +188,15 @@ export default function Invoices() {
         renderRightActions={RightAction}
         containerStyle={{ overflow: "hidden" }}
         onSwipeableOpen={() => {
-          setInvoiceItemChosed({ ...item });
-          if (openRef.current && openRef.current !== swipeableRef) {
+          setInvoiceItemChosed(item);
+          if (openRef.current && openRef.current !== swipeableRef?.current) {
             openRef.current.close();
           }
-          openRef.current = swipeableRef;
+          openRef.current = swipeableRef.current;
         }}
-        ref={(ref) => {
-          if (ref) swipeableRef = ref;
-        }}
+        ref={swipeableRef}
         onSwipeableClose={() => {
-          if (openRef.current === swipeableRef) {
+          if (openRef.current === swipeableRef.current) {
             openRef.current = null;
           }
         }}
@@ -347,7 +345,8 @@ export default function Invoices() {
 
         <FlatList
           data={pageDataHoaDon?.items}
-          renderItem={invoiceItem}
+          // renderItem={invoiceItem}
+          renderItem={({ item }) => <InvoiceItem item={item} />}
           keyExtractor={(item) => item.id}
           onEndReachedThreshold={0.1}
           onEndReached={handleLoadMore}

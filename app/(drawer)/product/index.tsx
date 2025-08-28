@@ -68,7 +68,6 @@ const Product = () => {
   const [textSearch, setTextSearch] = useState("");
   const isShowBoxFilter = useSharedValue(false);
   const [isShowBoxSearch, setIsShowBoxSearch] = useState(false);
-  const [isShowPopoverAction, setIsShowPopoverAction] = useState(false);
   const [isShowModalAddProduct, setIsShowShowModalAddProduct] = useState(false);
   const [isShowModalAdd_ProductGroup, setIsShowModalAdd_ProductGroup] =
     useState(false);
@@ -106,6 +105,7 @@ const Product = () => {
       pageSize: AppConst.PAGE_SIZE,
       idNhomHangHoas: arrIdNhomHangFilter,
     };
+    console.log("GetListProduct ", param);
 
     // console.log("param ", param);
     const data = await ProductService.GetListproduct(param);
@@ -170,7 +170,6 @@ const Product = () => {
       isShow: true,
       mes: `Bạn có chắc chắn muốn xóa sản phẩm ${productChosed?.tenHangHoa} không?`,
     });
-    openRef?.current?.close();
   };
 
   const handleLoadMore = () => {
@@ -246,16 +245,13 @@ const Product = () => {
     transform: [{ scale: scale.value }],
     opacity: cloneOpacity.value,
   }));
-  const onPressAction = (type: number) => {};
 
   const showModalAddNewProduct = () => {
     setIsShowShowModalAddProduct(true);
     setProductChosed(null);
-    openRef?.current?.close();
   };
   const showModalUpdatewProduct = () => {
     setIsShowShowModalAddProduct(true);
-    openRef?.current?.close();
   };
 
   const showModalAddNew_ProductGroup = () => {
@@ -333,7 +329,7 @@ const Product = () => {
   ) {
     const styleAnimation = useAnimatedStyle(() => {
       return {
-        transform: [{ translateX: progress.value }], // ví dụ
+        transform: [{ translateX: drag.value + 140 }],
       };
     }, []);
 
@@ -374,10 +370,9 @@ const Product = () => {
   }
 
   const ProductItem = ({ item, onLongPress }: ProductItemProps) => {
-    let swipeableRef: SwipeableMethods | null = null;
+    const swipeableRef = useRef<SwipeableMethods | null>(null);
     const itemRef = useRef<View>(null); // ref riêng cho mỗi item
     const { theme } = useTheme();
-    const isSelected = item.id === productChosed?.id;
     return (
       <Swipeable
         friction={2}
@@ -385,17 +380,15 @@ const Product = () => {
         renderRightActions={RightAction}
         containerStyle={{ overflow: "hidden" }}
         onSwipeableOpen={() => {
-          setProductChosed({ ...item });
-          if (openRef.current && openRef.current !== swipeableRef) {
+          setProductChosed(item);
+          if (openRef.current && openRef.current !== swipeableRef.current) {
             openRef.current.close();
           }
-          openRef.current = swipeableRef;
+          openRef.current = swipeableRef.current;
         }}
-        ref={(ref) => {
-          if (ref) swipeableRef = ref;
-        }}
+        ref={swipeableRef}
         onSwipeableClose={() => {
-          if (openRef.current === swipeableRef) {
+          if (openRef.current === swipeableRef.current) {
             openRef.current = null;
           }
         }}
@@ -407,7 +400,6 @@ const Product = () => {
               onLongPress(itemRef.current, item);
             }
           }}
-          onPressOut={onPressOutProduct}
         >
           <View style={[styles.flexRow, styles.contentItem]} ref={itemRef}>
             <View style={{ gap: 4 }}>
