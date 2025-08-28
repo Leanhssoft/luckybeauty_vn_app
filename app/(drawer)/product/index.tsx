@@ -33,6 +33,7 @@ import ModalAddProductGroup from "@/components/product_group/modal_add_produt_gr
 import { ActionType } from "@/enum/ActionType";
 import {
   default as Animated,
+  Easing,
   default as Reanimated,
   runOnJS,
   SharedValue,
@@ -183,6 +184,7 @@ const Product = () => {
     height: 0,
   });
   const scale = useSharedValue(1);
+  const cloneOpacity = useSharedValue(1);
   const overlayOpacity = useSharedValue(0);
   const actionOpacity = useSharedValue(0);
   const actionTranslateY = useSharedValue(-10);
@@ -199,6 +201,7 @@ const Product = () => {
       setProductChosed(item);
 
       // start animation
+      cloneOpacity.value = 1;
       scale.value = withTiming(1.05, { duration: 180 });
       overlayOpacity.value = withTiming(0.5, { duration: 180 });
 
@@ -208,14 +211,29 @@ const Product = () => {
   };
 
   const onPressOutProduct = () => {
-    scale.value = withTiming(1, { duration: 150 }, () => {
-      runOnJS(setProductChosed)(null);
-      runOnJS(setPosition)(null);
+    // scale item về 1
+    scale.value = withTiming(1, {
+      duration: 150,
+      easing: Easing.out(Easing.quad),
     });
-    overlayOpacity.value = withTiming(0, { duration: 150 });
+    overlayOpacity.value = withTiming(0, {
+      duration: 150,
+      easing: Easing.out(Easing.quad),
+    });
 
+    // action menu ẩn
     actionOpacity.value = withTiming(0, { duration: 120 });
     actionTranslateY.value = withTiming(-10, { duration: 120 });
+
+    // Ẩn clone item mượt
+    cloneOpacity.value = withTiming(
+      0,
+      { duration: 150, easing: Easing.out(Easing.quad) },
+      () => {
+        runOnJS(setProductChosed)(null);
+        runOnJS(setPosition)(null);
+      }
+    );
   };
 
   // overlay style
@@ -226,14 +244,9 @@ const Product = () => {
   // clone item style
   const cloneStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
+    opacity: cloneOpacity.value,
   }));
-
   const onPressAction = (type: number) => {};
-
-  const arrAction = [
-    { id: ActionType.UPDATE, label: "Sửa" },
-    { id: ActionType.DELETE, label: "Xóa" },
-  ];
 
   const showModalAddNewProduct = () => {
     setIsShowShowModalAddProduct(true);
@@ -555,7 +568,6 @@ const Product = () => {
         ) : (
           <FlatList
             data={pageResultProduct?.items}
-            // renderItem={productItem}
             renderItem={({ item }) => (
               <ProductItem item={item} onLongPress={onLongPressProduct} />
             )}
@@ -581,12 +593,11 @@ const Product = () => {
             {/* Item nổi bật */}
             <Animated.View
               style={[
-                styles.clone,
+                styles.itemClone,
                 {
-                  top: position.y,
+                  top: position.y - 74,
                   left: position.x,
                   width: position.width,
-                  height: position.height,
                 },
                 cloneStyle,
               ]}
@@ -616,26 +627,11 @@ const Product = () => {
               style={[
                 styles.actionMenu,
                 {
-                  top: position.y - 45,
                   left: position.x,
+                  top: position.y + position.height - 50,
                 },
                 actionStyle,
               ]}
-              // style={{
-              //   top: position.y - 45,
-              //   left: position.x,
-              //   position: "absolute",
-              //   borderRadius: 8,
-              //   padding: 10,
-              //   elevation: 4,
-              //   backgroundColor: theme.colors.background,
-              //   shadowColor: "#000",
-              //   shadowOffset: { width: 0, height: 0.5 },
-              //   shadowOpacity: 0.25,
-              //   shadowRadius: 3,
-              //   zIndex: 11,
-              //   width: 150,
-              // }}
             >
               <TouchableOpacity
                 style={[styles.flexRow, styles.dropdownItemAction]}
@@ -738,23 +734,23 @@ const createStyles = (theme: Theme) =>
       gap: 4,
     },
     overlay: {
-      backgroundColor: "black",
+      backgroundColor: theme.colors.black,
     },
-    clone: {
+    itemClone: {
       position: "absolute",
-      backgroundColor: "white",
+      backgroundColor: theme.colors.white,
       borderRadius: 8,
       elevation: 6,
-      padding: 12,
+      padding: 10,
       zIndex: 10,
     },
     actionMenu: {
       position: "absolute",
-      backgroundColor: "white",
+      backgroundColor: theme.colors.white,
       padding: 10,
       borderRadius: 8,
       elevation: 5,
-      shadowColor: "#000",
+      shadowColor: theme.colors.background,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.25,
       shadowRadius: 4,
