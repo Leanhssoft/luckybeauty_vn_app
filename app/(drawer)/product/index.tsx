@@ -14,7 +14,14 @@ import ProductGroupSevice from "@/services/product_group/ProductGroupSevice";
 import { useAppContext } from "@/store/react_context/AppProvider";
 import { IPropsSimpleDialog } from "@/type/IPropsSimpleDialog";
 import { Theme } from "@rneui/base";
-import { Button, Icon, SearchBar, Text, useTheme } from "@rneui/themed";
+import {
+  Button,
+  CheckBox,
+  Icon,
+  SearchBar,
+  Text,
+  useTheme,
+} from "@rneui/themed";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
@@ -29,6 +36,9 @@ import Swipeable, {
   SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
 
+import { TextLink } from "@/components/_text_link";
+import { ActionBottomNew } from "@/components/action_bottom_delete";
+import { ActionTop } from "@/components/action_top";
 import ModalAddProductGroup from "@/components/product_group/modal_add_produt_group";
 import { ActionType } from "@/enum/ActionType";
 import {
@@ -53,6 +63,9 @@ interface IPosition {
 
 type ProductItemProps = {
   item: IProductBasic;
+  isShowCheck?: boolean;
+  isChosed?: boolean;
+  onPress: (item: IProductBasic) => void;
   onLongPress: (ref: View, item: IProductBasic) => void;
 };
 
@@ -72,6 +85,7 @@ const Product = () => {
   const [isShowModalAdd_ProductGroup, setIsShowModalAdd_ProductGroup] =
     useState(false);
   const [isCheckMultipleProduct, setIsCheckMultipleProduct] = useState(false);
+  const [isCheckAll, setIsCheckAll] = useState(false);
   const [arrIdQuyDoiChosed, setArrIdQuyDoiChosed] = useState<string[]>([]);
   const [arrIdNhomHangFilter, setArrIdNhomHangFilter] = useState<string[]>([]);
   const [listGroupProduct, setListGroupProduct] = useState<IProductGroupDto[]>(
@@ -194,25 +208,83 @@ const Product = () => {
   const actionOpacity = useSharedValue(0);
   const actionTranslateY = useSharedValue(-10);
 
+  const opacity = useSharedValue(0);
+  const topAction_TranslateY = useSharedValue(-40);
+
+  useEffect(() => {
+    opacity.value = withTiming(isCheckMultipleProduct ? 1 : 0, {
+      duration: 500,
+      easing: Easing.out(Easing.ease),
+    });
+    topAction_TranslateY.value = withTiming(isCheckMultipleProduct ? 0 : -40, {
+      duration: 500,
+      easing: Easing.out(Easing.ease),
+    });
+  }, [isCheckMultipleProduct]);
+
+  const topAction_animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: topAction_TranslateY.value }],
+  }));
+
+  const clickChonNhieu = () => {
+    setProductChosed(null);
+    setIsCheckMultipleProduct(true);
+    setArrIdQuyDoiChosed([productChosed?.idDonViQuyDoi ?? ""]);
+  };
+
+  const clickXoaNhieu = () => {
+    setObjSimpleDialog({
+      ...objSimpleDialog,
+      isShow: true,
+      mes: `Bạn có chắc chắn muốn xóa ${arrIdQuyDoiChosed?.length} sản phẩm này không`,
+    });
+  };
+
   // action style
   const actionStyle = useAnimatedStyle(() => ({
     opacity: actionOpacity.value,
     transform: [{ translateY: actionTranslateY.value }],
   }));
 
-  const onLongPressProduct = (ref: View, item: IProductBasic) => {
-    ref.measureInWindow((x, y, width, height) => {
-      setPosition({ x, y, width, height });
-      setProductChosed(item);
-
-      // start animation
-      cloneOpacity.value = 1;
-      scale.value = withTiming(1.05, { duration: 180 });
-      overlayOpacity.value = withTiming(0.5, { duration: 180 });
-
-      actionOpacity.value = withTiming(1, { duration: 200 });
-      actionTranslateY.value = withTiming(0, { duration: 200 });
+  const choseProduct = (item: IProductBasic) => {
+    setArrIdQuyDoiChosed((prev) => {
+      if (prev.includes(item?.idDonViQuyDoi))
+        return prev?.filter((x) => x !== item?.idDonViQuyDoi);
+      else return [...prev, item?.idDonViQuyDoi];
     });
+  };
+
+  const choseAllProduct = () => {
+    setIsCheckAll(!isCheckAll);
+    if (isCheckAll) {
+      setArrIdQuyDoiChosed([]);
+    } else {
+      setArrIdQuyDoiChosed(
+        pageResultProduct?.items?.map((x) => {
+          return x.idDonViQuyDoi;
+        })
+      );
+    }
+  };
+
+  const onLongPressProduct = (ref: View, item: IProductBasic) => {
+    if (isCheckMultipleProduct) {
+      choseProduct(item);
+    } else {
+      ref.measureInWindow((x, y, width, height) => {
+        setPosition({ x, y, width, height });
+        setProductChosed(item);
+
+        // start animation
+        cloneOpacity.value = 1;
+        scale.value = withTiming(1.05, { duration: 180 });
+        overlayOpacity.value = withTiming(0.5, { duration: 180 });
+
+        actionOpacity.value = withTiming(1, { duration: 200 });
+        actionTranslateY.value = withTiming(0, { duration: 200 });
+      });
+    }
   };
 
   const onPressOutProduct = () => {
@@ -270,25 +342,50 @@ const Product = () => {
   };
 
   const deleteProduct = async () => {
-    const deleteOK = await ProductService.DeleteProduct(
-      productChosed?.id ?? ""
-    );
-    if (deleteOK !== null) {
+    let deleteOK = false;
+    if (isCheckMultipleProduct) {
+      deleteOK = await ProductService.DeleteMultipleProduct(arrIdQuyDoiChosed);
+
+      setPageResultProduct({
+        ...pageResultProduct,
+        totalCount:
+          pageResultProduct?.totalCount - (arrIdQuyDoiChosed?.length ?? 0),
+        items: pageResultProduct?.items?.filter(
+          (x) => !arrIdQuyDoiChosed.includes(x.id)
+        ),
+      });
+      setArrIdQuyDoiChosed([]);
+
       const diary: INhatKyThaoTacDto = {
         idChiNhanh: chiNhanhCurrent?.id ?? "",
         loaiNhatKy: DiaryStatus.DELETE,
         chucNang: "Danh mục hàng hóa",
-        noiDung: `Xóa hàng hóa '  ${productChosed?.tenHangHoa} (${productChosed?.maHangHoa})`,
-        noiDungChiTiet: `Xóa hàng hóa '  ${productChosed?.tenHangHoa} (${productChosed?.maHangHoa})`,
+        noiDung: `Xóa ${arrIdQuyDoiChosed?.length ?? 0} hàng hóa`,
+        noiDungChiTiet: `Xóa ${arrIdQuyDoiChosed?.length ?? 0} hàng hóa gồm: `,
       };
       await NhatKyThaoTacService.CreateNhatKyHoatDong(diary);
-      setPageResultProduct({
-        ...pageResultProduct,
-        totalCount: pageResultProduct?.totalCount - 1,
-        items: pageResultProduct?.items?.filter(
-          (x) => x.idDonViQuyDoi !== productChosed?.idDonViQuyDoi
-        ),
-      });
+    } else {
+      const xx = await ProductService.DeleteProduct(productChosed?.id ?? "");
+      if (xx !== null) {
+        const diary: INhatKyThaoTacDto = {
+          idChiNhanh: chiNhanhCurrent?.id ?? "",
+          loaiNhatKy: DiaryStatus.DELETE,
+          chucNang: "Danh mục hàng hóa",
+          noiDung: `Xóa hàng hóa '  ${productChosed?.tenHangHoa} (${productChosed?.maHangHoa})`,
+          noiDungChiTiet: `Xóa hàng hóa '  ${productChosed?.tenHangHoa} (${productChosed?.maHangHoa})`,
+        };
+        await NhatKyThaoTacService.CreateNhatKyHoatDong(diary);
+        setPageResultProduct({
+          ...pageResultProduct,
+          totalCount: pageResultProduct?.totalCount - 1,
+          items: pageResultProduct?.items?.filter(
+            (x) => x.idDonViQuyDoi !== productChosed?.idDonViQuyDoi
+          ),
+        });
+      }
+    }
+
+    if (deleteOK !== null) {
     }
     setObjSimpleDialog({ ...objSimpleDialog, isShow: false });
   };
@@ -382,12 +479,19 @@ const Product = () => {
     );
   }
 
-  const ProductItem = ({ item, onLongPress }: ProductItemProps) => {
+  const ProductItem = ({
+    item,
+    isShowCheck,
+    isChosed,
+    onPress,
+    onLongPress,
+  }: ProductItemProps) => {
     const swipeableRef = useRef<SwipeableMethods | null>(null);
     const itemRef = useRef<View>(null); // ref riêng cho mỗi item
     const { theme } = useTheme();
     return (
       <Swipeable
+        enabled={!isShowCheck}
         friction={2}
         dragOffsetFromRightEdge={100}
         renderRightActions={(progress, drag) =>
@@ -414,18 +518,28 @@ const Product = () => {
               onLongPress(itemRef.current, item);
             }
           }}
+          onPress={() => onPress(item)}
         >
           <View style={[styles.flexRow, styles.contentItem]} ref={itemRef}>
-            <View style={{ gap: 4 }}>
-              <Text>{item.tenHangHoa}</Text>
-              <Text
-                style={{
-                  color: theme.colors.success,
-                }}
-              >
-                {item.maHangHoa}
-              </Text>
+            <View style={{ flexDirection: "row" }}>
+              {isShowCheck && (
+                <CheckBox
+                  checked={isChosed ?? false}
+                  containerStyle={{ margin: 0, padding: 0 }}
+                />
+              )}
+              <View style={{ gap: 4 }}>
+                <Text>{item.tenHangHoa}</Text>
+                <Text
+                  style={{
+                    color: theme.colors.success,
+                  }}
+                >
+                  {item.maHangHoa}
+                </Text>
+              </View>
             </View>
+
             <Text
               style={{
                 fontWeight: 500,
@@ -575,7 +689,13 @@ const Product = () => {
           <FlatList
             data={pageResultProduct?.items}
             renderItem={({ item }) => (
-              <ProductItem item={item} onLongPress={onLongPressProduct} />
+              <ProductItem
+                item={item}
+                onPress={choseProduct}
+                onLongPress={onLongPressProduct}
+                isShowCheck={isCheckMultipleProduct}
+                isChosed={arrIdQuyDoiChosed.includes(item.idDonViQuyDoi)}
+              />
             )}
             keyExtractor={(item) => item.idDonViQuyDoi}
             onEndReachedThreshold={0.1}
@@ -670,7 +790,7 @@ const Product = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.flexRow, styles.dropdownItemAction]}
-                onPress={() => setIsCheckMultipleProduct(true)}
+                onPress={clickChonNhieu}
               >
                 <Icon
                   name="check"
@@ -684,12 +804,83 @@ const Product = () => {
         )}
       </View>
       <BottomButtonAdd onPress={showModalAddNewProduct} />
-
-      {/* <ActionBottomNew visible={true}>
-        <View>
-          <Text>hi btnRightAction</Text>
+      <ActionBottomNew visible={isCheckMultipleProduct}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            height: 60,
+            paddingHorizontal: 40,
+            backgroundColor: theme.colors.disabled,
+          }}
+        >
+          <TouchableOpacity style={{ gap: 4 }}>
+            <Icon
+              name="arrow-right-bold-circle-outline"
+              type={IconType.MATERIAL_COMMUNITY}
+              color={
+                (arrIdQuyDoiChosed?.length ?? 0) > 0
+                  ? theme.colors.black
+                  : "rgba(150, 150, 150, 0.5)"
+              }
+            />
+            <Text
+              style={{
+                color:
+                  (arrIdQuyDoiChosed?.length ?? 0) > 0
+                    ? theme.colors.black
+                    : "rgba(150, 150, 150, 0.5)",
+              }}
+            >
+              Chuyển nhóm
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{ gap: 4 }} onPress={clickXoaNhieu}>
+            <Icon
+              name="delete-outline"
+              type={IconType.MATERIAL_COMMUNITY}
+              color={
+                (arrIdQuyDoiChosed?.length ?? 0) > 0
+                  ? theme.colors.error
+                  : "rgba(150, 150, 150, 0.5)"
+              }
+            />
+            <Text
+              style={{
+                color:
+                  (arrIdQuyDoiChosed?.length ?? 0) > 0
+                    ? theme.colors.error
+                    : "rgba(150, 150, 150, 0.5)",
+              }}
+            >
+              Xóa
+            </Text>
+          </TouchableOpacity>
         </View>
-      </ActionBottomNew> */}
+      </ActionBottomNew>
+
+      <ActionTop visible={isCheckMultipleProduct}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            height: 50,
+            backgroundColor: theme.colors.disabled,
+            paddingHorizontal: 20,
+          }}
+        >
+          <View style={{ gap: 8, flexDirection: "row", alignItems: "center" }}>
+            <Icon name="close" type={IconType.MATERIAL_COMMUNITY} size={20} />
+            <Text>{arrIdQuyDoiChosed?.length ?? 0}</Text>
+          </View>
+          <TextLink
+            lable={isCheckAll ? "Bỏ chọn tất cả" : "Chọn tất cả"}
+            onPress={choseAllProduct}
+          />
+        </View>
+      </ActionTop>
     </View>
   );
 };
