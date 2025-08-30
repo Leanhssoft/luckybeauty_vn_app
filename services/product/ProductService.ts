@@ -66,6 +66,14 @@ class ProductSevice {
     );
     return true;
   };
+  ChuyenNhomHang = async (arrIdHangHoa: string[], idNhomHang: string) => {
+    if (arrIdHangHoa?.length === 0) return false;
+    await api.post(
+      `api/services/app/HangHoa/ChuyenNhomHang?idNhomHang=${idNhomHang}`,
+      arrIdHangHoa
+    );
+    return true;
+  };
 }
 
 export default new ProductSevice();

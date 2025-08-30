@@ -2,7 +2,7 @@ import { useFadeAndSlideUpAnimation } from "@/hooks/useFadeAndSlideUpAnimation";
 import { Theme } from "@rneui/base";
 import { useTheme } from "@rneui/themed";
 import React from "react";
-import { Dimensions, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -15,7 +15,6 @@ export const ActionTop = ({ visible, children }: ActionBottomProps) => {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = createStyles(theme);
-  const SCREEN_HEIGHT = Dimensions.get("window").height;
   const animatedStyle = useFadeAndSlideUpAnimation(visible, -40);
 
   return (

@@ -3,13 +3,14 @@ import { IconType } from "@/enum/IconType";
 import { IChiNhanhBasicDto } from "@/services/chi_nhanh/ChiNhanhDto";
 import ChiNhanhService from "@/services/chi_nhanh/ChiNhanhService";
 import { useAppContext } from "@/store/react_context/AppProvider";
+import { DrawerContextProvider } from "@/store/react_context/DrawerContextProvider";
 import { Theme } from "@rneui/base";
 import { Icon, Image, Text, useTheme } from "@rneui/themed";
 import { Redirect } from "expo-router";
 import { Drawer } from "expo-router/drawer";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+
 const appLogo = require("../../assets/images/app-logo.png");
 
 // export const unstable_settings = {
@@ -152,9 +153,8 @@ export default function DrawerLayout() {
   if (isLoading) return null;
   if (!isLogin) return <Redirect href="/(auth)/login" />;
 
-  // return <Slot />;
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <DrawerContextProvider>
       <Drawer
         screenOptions={{
           headerStyle: { backgroundColor: theme.colors.background },
@@ -213,6 +213,7 @@ export default function DrawerLayout() {
           name="product/index"
           options={{
             title: "Sản phẩm",
+            drawerLabel: "Sản phẩm",
             drawerIcon: ({ focused, color, size }) => (
               <Icon
                 type={IconType.IONICON}
@@ -251,6 +252,6 @@ export default function DrawerLayout() {
           }}
         />
       </Drawer>
-    </GestureHandlerRootView>
+    </DrawerContextProvider>
   );
 }

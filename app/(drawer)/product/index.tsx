@@ -36,11 +36,13 @@ import Swipeable, {
   SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
 
-import { TextLink } from "@/components/_text_link";
 import { ActionBottomNew } from "@/components/action_bottom_delete";
 import { ActionTop } from "@/components/action_top";
+import ModalListProductGroup from "@/components/product_group/list_group_product";
 import ModalAddProductGroup from "@/components/product_group/modal_add_produt_group";
 import { ActionType } from "@/enum/ActionType";
+import { useStatusBarContext } from "@/store/react_context/StatusBarProvider";
+import { useNavigation } from "expo-router";
 import {
   default as Animated,
   Easing,
@@ -74,8 +76,10 @@ const Product = () => {
   const styles = createStyles(theme);
   const insets = useSafeAreaInsets();
   const { chiNhanhCurrent } = useAppContext();
+  const { config, setConfig } = useStatusBarContext();
   const searchRef = useRef<TextInput | null>(null);
   const openRef = useRef<SwipeableMethods | null>(null);
+  const navigation = useNavigation();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [textSearch, setTextSearch] = useState("");
@@ -85,8 +89,10 @@ const Product = () => {
   const [isShowModalAdd_ProductGroup, setIsShowModalAdd_ProductGroup] =
     useState(false);
   const [isCheckMultipleProduct, setIsCheckMultipleProduct] = useState(false);
+  const [isShowModalListProductGroup, setIsShowModalListProductGroup] =
+    useState(false);
   const [isCheckAll, setIsCheckAll] = useState(false);
-  const [arrIdQuyDoiChosed, setArrIdQuyDoiChosed] = useState<string[]>([]);
+  const [arrIdHangHoaChosed, setArrIdHangHoaChosed] = useState<string[]>([]);
   const [arrIdNhomHangFilter, setArrIdNhomHangFilter] = useState<string[]>([]);
   const [listGroupProduct, setListGroupProduct] = useState<IProductGroupDto[]>(
     []
@@ -102,6 +108,10 @@ const Product = () => {
     totalCount: 0,
     totalPage: 0,
   });
+
+  useEffect(() => {
+    navigation.setOptions({ headerShown: !isCheckMultipleProduct });
+  }, [navigation, isCheckMultipleProduct]);
 
   const GetAllNhomSanPham = async () => {
     const data = await ProductGroupSevice.GetAllNhomHangHoa();
@@ -220,24 +230,34 @@ const Product = () => {
       duration: 500,
       easing: Easing.out(Easing.ease),
     });
-  }, [isCheckMultipleProduct]);
 
-  const topAction_animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: topAction_TranslateY.value }],
-  }));
+    if (isCheckMultipleProduct) {
+      setConfig((prev) => ({ ...prev, backgroundColor: theme.colors.primary }));
+    } else {
+      setConfig((prev) => ({
+        ...prev,
+        backgroundColor: theme.colors.background,
+      }));
+    }
+  }, [isCheckMultipleProduct]);
 
   const clickChonNhieu = () => {
     setProductChosed(null);
     setIsCheckMultipleProduct(true);
-    setArrIdQuyDoiChosed([productChosed?.idDonViQuyDoi ?? ""]);
+    setArrIdHangHoaChosed([productChosed?.id ?? ""]);
+  };
+
+  const unCheckAllProduct = () => {
+    setIsCheckMultipleProduct(false);
+    setArrIdHangHoaChosed([]);
+    setProductChosed(null);
   };
 
   const clickXoaNhieu = () => {
     setObjSimpleDialog({
       ...objSimpleDialog,
       isShow: true,
-      mes: `Bạn có chắc chắn muốn xóa ${arrIdQuyDoiChosed?.length} sản phẩm này không`,
+      mes: `Bạn có chắc chắn muốn xóa ${arrIdHangHoaChosed?.length} sản phẩm này không`,
     });
   };
 
@@ -248,21 +268,20 @@ const Product = () => {
   }));
 
   const choseProduct = (item: IProductBasic) => {
-    setArrIdQuyDoiChosed((prev) => {
-      if (prev.includes(item?.idDonViQuyDoi))
-        return prev?.filter((x) => x !== item?.idDonViQuyDoi);
-      else return [...prev, item?.idDonViQuyDoi];
+    setArrIdHangHoaChosed((prev) => {
+      if (prev.includes(item?.id)) return prev?.filter((x) => x !== item?.id);
+      else return [...prev, item?.id];
     });
   };
 
   const choseAllProduct = () => {
     setIsCheckAll(!isCheckAll);
     if (isCheckAll) {
-      setArrIdQuyDoiChosed([]);
+      setArrIdHangHoaChosed([]);
     } else {
-      setArrIdQuyDoiChosed(
+      setArrIdHangHoaChosed(
         pageResultProduct?.items?.map((x) => {
-          return x.idDonViQuyDoi;
+          return x.id;
         })
       );
     }
@@ -341,27 +360,81 @@ const Product = () => {
     setListGroupProduct([item, ...listGroupProduct]);
   };
 
+  const chuyenNhomSanPham = async (item: IProductGroupDto) => {
+    setIsShowModalListProductGroup(false);
+    setArrIdHangHoaChosed([]);
+    setIsCheckMultipleProduct(false);
+
+    await ProductService.ChuyenNhomHang(arrIdHangHoaChosed, item.id);
+    const arrHangHoa =
+      await ProductService.GetInforBasic_OfListHangHoa_ByIdHangHoa(
+        arrIdHangHoaChosed
+      );
+    const sMaTen = arrHangHoa
+      ?.map((x) => {
+        return {
+          maHangHoa: x.maHangHoa,
+          tenHangHoa: x.tenHangHoa,
+        };
+      })
+      .map((x) => `${x.tenHangHoa} (${x.maHangHoa})`)
+      .join(",");
+
+    const diary: INhatKyThaoTacDto = {
+      idChiNhanh: chiNhanhCurrent?.id ?? "",
+      loaiNhatKy: DiaryStatus.UPDATE,
+      chucNang: "Danh mục sản phẩm",
+      noiDung: `Chuyển nhóm cho ${
+        arrIdHangHoaChosed?.length ?? 0
+      } sản phẩm sang nhóm mới là ${item.tenNhomHang}`,
+      noiDungChiTiet: `Chuyển nhóm ${
+        arrIdHangHoaChosed?.length ?? 0
+      } sản phẩm gồm: ${sMaTen}`,
+    };
+    await NhatKyThaoTacService.CreateNhatKyHoatDong(diary);
+  };
+
+  const onClickChuyenNhom = () => {
+    setIsShowModalListProductGroup(true);
+  };
+
   const deleteProduct = async () => {
     let deleteOK = false;
     if (isCheckMultipleProduct) {
-      deleteOK = await ProductService.DeleteMultipleProduct(arrIdQuyDoiChosed);
+      deleteOK = await ProductService.DeleteMultipleProduct(arrIdHangHoaChosed);
 
       setPageResultProduct({
         ...pageResultProduct,
         totalCount:
-          pageResultProduct?.totalCount - (arrIdQuyDoiChosed?.length ?? 0),
+          pageResultProduct?.totalCount - (arrIdHangHoaChosed?.length ?? 0),
         items: pageResultProduct?.items?.filter(
-          (x) => !arrIdQuyDoiChosed.includes(x.id)
+          (x) => !arrIdHangHoaChosed.includes(x.id)
         ),
       });
-      setArrIdQuyDoiChosed([]);
+      setArrIdHangHoaChosed([]);
+
+      const arrHangHoa =
+        await ProductService.GetInforBasic_OfListHangHoa_ByIdHangHoa(
+          arrIdHangHoaChosed
+        );
+      const sMaTen = arrHangHoa
+        ?.map((x) => {
+          return {
+            maHangHoa: x.maHangHoa,
+            tenHangHoa: x.tenHangHoa,
+          };
+        })
+        .map((x) => `${x.tenHangHoa} (${x.maHangHoa})`)
+        .join(",");
 
       const diary: INhatKyThaoTacDto = {
         idChiNhanh: chiNhanhCurrent?.id ?? "",
         loaiNhatKy: DiaryStatus.DELETE,
-        chucNang: "Danh mục hàng hóa",
-        noiDung: `Xóa ${arrIdQuyDoiChosed?.length ?? 0} hàng hóa`,
-        noiDungChiTiet: `Xóa ${arrIdQuyDoiChosed?.length ?? 0} hàng hóa gồm: `,
+        chucNang: "Danh mục sản phẩm",
+        noiDung: `Xóa ${arrIdHangHoaChosed?.length ?? 0} sản phẩm`,
+        noiDungChiTiet: `Xóa ${
+          arrIdHangHoaChosed?.length ?? 0
+        } sản phẩm gồm: ${sMaTen}`,
       };
       await NhatKyThaoTacService.CreateNhatKyHoatDong(diary);
     } else {
@@ -370,9 +443,9 @@ const Product = () => {
         const diary: INhatKyThaoTacDto = {
           idChiNhanh: chiNhanhCurrent?.id ?? "",
           loaiNhatKy: DiaryStatus.DELETE,
-          chucNang: "Danh mục hàng hóa",
-          noiDung: `Xóa hàng hóa '  ${productChosed?.tenHangHoa} (${productChosed?.maHangHoa})`,
-          noiDungChiTiet: `Xóa hàng hóa '  ${productChosed?.tenHangHoa} (${productChosed?.maHangHoa})`,
+          chucNang: "Danh mục sản phẩm",
+          noiDung: `Xóa sản phẩm '  ${productChosed?.tenHangHoa} (${productChosed?.maHangHoa})`,
+          noiDungChiTiet: `Xóa sản phẩm '  ${productChosed?.tenHangHoa} (${productChosed?.maHangHoa})`,
         };
         await NhatKyThaoTacService.CreateNhatKyHoatDong(diary);
         setPageResultProduct({
@@ -554,334 +627,350 @@ const Product = () => {
   };
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
-      <ConfirmOKCancel
-        isShow={objSimpleDialog?.isShow ?? false}
-        mes={objSimpleDialog?.mes}
-        onAgree={deleteProduct}
-        onClose={() =>
-          setObjSimpleDialog({ ...objSimpleDialog, isShow: false })
-        }
-      />
-      <ModalAddProduct
-        isShow={isShowModalAddProduct}
-        onClose={() => setIsShowShowModalAddProduct(false)}
-        onSave={saveOKProuduct}
-        objUpdate={productChosed as unknown as undefined}
-      />
-      <ModalAddProductGroup
-        isShow={isShowModalAdd_ProductGroup}
-        onClose={() => setIsShowModalAdd_ProductGroup(false)}
-        onSave={saveOKProductGroup}
-      />
-      <View style={{ padding: 8 }}>
-        {isShowBoxSearch ? (
-          <SearchBar
-            ref={searchRef}
-            placeholder="Tìm kiếm sản phẩm"
-            platform={Platform.OS === "ios" ? "ios" : "android"}
-            searchIcon={{ name: "search", type: IconType.IONICON }}
-            clearIcon={{ name: "close", type: IconType.IONICON }}
-            containerStyle={{
-              backgroundColor: theme.colors.white,
-              borderBottomColor: theme.colors.grey5,
-              borderBottomWidth: 1,
-              height: 44,
-              margin: 0,
-            }}
-            inputContainerStyle={{
-              backgroundColor: theme.colors.white,
-              height: 32,
-            }}
-            cancelButtonTitle="Huỷ"
-            showCancel
-            value={textSearch}
-            onChangeText={(txt) => setTextSearch(txt)}
-            onCancel={() => setIsShowBoxSearch(false)}
-          />
-        ) : (
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: theme.colors.grey4, fontSize: 13 }}>
-              Tổng số {pageResultProduct?.totalCount ?? 0} sản phẩm
-            </Text>
-            <View style={styles.boxFilter}>
+    <>
+      <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+        <ConfirmOKCancel
+          isShow={objSimpleDialog?.isShow ?? false}
+          mes={objSimpleDialog?.mes}
+          onAgree={deleteProduct}
+          onClose={() =>
+            setObjSimpleDialog({ ...objSimpleDialog, isShow: false })
+          }
+        />
+        <ModalListProductGroup
+          isShow={isShowModalListProductGroup}
+          onClose={() => setIsShowModalListProductGroup(false)}
+          onSave={chuyenNhomSanPham}
+        />
+        <ModalAddProduct
+          isShow={isShowModalAddProduct}
+          onClose={() => setIsShowShowModalAddProduct(false)}
+          onSave={saveOKProuduct}
+          objUpdate={productChosed as unknown as undefined}
+        />
+        <ModalAddProductGroup
+          isShow={isShowModalAdd_ProductGroup}
+          onClose={() => setIsShowModalAdd_ProductGroup(false)}
+          onSave={saveOKProductGroup}
+        />
+        <View style={{ padding: 8 }}>
+          {isShowBoxSearch ? (
+            <SearchBar
+              ref={searchRef}
+              placeholder="Tìm kiếm sản phẩm"
+              platform={Platform.OS === "ios" ? "ios" : "android"}
+              searchIcon={{ name: "search", type: IconType.IONICON }}
+              clearIcon={{ name: "close", type: IconType.IONICON }}
+              containerStyle={{
+                backgroundColor: theme.colors.white,
+                borderBottomColor: theme.colors.grey5,
+                borderBottomWidth: 1,
+                height: 44,
+                margin: 0,
+              }}
+              inputContainerStyle={{
+                backgroundColor: theme.colors.white,
+                height: 32,
+              }}
+              cancelButtonTitle="Huỷ"
+              showCancel
+              value={textSearch}
+              onChangeText={(txt) => setTextSearch(txt)}
+              onCancel={() => setIsShowBoxSearch(false)}
+            />
+          ) : (
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: theme.colors.grey4, fontSize: 13 }}>
+                Tổng số {pageResultProduct?.totalCount ?? 0} sản phẩm
+              </Text>
               <Icon
                 name="search"
                 type={IconType.MATERIAL}
                 onPress={onShowBoxSearch}
               />
-              {/* <Icon
-                name="filter"
-                type={IconType.IONICON}
-                onPress={toggleBoxFilter}
-              /> */}
             </View>
-          </View>
-        )}
+          )}
 
-        <View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Text
-              style={{
-                fontWeight: 600,
-                textDecorationLine: "underline",
-                paddingTop: isShowBoxSearch ? 16 : 0,
-              }}
+          <View>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
             >
-              Nhóm sản phẩm
-            </Text>
-            <Icon
-              name="add-circle-outline"
-              type={IconType.IONICON}
-              size={30}
-              color={theme.colors.primary}
-              onPress={showModalAddNew_ProductGroup}
+              <Text
+                style={{
+                  fontWeight: 600,
+                  textDecorationLine: "underline",
+                  paddingTop: isShowBoxSearch ? 16 : 0,
+                }}
+              >
+                Nhóm sản phẩm
+              </Text>
+              <Icon
+                name="add-circle-outline"
+                type={IconType.IONICON}
+                size={30}
+                color={theme.colors.primary}
+                onPress={showModalAddNew_ProductGroup}
+              />
+            </View>
+
+            <ScrollView horizontal style={{ marginTop: 8 }}>
+              {(listGroupProduct?.length ?? 0) > 0 && (
+                <Button
+                  containerStyle={{
+                    paddingRight: 6,
+                    paddingVertical: 6,
+                    marginRight: 8,
+                  }}
+                  buttonStyle={{
+                    borderRadius: 4,
+
+                    backgroundColor:
+                      arrIdNhomHangFilter?.length > 0
+                        ? theme.colors.disabled
+                        : theme.colors.primary,
+                  }}
+                  title={"Tất cả"}
+                  onPress={nhomHangHoa_clickAll}
+                ></Button>
+              )}
+
+              {listGroupProduct?.map((item) => (
+                <Button
+                  key={item?.id}
+                  title={item.tenNhomHang}
+                  containerStyle={{ padding: 6 }}
+                  buttonStyle={{
+                    borderRadius: 4,
+                    backgroundColor: arrIdNhomHangFilter?.includes(item?.id)
+                      ? theme.colors.primary
+                      : theme.colors.disabled,
+                  }}
+                  onPress={() => choseNhomHangHoa(item?.id)}
+                ></Button>
+              ))}
+            </ScrollView>
+          </View>
+
+          {(pageResultProduct?.totalCount ?? 0) === 0 ? (
+            <PageEmpty txt="Chưa có dữ liệu" />
+          ) : (
+            <FlatList
+              data={pageResultProduct?.items}
+              renderItem={({ item }) => (
+                <ProductItem
+                  item={item}
+                  onPress={choseProduct}
+                  onLongPress={onLongPressProduct}
+                  isShowCheck={isCheckMultipleProduct}
+                  isChosed={arrIdHangHoaChosed.includes(item.id)}
+                />
+              )}
+              keyExtractor={(item) => item.idDonViQuyDoi}
+              onEndReachedThreshold={0.1}
+              onEndReached={handleLoadMore}
             />
-          </View>
+          )}
+          {productChosed && position && (
+            <>
+              {/* Overlay mờ */}
+              <Animated.View
+                style={[StyleSheet.absoluteFill, styles.overlay, overlayStyle]}
+                pointerEvents="auto"
+              >
+                {/* bắt sự kiện tap ngoài clone */}
+                <Pressable
+                  style={StyleSheet.absoluteFill}
+                  onPress={onPressOutProduct}
+                />
+              </Animated.View>
 
-          <ScrollView horizontal style={{ marginTop: 8 }}>
-            {(listGroupProduct?.length ?? 0) > 0 && (
-              <Button
-                containerStyle={{
-                  paddingRight: 6,
-                  paddingVertical: 6,
-                  marginRight: 8,
-                }}
-                buttonStyle={{
-                  borderRadius: 4,
-
-                  backgroundColor:
-                    arrIdNhomHangFilter?.length > 0
-                      ? theme.colors.disabled
-                      : theme.colors.primary,
-                }}
-                title={"Tất cả"}
-                onPress={nhomHangHoa_clickAll}
-              ></Button>
-            )}
-
-            {listGroupProduct?.map((item) => (
-              <Button
-                key={item?.id}
-                title={item.tenNhomHang}
-                containerStyle={{ padding: 6 }}
-                buttonStyle={{
-                  borderRadius: 4,
-                  backgroundColor: arrIdNhomHangFilter?.includes(item?.id)
-                    ? theme.colors.primary
-                    : theme.colors.disabled,
-                }}
-                onPress={() => choseNhomHangHoa(item?.id)}
-              ></Button>
-            ))}
-          </ScrollView>
-        </View>
-
-        {(pageResultProduct?.totalCount ?? 0) === 0 ? (
-          <PageEmpty txt="Chưa có dữ liệu" />
-        ) : (
-          <FlatList
-            data={pageResultProduct?.items}
-            renderItem={({ item }) => (
-              <ProductItem
-                item={item}
-                onPress={choseProduct}
-                onLongPress={onLongPressProduct}
-                isShowCheck={isCheckMultipleProduct}
-                isChosed={arrIdQuyDoiChosed.includes(item.idDonViQuyDoi)}
-              />
-            )}
-            keyExtractor={(item) => item.idDonViQuyDoi}
-            onEndReachedThreshold={0.1}
-            onEndReached={handleLoadMore}
-          />
-        )}
-        {productChosed && position && (
-          <>
-            {/* Overlay mờ */}
-            <Animated.View
-              style={[StyleSheet.absoluteFill, styles.overlay, overlayStyle]}
-              pointerEvents="auto"
-            >
-              {/* bắt sự kiện tap ngoài clone */}
-              <Pressable
-                style={StyleSheet.absoluteFill}
-                onPress={onPressOutProduct}
-              />
-            </Animated.View>
-
-            {/* Item nổi bật */}
-            <Animated.View
-              style={[
-                styles.itemClone,
-                {
-                  top: position.y - 74,
-                  left: position.x,
-                  width: position.width,
-                },
-                cloneStyle,
-              ]}
-            >
-              <View style={[styles.flexRow, styles.contentItem]}>
-                <View style={{ gap: 4 }}>
-                  <Text>{productChosed.tenHangHoa}</Text>
+              {/* Item nổi bật */}
+              <Animated.View
+                style={[
+                  styles.itemClone,
+                  {
+                    top: position.y - 74,
+                    left: position.x,
+                    width: position.width,
+                  },
+                  cloneStyle,
+                ]}
+              >
+                <View style={[styles.flexRow, styles.contentItem]}>
+                  <View style={{ gap: 4 }}>
+                    <Text>{productChosed.tenHangHoa}</Text>
+                    <Text
+                      style={{
+                        color: theme.colors.success,
+                      }}
+                    >
+                      {productChosed.maHangHoa}
+                    </Text>
+                  </View>
                   <Text
                     style={{
-                      color: theme.colors.success,
+                      fontWeight: 500,
                     }}
                   >
-                    {productChosed.maHangHoa}
+                    {new Intl.NumberFormat("vi-VN").format(
+                      productChosed.giaBan
+                    )}
                   </Text>
                 </View>
-                <Text
-                  style={{
-                    fontWeight: 500,
-                  }}
-                >
-                  {new Intl.NumberFormat("vi-VN").format(productChosed.giaBan)}
-                </Text>
-              </View>
-            </Animated.View>
+              </Animated.View>
 
-            <Animated.View
-              style={[
-                styles.actionMenu,
-                {
-                  left: position.x,
-                  top: position.y + position.height - 50,
-                },
-                actionStyle,
-              ]}
-            >
-              <TouchableOpacity
-                style={[styles.flexRow, styles.dropdownItemAction]}
-                onPress={showModalUpdatewProduct}
-              >
-                <Icon
-                  name="note-edit-outline"
-                  type={IconType.MATERIAL_COMMUNITY}
-                  size={18}
-                />
-                <Text>Sửa</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+              <Animated.View
                 style={[
-                  styles.flexRow,
-                  styles.dropdownItemAction,
+                  styles.actionMenu,
                   {
-                    borderBottomWidth: 1,
-                    borderBottomColor: theme.colors.grey5,
+                    left: position.x,
+                    top: position.y + position.height - 50,
                   },
+                  actionStyle,
                 ]}
-                onPress={() => showConfirmDelete}
               >
-                <Icon
-                  name="delete-outline"
-                  type={IconType.MATERIAL_COMMUNITY}
-                  size={18}
-                />
-                <Text>Xóa</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.flexRow, styles.dropdownItemAction]}
-                onPress={clickChonNhieu}
-              >
-                <Icon
-                  name="check"
-                  type={IconType.MATERIAL_COMMUNITY}
-                  size={18}
-                />
-                <Text>Chọn nhiều</Text>
-              </TouchableOpacity>
-            </Animated.View>
-          </>
-        )}
-      </View>
-      <BottomButtonAdd onPress={showModalAddNewProduct} />
-      <ActionBottomNew visible={isCheckMultipleProduct}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            height: 60,
-            paddingHorizontal: 40,
-            backgroundColor: theme.colors.disabled,
-          }}
-        >
-          <TouchableOpacity style={{ gap: 4 }}>
-            <Icon
-              name="arrow-right-bold-circle-outline"
-              type={IconType.MATERIAL_COMMUNITY}
-              color={
-                (arrIdQuyDoiChosed?.length ?? 0) > 0
-                  ? theme.colors.black
-                  : "rgba(150, 150, 150, 0.5)"
-              }
-            />
-            <Text
-              style={{
-                color:
-                  (arrIdQuyDoiChosed?.length ?? 0) > 0
+                <TouchableOpacity
+                  style={[styles.flexRow, styles.dropdownItemAction]}
+                  onPress={showModalUpdatewProduct}
+                >
+                  <Icon
+                    name="note-edit-outline"
+                    type={IconType.MATERIAL_COMMUNITY}
+                    size={18}
+                  />
+                  <Text>Sửa</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.flexRow,
+                    styles.dropdownItemAction,
+                    {
+                      borderBottomWidth: 1,
+                      borderBottomColor: theme.colors.grey5,
+                    },
+                  ]}
+                  onPress={() => showConfirmDelete}
+                >
+                  <Icon
+                    name="delete-outline"
+                    type={IconType.MATERIAL_COMMUNITY}
+                    size={18}
+                  />
+                  <Text>Xóa</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.flexRow, styles.dropdownItemAction]}
+                  onPress={clickChonNhieu}
+                >
+                  <Icon
+                    name="check"
+                    type={IconType.MATERIAL_COMMUNITY}
+                    size={18}
+                  />
+                  <Text>Chọn nhiều</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </>
+          )}
+        </View>
+        <BottomButtonAdd onPress={showModalAddNewProduct} />
+        <ActionBottomNew visible={isCheckMultipleProduct}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              height: 60,
+              paddingHorizontal: 40,
+              backgroundColor: theme.colors.disabled,
+            }}
+          >
+            <TouchableOpacity style={{ gap: 4 }} onPress={onClickChuyenNhom}>
+              <Icon
+                name="arrow-right-bold-circle-outline"
+                type={IconType.MATERIAL_COMMUNITY}
+                color={
+                  (arrIdHangHoaChosed?.length ?? 0) > 0
                     ? theme.colors.black
-                    : "rgba(150, 150, 150, 0.5)",
-              }}
-            >
-              Chuyển nhóm
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{ gap: 4 }} onPress={clickXoaNhieu}>
-            <Icon
-              name="delete-outline"
-              type={IconType.MATERIAL_COMMUNITY}
-              color={
-                (arrIdQuyDoiChosed?.length ?? 0) > 0
-                  ? theme.colors.error
-                  : "rgba(150, 150, 150, 0.5)"
-              }
-            />
-            <Text
-              style={{
-                color:
-                  (arrIdQuyDoiChosed?.length ?? 0) > 0
+                    : "rgba(150, 150, 150, 0.5)"
+                }
+              />
+              <Text
+                style={{
+                  color:
+                    (arrIdHangHoaChosed?.length ?? 0) > 0
+                      ? theme.colors.black
+                      : "rgba(150, 150, 150, 0.5)",
+                }}
+              >
+                Chuyển nhóm
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{ gap: 4 }} onPress={clickXoaNhieu}>
+              <Icon
+                name="delete-outline"
+                type={IconType.MATERIAL_COMMUNITY}
+                color={
+                  (arrIdHangHoaChosed?.length ?? 0) > 0
                     ? theme.colors.error
-                    : "rgba(150, 150, 150, 0.5)",
-              }}
-            >
-              Xóa
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ActionBottomNew>
-
-      <ActionTop visible={isCheckMultipleProduct}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            height: 50,
-            backgroundColor: theme.colors.disabled,
-            paddingHorizontal: 20,
-          }}
-        >
-          <View style={{ gap: 8, flexDirection: "row", alignItems: "center" }}>
-            <Icon name="close" type={IconType.MATERIAL_COMMUNITY} size={20} />
-            <Text>{arrIdQuyDoiChosed?.length ?? 0}</Text>
+                    : "rgba(150, 150, 150, 0.5)"
+                }
+              />
+              <Text
+                style={{
+                  color:
+                    (arrIdHangHoaChosed?.length ?? 0) > 0
+                      ? theme.colors.error
+                      : "rgba(150, 150, 150, 0.5)",
+                }}
+              >
+                Xóa
+              </Text>
+            </TouchableOpacity>
           </View>
-          <TextLink
-            lable={isCheckAll ? "Bỏ chọn tất cả" : "Chọn tất cả"}
-            onPress={choseAllProduct}
-          />
-        </View>
-      </ActionTop>
-    </View>
+        </ActionBottomNew>
+
+        <ActionTop visible={isCheckMultipleProduct}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              height: 50,
+              backgroundColor: theme.colors.primary,
+              paddingHorizontal: 20,
+              top: 0,
+            }}
+          >
+            <View
+              style={{ gap: 8, flexDirection: "row", alignItems: "center" }}
+            >
+              <Icon
+                name="close"
+                type={IconType.MATERIAL_COMMUNITY}
+                size={20}
+                onPress={unCheckAllProduct}
+                color={theme.colors.white}
+              />
+              <Text style={{ color: theme.colors.white, fontSize: 16 }}>
+                {arrIdHangHoaChosed?.length ?? 0}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={choseAllProduct}>
+              <Text style={{ color: theme.colors.white }}>
+                {isCheckAll ? "Bỏ chọn tất cả" : "Chọn tất cả"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ActionTop>
+      </View>
+    </>
   );
 };
 
