@@ -1,8 +1,11 @@
+import { TextLink } from "@/components/_text_link";
+import ModalAddCustomer from "@/components/customer/modal_add_customer";
 import PageEmpty from "@/components/page_empty";
 import { TrangThaiLichHen } from "@/enum/TrangThaiLichHen";
 import { INhatKyCuocHen } from "@/services/appointment/INhatKyCuocHen";
 import { IPagedRequestDto } from "@/services/commonDto/IPagedRequestDto";
 import { IPageResultDto } from "@/services/commonDto/IPageResultDto";
+import { ICreateOrEditKhachHangDto } from "@/services/customer/ICreateOrEditKhachHangDto";
 import { IKhachHangItemDto } from "@/services/customer/IKhachHangItemDto";
 import { ILichSuMuaHang } from "@/services/customer/ILichSuMuaHang";
 import KhachHangService from "@/services/customer/KhachHangService";
@@ -10,9 +13,9 @@ import CommonFunc from "@/utils/CommonFunc";
 import { Avatar, Theme } from "@rneui/base";
 import { Text, useTheme } from "@rneui/themed";
 import dayjs from "dayjs";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 enum Tab {
@@ -26,14 +29,34 @@ export default function CustomerDetails() {
   const styles = createStyles(theme);
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const navigation = useNavigation();
+  const [isShowModalCustomer, setIsShowModalCustomer] = useState(false);
   const [tabActive, setTabActive] = useState(Tab.CUOC_HEN);
-  const [customerItem, setCustomerItem] = useState<IKhachHangItemDto>();
+  const [customerItem, setCustomerItem] = useState<IKhachHangItemDto>({
+    id: "",
+    idKhachHang: "",
+    maKhachHang: "",
+    tenKhachHang: "",
+    soDienThoai: "",
+  });
   const [pageDataNhatKyCuocHen, setPageDataNhatKyCuocHen] = useState<
     IPageResultDto<INhatKyCuocHen>
   >({ items: [], totalCount: 0, totalPage: 0 });
   const [pageDataNhatKyMuaHang, setPageDataNhatKyMuaHang] = useState<
     IPageResultDto<ILichSuMuaHang>
   >({ items: [], totalCount: 0, totalPage: 0 });
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TextLink lable="Sửa" onPress={showModalEditCustomer} />
+      ),
+    });
+  }, [navigation]);
+
+  const showModalEditCustomer = () => {
+    setIsShowModalCustomer(true);
+  };
 
   const getInforCustomer_byId = async () => {
     const data = await KhachHangService.getDetail(id);
@@ -51,7 +74,7 @@ export default function CustomerDetails() {
       return {
         ...prev,
         items: data?.items,
-        totalCount: data?.totalCount,
+        totalCount: data?.totalCount ?? 0,
       };
     });
   };
@@ -98,8 +121,30 @@ export default function CustomerDetails() {
         break;
     }
   };
+
+  const saveOKCustomer = (item: ICreateOrEditKhachHangDto) => {
+    setIsShowModalCustomer(false);
+    setCustomerItem((prev) => {
+      return {
+        ...prev,
+        tenKhachHang: item?.tenKhachHang,
+        soDienThoai: item?.soDienThoai,
+        diaChi: item?.diaChi,
+        ngaySinh: item?.ngaySinh,
+        idNhomKhach: item?.idNhomKhach ?? "",
+        tenNhomKhach: item?.tenNhomKhach ?? "",
+      };
+    });
+  };
+
   return (
     <View style={[styles.container]}>
+      <ModalAddCustomer
+        isShow={isShowModalCustomer}
+        objUpdate={customerItem}
+        onClose={() => setIsShowModalCustomer(false)}
+        onSave={saveOKCustomer}
+      />
       <View style={[styles.flexRow, { gap: 8 }]}>
         <Avatar
           rounded
@@ -135,7 +180,11 @@ export default function CustomerDetails() {
         <View style={[styles.flexRow, { justifyContent: "space-between" }]}>
           <Text>Ngày sinh</Text>
           <Text>
-            {dayjs(customerItem?.ngaySinh ?? new Date()).format("DD/MM/YYYY")}
+            {!customerItem?.ngaySinh
+              ? ""
+              : dayjs(customerItem?.ngaySinh ?? new Date()).format(
+                  "DD/MM/YYYY"
+                )}
           </Text>
         </View>
         <View style={[styles.flexRow, { justifyContent: "space-between" }]}>
@@ -152,7 +201,7 @@ export default function CustomerDetails() {
           styles.flexRow,
 
           {
-            justifyContent: "space-between",
+            gap: 16,
             paddingVertical: 24,
             borderBottomColor: theme.colors.grey5,
             borderBottomWidth: 1,
@@ -160,85 +209,74 @@ export default function CustomerDetails() {
         ]}
       >
         <TouchableOpacity
-          style={{ gap: 8, alignItems: "center" }}
+          style={[
+            styles.boxNumber,
+            tabActive === Tab.CUOC_HEN ? styles.boxActive : styles.boxNotActive,
+          ]}
           onPress={() => changeTab(Tab.CUOC_HEN)}
         >
           <Text
             style={[
               styles.number,
-              {
-                color:
-                  tabActive === Tab.CUOC_HEN
-                    ? theme.colors.primary
-                    : theme.colors.black,
-              },
+              tabActive === Tab.CUOC_HEN
+                ? styles.textActive
+                : styles.textNotActive,
             ]}
           >
             {CommonFunc.formatCurrency(customerItem?.soLanBooking ?? 0)}
           </Text>
           <Text
-            style={{
-              color:
-                tabActive === Tab.CUOC_HEN
-                  ? theme.colors.primary
-                  : theme.colors.black,
-            }}
+            style={[
+              tabActive === Tab.CUOC_HEN
+                ? styles.textActive
+                : styles.textNotActive,
+            ]}
           >
             Cuộc hẹn
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={{ gap: 8, alignItems: "center" }}
+          style={[
+            styles.boxNumber,
+            tabActive === Tab.NO ? styles.boxActive : styles.boxNotActive,
+          ]}
           onPress={() => changeTab(Tab.NO)}
         >
           <Text
             style={[
               styles.number,
-              {
-                color:
-                  tabActive === Tab.NO
-                    ? theme.colors.primary
-                    : theme.colors.black,
-              },
+              tabActive === Tab.NO ? styles.textActive : styles.textNotActive,
             ]}
           >
             {CommonFunc.formatCurrency(customerItem?.conNo ?? 0)}
           </Text>
           <Text
-            style={{
-              color:
-                tabActive === Tab.NO
-                  ? theme.colors.primary
-                  : theme.colors.black,
-            }}
+            style={[
+              tabActive === Tab.NO ? styles.textActive : styles.textNotActive,
+            ]}
           >
             Còn nợ
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={{ gap: 8, alignItems: "center" }}
+          style={[
+            styles.boxNumber,
+            tabActive === Tab.TGT ? styles.boxActive : styles.boxNotActive,
+          ]}
           onPress={() => changeTab(Tab.TGT)}
         >
           <Text
             style={[
               styles.number,
-              {
-                color:
-                  tabActive === Tab.TGT
-                    ? theme.colors.primary
-                    : theme.colors.black,
-              },
+              tabActive === Tab.TGT ? styles.textActive : styles.textNotActive,
             ]}
           >
             {CommonFunc.formatCurrency(customerItem?.soDuTheGiaTri ?? 0)}
           </Text>
           <Text
-            style={{
-              color:
-                tabActive === Tab.TGT
-                  ? theme.colors.primary
-                  : theme.colors.black,
-            }}
+            style={[
+              tabActive === Tab.TGT ? styles.textActive : styles.textNotActive,
+            ]}
           >
             Số sư thẻ
           </Text>
@@ -249,9 +287,12 @@ export default function CustomerDetails() {
           <Text style={{ textDecorationLine: "underline" }}></Text>
           <View style={{ marginTop: 0 }}>
             {(pageDataNhatKyCuocHen?.totalCount ?? 0) == 0 ? (
-              <PageEmpty txt="Không có dữ liệu để hiển thị" />
+              <PageEmpty
+                txt=" Không có dữ liệu để hiển thị"
+                style={{ height: 80 }}
+              />
             ) : (
-              <View style={{ gap: 12 }}>
+              <ScrollView style={{ gap: 12 }}>
                 {pageDataNhatKyCuocHen?.items?.map((x, index) => (
                   <View
                     key={index}
@@ -287,7 +328,7 @@ export default function CustomerDetails() {
                     </Text>
                   </View>
                 ))}
-              </View>
+              </ScrollView>
             )}
           </View>
         </View>
@@ -297,9 +338,12 @@ export default function CustomerDetails() {
           <Text style={{ textDecorationLine: "underline" }}></Text>
           <View style={{ marginTop: 0 }}>
             {(pageDataNhatKyMuaHang?.totalCount ?? 0) == 0 ? (
-              <PageEmpty txt="Không có dữ liệu để hiển thị" />
+              <PageEmpty
+                txt="Không có dữ liệu để hiển thị"
+                style={{ height: 80 }}
+              />
             ) : (
-              <View style={{ gap: 16 }}>
+              <ScrollView style={{ gap: 16 }}>
                 {pageDataNhatKyMuaHang?.items?.map((x, index) => (
                   <View
                     key={index}
@@ -327,7 +371,7 @@ export default function CustomerDetails() {
                     </View>
                   </View>
                 ))}
-              </View>
+              </ScrollView>
             )}
           </View>
         </View>
@@ -350,5 +394,29 @@ const createStyles = (theme: Theme) =>
     number: {
       fontSize: 16,
       fontWeight: 600,
+    },
+    boxNumber: {
+      alignItems: "center",
+      gap: 8,
+      borderRadius: 8,
+      padding: 12,
+      flex: 1,
+    },
+    boxActive: {
+      shadowColor: theme.colors.black,
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+      backgroundColor: theme.colors.primary,
+    },
+    boxNotActive: {
+      borderColor: theme.colors.grey5,
+      borderWidth: 1,
+    },
+    textActive: {
+      color: theme.colors.white,
+    },
+    textNotActive: {
+      color: theme.colors.black,
     },
   });

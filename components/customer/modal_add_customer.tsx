@@ -1,6 +1,7 @@
 import AppConst from "@/const/AppConst";
 import { ActionType } from "@/enum/ActionType";
 import { IconType } from "@/enum/IconType";
+import { LoaiDoiTuong } from "@/enum/LoaiDoiTuong";
 import {
   CreateOrEditKhachangDto,
   ICreateOrEditKhachHangDto,
@@ -14,14 +15,24 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { Button, Icon } from "@rneui/base";
-import { Text, useTheme } from "@rneui/themed";
+import { Text, Theme, useTheme } from "@rneui/themed";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Modal, TouchableOpacity, View } from "react-native";
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as yup from "yup";
 import Radio from "../_radio";
+import { TextLink } from "../_text_link";
 import { TitleModal } from "../_title_modal";
 import { BackDropView } from "../back_drop_view";
 import { ModalContainer } from "../modal_container";
@@ -35,7 +46,10 @@ const ModalAddCustomer = ({
   onSave,
 }: PropModal<ICreateOrEditKhachHangDto>) => {
   const { theme } = useTheme();
+  const styles = createStyles(theme);
   const insets = useSafeAreaInsets();
+
+  const isNewCustomer = CommonFunc.checkNull(objUpdate?.id);
 
   const [isShowModalListCustomer, setIsShowModalListCustomer] = useState(false);
   const [isShowDateWheel, setIsShowDateWheel] = useState(false);
@@ -59,13 +73,20 @@ const ModalAddCustomer = ({
     gioiTinhNam: false,
     diaChi: "",
     ngaySinh: null,
-    tenNhomKhach: "Nhóm mặc định",
+    tenNhomKhach: "Chọn nhóm",
   });
 
   useEffect(() => {
     if (isShow) {
-      // todo update reset (objupdate)
-      reset(defaultValues);
+      if (isNewCustomer) {
+        reset(defaultValues);
+      } else {
+        // cập nhật
+        reset({
+          ...defaultValues,
+          ...objUpdate,
+        });
+      }
     }
   }, [isShow]);
 
@@ -91,12 +112,22 @@ const ModalAddCustomer = ({
 
   const choseDateOfBirth = (event: DateTimePickerEvent, date?: Date) => {
     setDateOfBirth(date ?? new Date());
-    setIsShowDateWheel(false);
     setValue("ngaySinh", date ?? null);
+    if (Platform.OS === "android") {
+      setIsShowDateWheel(false);
+    }
   };
 
   const onDoneChoseDateOfBirth = () => {
     setIsShowDateWheel(false);
+  };
+  const cancelChoseDateOfBirth = () => {
+    setIsShowDateWheel(false);
+    if (isNewCustomer) {
+      setDateOfBirth(new Date());
+    } else {
+      setDateOfBirth(objUpdate?.ngaySinh ?? new Date());
+    }
   };
 
   const showModalNhomKhach = () => {
@@ -125,10 +156,11 @@ const ModalAddCustomer = ({
     if (!check) {
       return false;
     }
-
+    data.idLoaiKhach = LoaiDoiTuong.KHACH_HANG;
     const result = await KhachHangService.createOrEdit(data);
-
-    onSave(result, ActionType.INSERT);
+    if (result !== null) {
+      onSave(result, isNewCustomer ? ActionType.INSERT : ActionType.UPDATE);
+    }
   };
 
   const saveOKNhomKhach = async (
@@ -147,64 +179,67 @@ const ModalAddCustomer = ({
         onClose={() => setIsShowModalListCustomer(false)}
         onSave={saveOKNhomKhach}
       />
-      <BackDropView>
-        <ModalContainer
-          style={{
-            position: "relative",
-          }}
-        >
-          <TitleModal
-            title="Khách hàng mới"
-            onClose={onClose}
-            style={{ backgroundColor: theme.colors.primary }}
-          />
-
-          <View style={{ gap: 8, padding: 16 }}>
-            <Controller
-              control={control}
-              name="tenKhachHang"
-              render={({ field: { value, onChange, onBlur } }) => (
-                <TextFieldCustom
-                  label="Tên khách hàng"
-                  variant="outlined"
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  value={value}
-                  onFocus={() => setIsShowDateWheel(false)}
-                  error={errors?.tenKhachHang ?? false ? true : false}
-                  helperText={errors?.tenKhachHang?.message}
-                />
-              )}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <BackDropView>
+          <ModalContainer
+            style={{
+              position: "relative",
+            }}
+          >
+            <TitleModal
+              title={isNewCustomer ? "Khách hàng mới" : "Cập nhật khách hàng"}
+              onClose={onClose}
+              style={{ backgroundColor: theme.colors.primary }}
             />
-            <Controller
-              control={control}
-              name="soDienThoai"
-              render={({ field: { value, onChange, onBlur } }) => (
-                <TextFieldCustom
-                  label="Số điện thoại"
-                  variant="outlined"
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  value={value}
-                  onFocus={() => setIsShowDateWheel(false)}
-                  error={errors?.soDienThoai ?? false ? true : false}
-                  helperText={errors?.soDienThoai?.message}
+            <KeyboardAvoidingView>
+              <View style={{ gap: 8, padding: 16 }}>
+                <Controller
+                  control={control}
+                  name="tenKhachHang"
+                  render={({ field: { value, onChange, onBlur } }) => (
+                    <TextFieldCustom
+                      label="Tên khách hàng"
+                      variant="outlined"
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      value={value}
+                      onFocus={() => setIsShowDateWheel(false)}
+                      error={errors?.tenKhachHang ?? false ? true : false}
+                      helperText={errors?.tenKhachHang?.message}
+                    />
+                  )}
                 />
-              )}
-            />
-            <TouchableOpacity onPress={showDateWheel}>
-              <Text
-                style={{
-                  padding: 8,
-                  borderRadius: 4,
-                  borderWidth: 1,
-                  borderColor: theme.colors.grey5,
-                }}
-              >
-                {dayjs(watch("ngaySinh") ?? new Date()).format("DD/MM/YYYY")}
-              </Text>
-            </TouchableOpacity>
-            {/* <TextFieldCustom
+                <Controller
+                  control={control}
+                  name="soDienThoai"
+                  render={({ field: { value, onChange, onBlur } }) => (
+                    <TextFieldCustom
+                      label="Số điện thoại"
+                      variant="outlined"
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      value={value}
+                      onFocus={() => setIsShowDateWheel(false)}
+                      error={errors?.soDienThoai ?? false ? true : false}
+                      helperText={errors?.soDienThoai?.message}
+                    />
+                  )}
+                />
+                <TouchableOpacity onPress={showDateWheel}>
+                  <Text
+                    style={{
+                      padding: 8,
+                      borderRadius: 4,
+                      borderWidth: 1,
+                      borderColor: theme.colors.grey5,
+                    }}
+                  >
+                    {dayjs(watch("ngaySinh") ?? new Date()).format(
+                      "DD/MM/YYYY"
+                    )}
+                  </Text>
+                </TouchableOpacity>
+                {/* <TextFieldCustom
               label="Ngày sinh"
               variant="outlined"
               value={dayjs(watch("ngaySinh") ?? new Date()).format(
@@ -214,90 +249,115 @@ const ModalAddCustomer = ({
               showSoftInputOnFocus={false}
             /> */}
 
-            <View
-              style={{ flexDirection: "row", gap: 16, alignItems: "center" }}
-            >
-              <Text>Giới tính</Text>
-              <View
-                style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
-              >
-                <Radio
-                  label="Nữ"
-                  isSelected={!(watch("gioiTinhNam") ?? false)}
-                  onPressRdo={() => setValue("gioiTinhNam", false)}
-                />
-                <Radio
-                  label="Nam"
-                  isSelected={watch("gioiTinhNam") ?? false}
-                  onPressRdo={() => setValue("gioiTinhNam", true)}
-                />
-              </View>
-            </View>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    gap: 16,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text>Giới tính</Text>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      gap: 8,
+                      alignItems: "center",
+                    }}
+                  >
+                    <Radio
+                      label="Nữ"
+                      isSelected={!(watch("gioiTinhNam") ?? false)}
+                      onPressRdo={() => setValue("gioiTinhNam", false)}
+                    />
+                    <Radio
+                      label="Nam"
+                      isSelected={watch("gioiTinhNam") ?? false}
+                      onPressRdo={() => setValue("gioiTinhNam", true)}
+                    />
+                  </View>
+                </View>
 
-            <Controller
-              control={control}
-              name="diaChi"
-              render={({ field: { value, onChange, onBlur } }) => (
-                <TextFieldCustom
-                  multiline
-                  variant="outlined"
-                  label="Địa chỉ"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
+                <Controller
+                  control={control}
+                  name="diaChi"
+                  render={({ field: { value, onChange, onBlur } }) => (
+                    <TextFieldCustom
+                      multiline
+                      variant="outlined"
+                      label="Địa chỉ"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                    />
+                  )}
                 />
-              )}
-            />
-            <TouchableOpacity onPress={showModalNhomKhach}>
-              <TextFieldCustom
-                label="Nhóm khách"
-                variant="outlined"
-                value={watch("tenNhomKhach")}
-                readOnly
-                endIcon={
-                  <Icon
-                    name="navigate-next"
-                    type={IconType.MATERIAL}
-                    size={30}
+                <TouchableOpacity onPress={showModalNhomKhach}>
+                  <TextFieldCustom
+                    label="Nhóm khách"
+                    variant="outlined"
+                    value={watch("tenNhomKhach") ?? "Chọn nhóm"}
+                    readOnly
+                    endIcon={
+                      <Icon
+                        name="navigate-next"
+                        type={IconType.MATERIAL}
+                        size={30}
+                      />
+                    }
                   />
-                }
-              />
-            </TouchableOpacity>
+                </TouchableOpacity>
 
-            <View style={{ paddingTop: 20, gap: 8 }}>
-              <Button radius={"md"} onPress={handleSubmit(onSaveCustomer)}>
-                Thêm mới
-              </Button>
-            </View>
-          </View>
-          {isShowDateWheel && (
-            <View
-              style={{
-                backgroundColor: theme.colors.grey5,
-                position: "absolute",
-                bottom: 0,
-                width: "100%",
-              }}
-            >
-              <View style={{ alignItems: "center" }}>
-                <DateTimePicker
-                  value={dateOfBirth}
-                  mode="date"
-                  display="spinner"
-                  onChange={choseDateOfBirth}
-                  minimumDate={new Date(1950, 1, 1)}
-                  timeZoneName="Asia/Ho_Chi_Minh"
-                  locale="vi-VN"
-                  is24Hour
-                  textColor={theme.colors.black}
-                />
+                <View style={{ paddingTop: 20, gap: 8 }}>
+                  <Button radius={"md"} onPress={handleSubmit(onSaveCustomer)}>
+                    {isNewCustomer ? "Thêm mới" : "Cập nhật"}
+                  </Button>
+                </View>
               </View>
-            </View>
-          )}
-        </ModalContainer>
-      </BackDropView>
+              {isShowDateWheel && (
+                <View
+                  style={{
+                    backgroundColor: theme.colors.grey5,
+                    position: "absolute",
+                    bottom: 0,
+                    width: "100%",
+                  }}
+                >
+                  <View style={[styles.datetime_boxDone]}>
+                    <TextLink lable="Hủy" onPress={cancelChoseDateOfBirth} />
+                    <TextLink lable="Xong" onPress={onDoneChoseDateOfBirth} />
+                  </View>
+                  <View style={{ alignItems: "center" }}>
+                    <DateTimePicker
+                      value={dateOfBirth}
+                      mode="date"
+                      display="spinner"
+                      onChange={choseDateOfBirth}
+                      minimumDate={new Date(1950, 1, 1)}
+                      timeZoneName="Asia/Ho_Chi_Minh"
+                      locale="vi-VN"
+                      is24Hour
+                      textColor={theme.colors.black}
+                    />
+                  </View>
+                </View>
+              )}
+            </KeyboardAvoidingView>
+          </ModalContainer>
+        </BackDropView>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
 
 export default ModalAddCustomer;
+
+const createStyles = (theme: Theme) =>
+  StyleSheet.create({
+    datetime_boxDone: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 24,
+      paddingVertical: 8,
+    },
+  });
