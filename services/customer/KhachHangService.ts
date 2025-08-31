@@ -1,11 +1,14 @@
 import ApiConst from "../../const/ApiConst";
 import CommonFunc from "../../utils/CommonFunc";
 import api from "../api";
+import { INhatKyCuocHen } from "../appointment/INhatKyCuocHen";
 import { IFileDto } from "../commonDto/IFileDto";
 import { IFileUploadDto } from "../commonDto/IFileUpload";
+import { IPagedRequestDto } from "../commonDto/IPagedRequestDto";
 import { IPageResultDto } from "../commonDto/IPageResultDto";
 import { ICreateOrEditKhachHangDto } from "./ICreateOrEditKhachHangDto";
 import { IKhachHangItemDto } from "./IKhachHangItemDto";
+import { ILichSuMuaHang } from "./ILichSuMuaHang";
 import { IPagedKhachHangRequestDto } from "./IPagedKhachHangRequestDto";
 import { IParamSearchCustomerDto } from "./ParamSearchCustomerDto";
 
@@ -26,10 +29,26 @@ class KhachHangService {
     );
     return response;
   }
-  // public async GetNhatKyHoatDong_ofKhachHang(id: string): Promise<HoatDongKhachHang[]> {
-  //     const response = await api.get(`api/services/app/KhachHang/GetNhatKyHoatDong_ofKhachHang?idKhachHang=${id}`);
-  //     return response.data.result;
-  // }
+  public async LichSuDatLich(
+    idKhachHang: string,
+    param: IPagedRequestDto
+  ): Promise<IPageResultDto<INhatKyCuocHen>> {
+    const response = await api.post(
+      `api/services/app/KhachHang/LichSuDatLich?idKhachHang=${idKhachHang}`,
+      param
+    );
+    return response;
+  }
+  public async LichSuMuaHang(
+    idKhachHang: string,
+    param: IPagedRequestDto
+  ): Promise<IPageResultDto<ILichSuMuaHang>> {
+    const response = await api.post(
+      `api/services/app/KhachHang/LichSuGiaoDich?idKhachHang=${idKhachHang}`,
+      param
+    );
+    return response;
+  }
   public async getKhachHang(id: string): Promise<ICreateOrEditKhachHangDto> {
     // get infor customer from DM_KhachHang
     if (CommonFunc.checkNull(id) || id === ApiConst.GUID_EMPTY) {

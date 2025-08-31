@@ -1,3 +1,4 @@
+import { TextLink } from "@/components/_text_link";
 import { MainNavigation } from "@/enum/navigation/RouteName";
 import { MainDrawerParamList } from "@/enum/navigation/RouteParam";
 import { DrawerNavigationProp } from "@react-navigation/drawer";
@@ -42,6 +43,9 @@ export default function CustomerStack() {
             <TouchableOpacity onPress={() => route.back()}>
               <Icon name="arrow-back-ios" size={24} />
             </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <TextLink lable="Sửa" onPress={() => console.log(11)} />
           ),
         }}
       />
