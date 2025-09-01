@@ -1,3 +1,4 @@
+import ApiConst from "@/const/ApiConst";
 import AppConst from "@/const/AppConst";
 import { IconType } from "@/enum/IconType";
 import { IPagedRequestDto } from "@/services/commonDto/IPagedRequestDto";
@@ -21,6 +22,7 @@ import { ModalContainer } from "../modal_container";
 
 const ModalListCustomerGroup = ({
   isShow,
+  objUpdate,
   onClose,
   onSave,
 }: PropModal<ICustomerGroupDto>) => {
@@ -53,12 +55,19 @@ const ModalListCustomerGroup = ({
     if (isShow) {
       getAllNhomKhach();
       setMesErr("");
+      setCustomerGroupChosed({
+        id: objUpdate?.id ?? ApiConst.GUID_EMPTY,
+        tenNhomKhach: objUpdate?.tenNhomKhach ?? "",
+      });
+    }
+  }, [isShow, objUpdate?.id]);
+
+  const onClickChonNhom = (item: ICustomerGroupDto | null) => {
+    if (item) {
+      setCustomerGroupChosed({ ...item });
+    } else {
       setCustomerGroupChosed(null);
     }
-  }, [isShow]);
-
-  const onClickChonNhom = (item: ICustomerGroupDto) => {
-    setCustomerGroupChosed({ ...item });
     setMesErr("");
   };
 
@@ -126,6 +135,39 @@ const ModalListCustomerGroup = ({
               data={pageDataNhomKhachHang?.items}
               renderItem={renderItem}
               keyExtractor={(item) => item.id}
+              ListHeaderComponent={() => (
+                <TouchableOpacity
+                  style={{
+                    padding: 12,
+                    borderBottomColor: theme.colors.grey5,
+                    borderBottomWidth: 1,
+                    marginTop: 8,
+                  }}
+                  onPress={() =>
+                    onClickChonNhom({
+                      id: ApiConst.GUID_EMPTY,
+                      tenNhomKhach: "Nhóm mặc định",
+                    })
+                  }
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text>Nhóm mặc định</Text>
+                    {customerGroupchosed?.id == ApiConst.GUID_EMPTY && (
+                      <Icon
+                        name="check"
+                        type={IconType.ANTDESIGN}
+                        color={theme.colors.primary}
+                      />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              )}
             />
             <View style={{ justifyContent: "flex-end", marginTop: 24 }}>
               <Button onPress={onChoseNhomKhach} radius={"md"}>
