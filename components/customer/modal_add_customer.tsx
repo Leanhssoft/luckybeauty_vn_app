@@ -1,3 +1,4 @@
+import ApiConst from "@/const/ApiConst";
 import AppConst from "@/const/AppConst";
 import { ActionType } from "@/enum/ActionType";
 import { IconType } from "@/enum/IconType";
@@ -53,7 +54,7 @@ const ModalAddCustomer = ({
 
   const [isShowModalListCustomer, setIsShowModalListCustomer] = useState(false);
   const [isShowDateWheel, setIsShowDateWheel] = useState(false);
-  const [dateOfBirth, setDateOfBirth] = useState<Date>(new Date());
+  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
 
   const schema = yup.object({
     tenKhachHang: yup.string().required("Vui lòng nhập tên khách hàng"),
@@ -86,6 +87,11 @@ const ModalAddCustomer = ({
           ...defaultValues,
           ...objUpdate,
         });
+        if (objUpdate?.ngaySinh) {
+          setDateOfBirth(new Date(objUpdate?.ngaySinh ?? new Date()));
+        } else {
+          setDateOfBirth(null);
+        }
       }
     }
   }, [isShow]);
@@ -124,9 +130,13 @@ const ModalAddCustomer = ({
   const cancelChoseDateOfBirth = () => {
     setIsShowDateWheel(false);
     if (isNewCustomer) {
-      setDateOfBirth(new Date());
+      setDateOfBirth(null);
     } else {
-      setDateOfBirth(objUpdate?.ngaySinh ?? new Date());
+      if (objUpdate?.ngaySinh) {
+        setDateOfBirth(new Date(objUpdate?.ngaySinh ?? new Date()));
+      } else {
+        setDateOfBirth(null);
+      }
     }
   };
 
@@ -157,7 +167,14 @@ const ModalAddCustomer = ({
       return false;
     }
     data.idLoaiKhach = LoaiDoiTuong.KHACH_HANG;
+    data.tenKhachHang_KhongDau = CommonFunc.convertString_toEnglish(
+      data?.tenKhachHang
+    );
     const result = await KhachHangService.createOrEdit(data);
+    result.tenNhomKhach = CommonFunc.checkNull(result.tenNhomKhach ?? "")
+      ? "Nhóm mặc định"
+      : result.tenNhomKhach;
+
     if (result !== null) {
       onSave(result, isNewCustomer ? ActionType.INSERT : ActionType.UPDATE);
     }
@@ -167,7 +184,11 @@ const ModalAddCustomer = ({
     nhomKhach: ICustomerGroupDto,
     actionid?: number
   ) => {
-    setValue("idNhomKhach", nhomKhach?.id);
+    if (CommonFunc.checkNull_OrEmpty(nhomKhach?.id)) {
+      setValue("idNhomKhach", null);
+    } else {
+      setValue("idNhomKhach", nhomKhach?.id);
+    }
     setValue("tenNhomKhach", nhomKhach?.tenNhomKhach);
     setIsShowModalListCustomer(false);
   };
@@ -176,6 +197,10 @@ const ModalAddCustomer = ({
     <Modal visible={isShow} animationType="slide" transparent={true}>
       <ModalListCustomerGroup
         isShow={isShowModalListCustomer}
+        objUpdate={{
+          id: watch("idNhomKhach") ?? ApiConst.GUID_EMPTY,
+          tenNhomKhach: watch("tenNhomKhach") ?? "Nhóm mặc định",
+        }}
         onClose={() => setIsShowModalListCustomer(false)}
         onSave={saveOKNhomKhach}
       />
@@ -225,29 +250,35 @@ const ModalAddCustomer = ({
                     />
                   )}
                 />
+                <Text>Ngày sinh</Text>
+                {}
                 <TouchableOpacity onPress={showDateWheel}>
-                  <Text
-                    style={{
-                      padding: 8,
-                      borderRadius: 4,
-                      borderWidth: 1,
-                      borderColor: theme.colors.grey5,
-                    }}
-                  >
-                    {dayjs(watch("ngaySinh") ?? new Date()).format(
-                      "DD/MM/YYYY"
-                    )}
-                  </Text>
+                  {dateOfBirth ? (
+                    <Text
+                      style={{
+                        padding: 12,
+                        borderRadius: 4,
+                        borderWidth: 1,
+                        borderColor: theme.colors.grey5,
+                      }}
+                    >
+                      {dayjs(watch("ngaySinh") ?? new Date()).format(
+                        "DD/MM/YYYY"
+                      )}
+                    </Text>
+                  ) : (
+                    <Text
+                      style={{
+                        padding: 12,
+                        borderRadius: 4,
+                        borderWidth: 1,
+                        borderColor: theme.colors.grey5,
+                      }}
+                    >
+                      {""}
+                    </Text>
+                  )}
                 </TouchableOpacity>
-                {/* <TextFieldCustom
-              label="Ngày sinh"
-              variant="outlined"
-              value={dayjs(watch("ngaySinh") ?? new Date()).format(
-                "DD/MM/YYYY"
-              )}
-              onFocus={showDateWheel}
-              showSoftInputOnFocus={false}
-            /> */}
 
                 <View
                   style={{
@@ -295,7 +326,7 @@ const ModalAddCustomer = ({
                   <TextFieldCustom
                     label="Nhóm khách"
                     variant="outlined"
-                    value={watch("tenNhomKhach") ?? "Chọn nhóm"}
+                    value={watch("tenNhomKhach") || "Nhóm mặc định"}
                     readOnly
                     endIcon={
                       <Icon
@@ -328,7 +359,7 @@ const ModalAddCustomer = ({
                   </View>
                   <View style={{ alignItems: "center" }}>
                     <DateTimePicker
-                      value={dateOfBirth}
+                      value={dateOfBirth ?? new Date()}
                       mode="date"
                       display="spinner"
                       onChange={choseDateOfBirth}
