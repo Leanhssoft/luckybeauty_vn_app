@@ -353,10 +353,13 @@ const ModalAddCustomer = ({
                     width: "100%",
                   }}
                 >
-                  <View style={[styles.datetime_boxDone]}>
-                    <TextLink lable="Hủy" onPress={cancelChoseDateOfBirth} />
-                    <TextLink lable="Xong" onPress={onDoneChoseDateOfBirth} />
-                  </View>
+                  {Platform.OS === "ios" && (
+                    <View style={[styles.datetime_boxDone]}>
+                      <TextLink lable="Hủy" onPress={cancelChoseDateOfBirth} />
+                      <TextLink lable="Xong" onPress={onDoneChoseDateOfBirth} />
+                    </View>
+                  )}
+
                   <View style={{ alignItems: "center" }}>
                     <DateTimePicker
                       value={dateOfBirth ?? new Date()}
