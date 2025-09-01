@@ -11,6 +11,7 @@ import { IKhachHangItemDto } from "@/services/customer/IKhachHangItemDto";
 import KhachHangService from "@/services/customer/KhachHangService";
 import { IParamSearchCustomerDto } from "@/services/customer/ParamSearchCustomerDto";
 import { useAppContext } from "@/store/react_context/AppProvider";
+import { useKhachHangStore } from "@/store/zustand/khach_hang";
 import { IPropsSimpleDialog } from "@/type/IPropsSimpleDialog";
 import CommonFunc from "@/utils/CommonFunc";
 import { Theme } from "@rneui/base";
@@ -39,8 +40,8 @@ const CustomerPage = () => {
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const insets = useSafeAreaInsets();
-
   const { userLogin, chiNhanhCurrent } = useAppContext();
+  const customerUpdate = useKhachHangStore((s) => s.customer);
   const [textSearch, setTextSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isShowModalAddCustomer, setIsShowModalAddCustomer] = useState(false);
@@ -83,6 +84,30 @@ const CustomerPage = () => {
   useEffect(() => {
     PageLoad();
   }, []);
+
+  useEffect(() => {
+    setPageDataCustomer((prev) => {
+      return {
+        ...prev,
+        items: prev.items?.map((x) => {
+          if (x.id === customerUpdate?.id) {
+            return {
+              ...x,
+              maKhachHang: customerUpdate?.maKhachHang,
+              tenKhachHang: customerUpdate?.tenKhachHang,
+              soDienThoai: customerUpdate?.soDienThoai,
+              diaChi: customerUpdate?.diaChi,
+              ngaySinh: customerUpdate?.ngaySinh,
+              idNhomKhach: customerUpdate?.idNhomKhach ?? "",
+              tenNhomKhach: customerUpdate?.tenNhomKhach ?? "",
+            };
+          } else {
+            return x;
+          }
+        }),
+      };
+    });
+  }, [customerUpdate]);
 
   const onChangePage = async (newPage: number) => {
     setParamSearchCustomer((prev) => {

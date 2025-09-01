@@ -8,7 +8,9 @@ import { IPageResultDto } from "@/services/commonDto/IPageResultDto";
 import { ICreateOrEditKhachHangDto } from "@/services/customer/ICreateOrEditKhachHangDto";
 import { IKhachHangItemDto } from "@/services/customer/IKhachHangItemDto";
 import { ILichSuMuaHang } from "@/services/customer/ILichSuMuaHang";
+import { ILuyKeTheGiaTri } from "@/services/customer/ILuyKeTheGiaTri";
 import KhachHangService from "@/services/customer/KhachHangService";
+import { useKhachHangStore } from "@/store/zustand/khach_hang";
 import CommonFunc from "@/utils/CommonFunc";
 import { Avatar, Theme } from "@rneui/base";
 import { Text, useTheme } from "@rneui/themed";
@@ -30,6 +32,7 @@ export default function CustomerDetails() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const navigation = useNavigation();
+  const updateCustomer = useKhachHangStore((o) => o.setCustomer);
   const [isShowModalCustomer, setIsShowModalCustomer] = useState(false);
   const [tabActive, setTabActive] = useState(Tab.CUOC_HEN);
   const [customerItem, setCustomerItem] = useState<IKhachHangItemDto>({
@@ -39,6 +42,7 @@ export default function CustomerDetails() {
     tenKhachHang: "",
     soDienThoai: "",
   });
+  const [listLuyKeTGT, setListLuyKeTGT] = useState<ILuyKeTheGiaTri[]>([]);
   const [pageDataNhatKyCuocHen, setPageDataNhatKyCuocHen] = useState<
     IPageResultDto<INhatKyCuocHen>
   >({ items: [], totalCount: 0, totalPage: 0 });
@@ -61,6 +65,11 @@ export default function CustomerDetails() {
   const getInforCustomer_byId = async () => {
     const data = await KhachHangService.getDetail(id);
     setCustomerItem(data);
+  };
+
+  const GetListLuyKeTGT_ofKhachHang = async () => {
+    const data = await KhachHangService.GetListLuyKeTGT_ofKhachHang(id);
+    setListLuyKeTGT(data);
   };
 
   const getNhatKyCuocHen = async () => {
@@ -114,9 +123,9 @@ export default function CustomerDetails() {
           getLichSuMuaHang();
         }
         break;
-      case Tab.CUOC_HEN:
+      case Tab.TGT:
         {
-          getNhatKyCuocHen();
+          GetListLuyKeTGT_ofKhachHang();
         }
         break;
     }
@@ -127,6 +136,7 @@ export default function CustomerDetails() {
     setCustomerItem((prev) => {
       return {
         ...prev,
+        maKhachHang: item?.maKhachHang,
         tenKhachHang: item?.tenKhachHang,
         soDienThoai: item?.soDienThoai,
         diaChi: item?.diaChi,
@@ -135,6 +145,8 @@ export default function CustomerDetails() {
         tenNhomKhach: item?.tenNhomKhach ?? "",
       };
     });
+
+    updateCustomer(item);
   };
 
   return (
@@ -193,7 +205,11 @@ export default function CustomerDetails() {
         </View>
         <View style={[styles.flexRow, { justifyContent: "space-between" }]}>
           <Text>Nhóm khách</Text>
-          <Text> {customerItem?.tenNhomKhach ?? "Nhóm mặc định"}</Text>
+          <Text>
+            {CommonFunc.checkNull(customerItem?.tenNhomKhach ?? "")
+              ? "Nhóm mặc định"
+              : customerItem?.tenNhomKhach}
+          </Text>
         </View>
       </View>
       <View
@@ -366,6 +382,49 @@ export default function CustomerDetails() {
                         <Text>Nợ:</Text>
                         <Text style={{ color: theme.colors.error }}>
                           {CommonFunc.formatCurrency(x.conNo)}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      )}
+      {tabActive === Tab.TGT && (
+        <View style={{ marginTop: 18 }}>
+          <Text style={{ textDecorationLine: "underline" }}></Text>
+          <View style={{ marginTop: 0 }}>
+            {(listLuyKeTGT?.length ?? 0) == 0 ? (
+              <PageEmpty
+                txt="Không có dữ liệu để hiển thị"
+                style={{ height: 80 }}
+              />
+            ) : (
+              <ScrollView style={{ gap: 16 }}>
+                {listLuyKeTGT?.map((x, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.flexRow,
+                      { justifyContent: "space-between" },
+                    ]}
+                  >
+                    <View style={{ gap: 4 }}>
+                      <Text>{x.maHoaDon}</Text>
+                      <Text style={{ color: theme.colors.grey4 }}>
+                        {dayjs(x.ngayPhatSinh).format("DD/MM/YYYY HH:mm")}
+                      </Text>
+                    </View>
+                    <View style={{ gap: 4, alignItems: "center" }}>
+                      <Text style={[styles.number]}>
+                        {CommonFunc.formatCurrency(x.giaTriPhatSinh)}
+                      </Text>
+                      <View style={[styles.flexRow, { gap: 4 }]}>
+                        <Text>Lũy kế:</Text>
+                        <Text style={{ color: theme.colors.error }}>
+                          {CommonFunc.formatCurrency(x.luyKe)}
                         </Text>
                       </View>
                     </View>
