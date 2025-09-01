@@ -71,6 +71,7 @@ export default function DateRangePicker({
         containerStyle={{ position: "absolute", top: 0, right: 0 }}
         onPress={onClose}
       />
+      {/* date in iOS */}
       {isShowDateFrom && Platform.OS === "ios" && (
         <DateTimePicker
           value={dateFrom}
@@ -99,6 +100,54 @@ export default function DateRangePicker({
           value={dateTo}
           mode="date"
           display="inline"
+          timeZoneName="Asia/Ho_Chi_Minh"
+          locale="vi-VN"
+          onChange={changeDateTo}
+          style={{
+            backgroundColor: theme.colors.background,
+            width: screenWidth,
+            position: "absolute",
+            top: 80,
+            left: 10,
+            zIndex: 999999,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 0.5 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3,
+          }}
+          themeVariant="light"
+        />
+      )}
+
+      {/* date in Android */}
+      {isShowDateFrom && Platform.OS === "android" && (
+        <DateTimePicker
+          value={dateFrom}
+          mode="date"
+          display="default"
+          timeZoneName="Asia/Ho_Chi_Minh"
+          locale="vi-VN"
+          onChange={changeDateFrom}
+          style={{
+            backgroundColor: theme.colors.background,
+            width: screenWidth,
+            position: "absolute",
+            top: 80,
+            left: 10,
+            zIndex: 999999,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 0.5 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3,
+          }}
+          themeVariant="light"
+        />
+      )}
+      {isShowDateTo && Platform.OS === "android" && (
+        <DateTimePicker
+          value={dateTo}
+          mode="date"
+          display="default"
           timeZoneName="Asia/Ho_Chi_Minh"
           locale="vi-VN"
           onChange={changeDateTo}
