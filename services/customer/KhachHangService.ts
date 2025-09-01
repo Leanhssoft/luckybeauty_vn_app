@@ -9,6 +9,7 @@ import { IPageResultDto } from "../commonDto/IPageResultDto";
 import { ICreateOrEditKhachHangDto } from "./ICreateOrEditKhachHangDto";
 import { IKhachHangItemDto } from "./IKhachHangItemDto";
 import { ILichSuMuaHang } from "./ILichSuMuaHang";
+import { ILuyKeTheGiaTri } from "./ILuyKeTheGiaTri";
 import { IPagedKhachHangRequestDto } from "./IPagedKhachHangRequestDto";
 import { IParamSearchCustomerDto } from "./ParamSearchCustomerDto";
 
@@ -145,19 +146,19 @@ class KhachHangService {
     );
     return response.data.result;
   }
-  // async lichSuGiaoDich(idKhachHang: string, input: IPagedRequestDto): Promise<IPageResultDto<LichSuGiaoDich>> {
-  //     const response = await api.post(`api/services/app/KhachHang/LichSuGiaoDich?idKhachHang=${idKhachHang}`, input);
-  //     return response.data.result;
-  // }
-  // async lichSuDatLich(idKhachHang: string, input: IPagedRequestDto): Promise<IPageResultDto<ILichSuDatLich>> {
-  //     const response = await api.post(`api/services/app/KhachHang/LichSuDatLich?idKhachHang=${idKhachHang}`, input);
-  //     return response.data.result;
-  // }
   GetListCustomerId_byPhone = async (memberPhone: string): Promise<string> => {
     const result = await api.get(
       `api/services/app/KhachHang/GetListCustomerId_byPhone?phone=${memberPhone}`
     );
     return result.data.result;
+  };
+  GetListLuyKeTGT_ofKhachHang = async (
+    idKhachHang: string
+  ): Promise<ILuyKeTheGiaTri[]> => {
+    const result = await api.get(
+      `api/services/app/KhachHang/GetListLuyKeTGT_ofKhachHang?idKhachHang=${idKhachHang}`
+    );
+    return result;
   };
 }
 export default new KhachHangService();
