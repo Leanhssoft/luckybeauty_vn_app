@@ -44,7 +44,6 @@ export default PageEmpty;
 const styles = StyleSheet.create({
   container: {
     gap: 12,
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "white",
