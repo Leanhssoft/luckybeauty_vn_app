@@ -2,6 +2,8 @@ import ApiConst from "@/const/ApiConst";
 import { ActionType } from "@/enum/ActionType";
 import CustomerGroupService from "@/services/customer_group/CustomerGroupService";
 import { ICustomerGroupDto } from "@/services/customer_group/ICustomerGroupDto";
+import { useAppContext } from "@/store/react_context/AppProvider";
+import { useNhomKhachHangStore } from "@/store/zustand/nhom_khach_hang";
 import { PropModal } from "@/type/PropModal";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Button } from "@rneui/base";
@@ -21,6 +23,10 @@ const ModalAddNhomKhachHang = ({
   onSave,
 }: PropModal<ICustomerGroupDto>) => {
   const { theme } = useTheme();
+
+  const { chiNhanhCurrent } = useAppContext();
+  const setNhomKhach = useNhomKhachHangStore((x) => x.setNhomKhach);
+
   const schema = yup.object({
     tenNhomKhach: yup.string().required("Vui lòng nhập tên nhóm khách"),
   });
@@ -36,7 +42,7 @@ const ModalAddNhomKhachHang = ({
   });
 
   const saveNhomKhach = async (data: FormData) => {
-    const check = await CustomerGroupService.checkGroupNameExists(
+    const check = await CustomerGroupService.CheckExistsNhomKhachHang(
       data?.tenNhomKhach,
       objUpdate?.id ?? ""
     );
@@ -49,11 +55,22 @@ const ModalAddNhomKhachHang = ({
     }
     const input: ICustomerGroupDto = {
       id: objUpdate?.id ?? ApiConst.GUID_EMPTY,
-      tenNhomKhachHang: data?.tenNhomKhach,
+      tenNhomKhach: data?.tenNhomKhach,
     };
     const result = await CustomerGroupService.CreateOrEditNhomKhach(input);
     if (result) {
       onSave(result, ActionType.INSERT);
+      setNhomKhach(result);
+      // đã lưu diary at API
+
+      // const diary: INhatKyThaoTacDto = {
+      //   idChiNhanh: chiNhanhCurrent?.id ?? "",
+      //   loaiNhatKy: DiaryStatus.INSERT,
+      //   chucNang: "Danh mục nhóm khách hàng",
+      //   noiDung: `Thêm mới nhóm khách ${data?.tenNhomKhach} (${result?.maNhomKhach}) `,
+      //   noiDungChiTiet: `Thêm mới nhóm khách ${data?.tenNhomKhach} (${result?.maNhomKhach}) `,
+      // };
+      // await NhatKyThaoTacService.CreateNhatKyHoatDong(diary);
     }
   };
 
@@ -88,7 +105,12 @@ const ModalAddNhomKhachHang = ({
               )}
             />
             <View style={{ justifyContent: "flex-end", marginTop: 16 }}>
-              <Button onPress={handleSubmit(saveNhomKhach)} radius={"md"}>
+              <Button
+                onPress={handleSubmit(saveNhomKhach)}
+                radius={"lg"}
+                size="sm"
+                titleStyle={{ fontSize: 16 }}
+              >
                 Lưu
               </Button>
             </View>

@@ -1,3 +1,5 @@
+import ApiConst from "@/const/ApiConst";
+import CommonFunc from "@/utils/CommonFunc";
 import api from "../api";
 import { IPagedRequestDto } from "../commonDto/IPagedRequestDto";
 import { IPageResultDto } from "../commonDto/IPageResultDto";
@@ -25,9 +27,14 @@ class CustomerGroupService {
       totalPage: 0,
     } as IPageResultDto<ICustomerGroupDto>;
   };
-  checkGroupNameExists = async (tenNhomKhach: string, id: string) => {
-    // todo
-    return false;
+  CheckExistsNhomKhachHang = async (tenNhomKhach: string, id: string) => {
+    if (CommonFunc.checkNull(id)) {
+      id = ApiConst.GUID_EMPTY;
+    }
+    const result = await api.get(
+      `api/services/app/NhomKhach/CheckExistsNhomKhachHang?tenNhomKhach=${tenNhomKhach}&id=${id}`
+    );
+    return result;
   };
   CreateOrEditNhomKhach = async (
     input: ICustomerGroupDto

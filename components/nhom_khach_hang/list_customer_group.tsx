@@ -4,6 +4,7 @@ import { IPagedRequestDto } from "@/services/commonDto/IPagedRequestDto";
 import { IPageResultDto } from "@/services/commonDto/IPageResultDto";
 import CustomerGroupService from "@/services/customer_group/CustomerGroupService";
 import { ICustomerGroupDto } from "@/services/customer_group/ICustomerGroupDto";
+import { useNhomKhachHangStore } from "@/store/zustand/nhom_khach_hang";
 import { Button, Theme } from "@rneui/base";
 import { useTheme } from "@rneui/themed";
 import { useEffect, useState } from "react";
@@ -21,6 +22,7 @@ export function ListCustomerGroup({
 }: ListCustomerGroupProps) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
+  const nhomKhachStore = useNhomKhachHangStore((x) => x.nhomKhach);
 
   const [pageDataNhomKhachHang, setPageDatNhomKhachHang] = useState<
     IPageResultDto<ICustomerGroupDto>
@@ -45,6 +47,18 @@ export function ListCustomerGroup({
   useEffect(() => {
     getAllNhomKhach();
   }, []);
+
+  useEffect(() => {
+    if (nhomKhachStore) {
+      setPageDatNhomKhachHang((prev) => {
+        return {
+          ...prev,
+          items: [nhomKhachStore, ...prev.items],
+          totalCount: prev?.totalCount + 1,
+        };
+      });
+    }
+  }, [nhomKhachStore]);
 
   return (
     <ScrollView horizontal style={{ marginTop: 16 }}>
@@ -108,5 +122,6 @@ const createStyles = (theme: Theme) =>
     item: {
       padding: 0,
       marginLeft: 8,
+      minWidth: 60,
     },
   });
