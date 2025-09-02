@@ -315,6 +315,9 @@ export default function Invoices() {
             onChangeText={(txt) => setTextSearch(txt)}
             showCancel
             cancelButtonTitle="Huỷ"
+            cancelButtonProps={{
+              buttonTextStyle: { fontSize: 14 },
+            }}
             onCancel={() => setIsShowBoxSearch(false)}
           />
         ) : (

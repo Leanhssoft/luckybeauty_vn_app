@@ -673,6 +673,9 @@ const Product = () => {
                 height: 32,
               }}
               cancelButtonTitle="Huỷ"
+              cancelButtonProps={{
+                buttonTextStyle: { fontSize: 14 },
+              }}
               showCancel
               value={textSearch}
               onChangeText={(txt) => setTextSearch(txt)}
