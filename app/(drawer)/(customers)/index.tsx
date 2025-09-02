@@ -11,13 +11,11 @@ import { IconType } from "@/enum/IconType";
 import { LoaiDoiTuong } from "@/enum/LoaiDoiTuong";
 import { TrangThaiHoatDong } from "@/enum/TrangThaiHoatDong";
 import { TrangThaiNo } from "@/enum/TrangThaiNo";
-import { IPagedRequestDto } from "@/services/commonDto/IPagedRequestDto";
 import { IPageResultDto } from "@/services/commonDto/IPageResultDto";
 import { ICreateOrEditKhachHangDto } from "@/services/customer/ICreateOrEditKhachHangDto";
 import { IKhachHangItemDto } from "@/services/customer/IKhachHangItemDto";
 import KhachHangService from "@/services/customer/KhachHangService";
 import { IParamSearchCustomerDto } from "@/services/customer/ParamSearchCustomerDto";
-import CustomerGroupService from "@/services/customer_group/CustomerGroupService";
 import { ICustomerGroupDto } from "@/services/customer_group/ICustomerGroupDto";
 import { useAppContext } from "@/store/react_context/AppProvider";
 import { useKhachHangStore } from "@/store/zustand/khach_hang";
@@ -29,7 +27,6 @@ import {
   Button,
   CheckBox,
   Icon,
-  ListItem,
   SearchBar,
   useTheme,
 } from "@rneui/themed";
@@ -39,14 +36,21 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { RectButton } from "react-native-gesture-handler";
-import { useSharedValue } from "react-native-reanimated";
+import { SwipeableMethods } from "react-native-gesture-handler/lib/typescript/components/ReanimatedSwipeable";
+import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
+import {
+  default as Reanimated,
+  SharedValue,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const CustomerPage = () => {
@@ -55,6 +59,7 @@ const CustomerPage = () => {
   const insets = useSafeAreaInsets();
   const { chiNhanhCurrent } = useAppContext();
   const firstLoad = useRef(true);
+  const openRef = useRef<SwipeableMethods | null>(null);
   const [isShowBoxSearch, setIsShowBoxSearch] = useState(false);
   const customerUpdate = useKhachHangStore((s) => s.customer);
   const [textSearch, setTextSearch] = useState("");
@@ -87,26 +92,6 @@ const CustomerPage = () => {
       pageSize: AppConst.PAGE_SIZE,
       trangThais: [TrangThaiHoatDong.DANG_HOAT_DONG],
     });
-
-  const [pageDataNhomKhachHang, setPageDatNhomKhachHang] = useState<
-    IPageResultDto<ICustomerGroupDto>
-  >({ items: [], totalCount: 0, totalPage: 0 });
-
-  const getAllNhomKhach = async () => {
-    const input: IPagedRequestDto = {
-      keyword: "",
-      skipCount: 1,
-      maxResultCount: 100,
-    };
-    const data = await CustomerGroupService.getAllNhomKhach(input);
-    setPageDatNhomKhachHang({
-      items: data?.items,
-      totalCount: data?.totalCount,
-      totalPage: Math.ceil(
-        (data?.totalCount ?? 0) / (input?.maxResultCount ?? AppConst.PAGE_SIZE)
-      ),
-    });
-  };
 
   const getListCustomer = async (param: IParamSearchCustomerDto) => {
     console.log("getListCustomer ", param.currentPage, param?.textSearch);
@@ -142,9 +127,7 @@ const CustomerPage = () => {
     setIsLoading(false);
   };
 
-  const PageLoad = async () => {
-    await getAllNhomKhach();
-  };
+  const PageLoad = async () => {};
 
   useEffect(() => {
     PageLoad();
@@ -213,7 +196,6 @@ const CustomerPage = () => {
           textSearch: textSearch,
         };
       });
-      console.log("textSearch ");
 
       await getListCustomer(param);
     }, 2000);
@@ -294,11 +276,7 @@ const CustomerPage = () => {
   };
 
   const saveOKCustomerGroup = (item: ICustomerGroupDto) => {
-    setPageDatNhomKhachHang({
-      ...pageDataNhomKhachHang,
-      items: [item, ...pageDataNhomKhachHang?.items],
-      totalCount: (pageDataNhomKhachHang?.totalCount ?? 0) + 1,
-    });
+    setIsShowModalAdd_CustomerGroup(false);
   };
 
   const cancelFilter = () => {
@@ -363,31 +341,78 @@ const CustomerPage = () => {
     getListCustomer(paramSearchCustomer);
   }, [paramSearchCustomer?.currentPage]);
 
-  const renderItem = ({
+  function RightAction(
+    progress: SharedValue<number>,
+    drag: SharedValue<number>,
+    item: IKhachHangItemDto
+  ) {
+    const styleAnimation = useAnimatedStyle(() => {
+      return {
+        transform: [{ translateX: drag.value + 100 }],
+      };
+    }, []);
+
+    return (
+      <Reanimated.View style={[styleAnimation]}>
+        <TouchableOpacity
+          style={[
+            {
+              backgroundColor: theme.colors.error,
+              width: 100,
+              height: "100%",
+              justifyContent: "center",
+              gap: 8,
+            },
+          ]}
+          onPress={() => onClickDelete(item)}
+        >
+          <Icon
+            name="delete"
+            type={IconType.MATERIAL_COMMUNITY}
+            color={theme.colors.white}
+            size={18}
+          />
+          <Text style={{ color: theme.colors.white, textAlign: "center" }}>
+            Xóa
+          </Text>
+        </TouchableOpacity>
+      </Reanimated.View>
+    );
+  }
+
+  const CustomerItem = ({
     item,
     index,
   }: {
     item: IKhachHangItemDto;
     index: number;
   }) => {
+    const swipeableRef = useRef<SwipeableMethods | null>(null);
+
     return (
-      <ListItem.Swipeable
-        bottomDivider={false}
-        containerStyle={{ paddingHorizontal: 4, paddingVertical: 8 }}
-        rightContent={(reset) => (
-          <Button
-            title="Xóa"
-            onPress={() => {
-              onClickDelete(item);
-              reset();
-            }}
-            icon={{ name: "delete", color: "white" }}
-            buttonStyle={{ minHeight: "100%", backgroundColor: "red" }}
-          />
-        )}
+      <ReanimatedSwipeable
+        renderRightActions={(progress, drag) =>
+          RightAction(progress, drag, item)
+        }
+        containerStyle={{ overflow: "hidden" }}
+        onSwipeableOpen={() => {
+          if (openRef.current && openRef.current !== swipeableRef.current) {
+            openRef.current.close();
+          }
+          openRef.current = swipeableRef.current;
+        }}
+        ref={swipeableRef}
+        onSwipeableClose={() => {
+          if (openRef.current === swipeableRef.current) {
+            openRef.current = null;
+          }
+        }}
       >
-        <RectButton onPress={() => router.push(`/details/${item?.id}`)}>
-          <ListItem.Content style={styles.customerItem}>
+        <Pressable
+          onPress={() => router.push(`/details/${item?.id}`)}
+          style={{ paddingHorizontal: 4, paddingVertical: 8 }}
+        >
+          <View style={styles.customerItem}>
             <TouchableOpacity
               style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
             >
@@ -452,9 +477,9 @@ const CustomerPage = () => {
                 </Text>
               </View>
             </View>
-          </ListItem.Content>
-        </RectButton>
-      </ListItem.Swipeable>
+          </View>
+        </Pressable>
+      </ReanimatedSwipeable>
     );
   };
 
@@ -537,18 +562,6 @@ const CustomerPage = () => {
           </View>
         )}
       </View>
-      {/* <SearchBar
-        placeholder="Tìm kiếm khách hàng"
-        containerStyle={{
-          backgroundColor: theme.colors.white,
-        }}
-        inputContainerStyle={{
-          backgroundColor: theme.colors.white,
-        }}
-        value={textSearch}
-        onChangeText={(txt) => setTextSearch(txt)}
-      /> */}
-
       {isLoading && (
         <ActivityIndicator
           size={"large"}
@@ -562,7 +575,9 @@ const CustomerPage = () => {
       )}
       <FlatList
         data={pageDataCustomer?.items}
-        renderItem={renderItem}
+        renderItem={({ item, index }) => (
+          <CustomerItem item={item} index={index} />
+        )}
         keyExtractor={(item) => item.id}
         style={{ paddingBottom: insets.bottom + 40 }}
         onEndReachedThreshold={0.1}
@@ -571,21 +586,21 @@ const CustomerPage = () => {
       <BottomButtonAdd onPress={() => setIsShowModalAddCustomer(true)} />
       <BottomSheet isOpen={isShowBoxFilter} toggleSheet={toggleBoxFilter}>
         <View style={{ width: "100%" }}>
-          <Icon
-            name="close"
-            type={IconType.IONICON}
-            onPress={toggleBoxFilter}
-            containerStyle={{
-              position: "absolute",
-              top: 0,
-              right: 0,
-              padding: 8,
-            }}
-          />
           <Text style={{ fontWeight: 700, fontSize: 16 }}>Lọc khách hàng</Text>
           <View style={{ marginTop: 24, gap: 16 }}>
             <View>
-              <Text style={{ fontWeight: 600 }}>Nhóm khách</Text>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+              >
+                <Text style={{ fontWeight: 600 }}>Nhóm khách</Text>
+                <Icon
+                  name="add-circle-outline"
+                  type={IconType.IONICON}
+                  size={30}
+                  color={theme.colors.primary}
+                  onPress={() => setIsShowModalAdd_CustomerGroup(true)}
+                />
+              </View>
               <ListCustomerGroup
                 selectedId={idNhomKhachSelected}
                 choseItem={choseNhomKhach}
