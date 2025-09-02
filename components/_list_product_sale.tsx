@@ -6,6 +6,7 @@ import { IParamSearchProductDto, IProductBasic } from "@/services/product/dto";
 import ProductService from "@/services/product/ProductService";
 import { IProductGroupDto } from "@/services/product_group/dto";
 import ProductGroupSevice from "@/services/product_group/ProductGroupSevice";
+import { useBottomTabSaleStore } from "@/store/zustand/bottom_tab_sale";
 import { Text, Theme } from "@rneui/base";
 import { Button, Icon, Input, useTheme } from "@rneui/themed";
 import { FC, useEffect, useRef, useState } from "react";
@@ -42,6 +43,8 @@ const ListProductSale: FC<PropsListProductSale> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [txtSearchProduct, setTxtSearchProduct] = useState("");
+  const setIsHideBottomTab = useBottomTabSaleStore((x) => x.setIsHideTab);
+
   const [isCheckMultipleProduct, setIsCheckMultipleProduct] = useState(false);
   const [arrIdQuyDoiChosed, setArrIdQuyDoiChosed] = useState<string[]>([]);
   const [arrIdNhomHangFilter, setArrIdNhomHangFilter] = useState<string[]>([]);
@@ -68,6 +71,7 @@ const ListProductSale: FC<PropsListProductSale> = ({
     if (isDoneAgreeChoseProduct) {
       setArrIdQuyDoiChosed([]);
       setIsCheckMultipleProduct(false);
+      setIsHideBottomTab(false);
     }
   }, [isDoneAgreeChoseProduct]);
 
@@ -187,6 +191,7 @@ const ListProductSale: FC<PropsListProductSale> = ({
 
   const clickBoChonNhieuSanPham = () => {
     setIsCheckMultipleProduct(false);
+    setIsHideBottomTab(false);
     setArrIdQuyDoiChosed([]);
     onClickChoseProduct([], false);
   };
@@ -266,7 +271,7 @@ const ListProductSale: FC<PropsListProductSale> = ({
       </View>
 
       {(pageResultProduct?.totalCount ?? 0) == 0 ? (
-        <PageEmpty txt="Chưa có dữ liệu" />
+        <PageEmpty txt="Chưa có dữ liệu" style={{ height: 100 }} />
       ) : (
         <View style={{ marginTop: 8, flex: 1 }}>
           <View
@@ -276,7 +281,10 @@ const ListProductSale: FC<PropsListProductSale> = ({
             ]}
           >
             <TouchableOpacity
-              onPress={() => setIsCheckMultipleProduct(!isCheckMultipleProduct)}
+              onPress={() => {
+                setIsCheckMultipleProduct(!isCheckMultipleProduct);
+                setIsHideBottomTab(!isCheckMultipleProduct);
+              }}
               style={styles.flexRow}
             >
               {isCheckMultipleProduct && (

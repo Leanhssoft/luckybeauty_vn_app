@@ -325,6 +325,18 @@ class SQLLiteQuery {
     await db.execAsync(`DELETE from tblHoaDon where Id='${id}';
       DELETE from tblHoaDonChiTiet where IdHoaDon='${id}'`);
   };
+  Remove_MultipleHoaDon = async (
+    db: sqlite.SQLiteDatabase,
+    arrId: string[]
+  ) => {
+    try {
+      const sIds = arrId.map(() => "?").join(",");
+      const sql = `DELETE FROM tblHoaDon WHERE id IN (${sIds})`;
+      await db.runAsync(sql, arrId);
+    } catch (error) {
+      console.log("Remove_MultipleHoaDon ", error);
+    }
+  };
   DeleteHoaDonChiTiet_byId = async (db: sqlite.SQLiteDatabase, id: string) => {
     try {
       await db.runAsync(`DELETE from tblHoaDonChiTiet where id= $id`, {

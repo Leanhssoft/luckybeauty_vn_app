@@ -3,6 +3,7 @@ import { MainNavigation } from "@/enum/navigation/RouteName";
 import { MainDrawerParamList } from "@/enum/navigation/RouteParam";
 import SQLLiteQuery from "@/store/expo-sqlite/SQLLiteQuery";
 import { useSaleManagerStackContext } from "@/store/react_context/SaleManagerStackProvide";
+import { useBottomTabSaleStore } from "@/store/zustand/bottom_tab_sale";
 import { DrawerNavigationProp } from "@react-navigation/drawer";
 import { Icon } from "@rneui/base";
 import { Badge, useTheme } from "@rneui/themed";
@@ -10,6 +11,7 @@ import { Tabs, useNavigation } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect } from "react";
 import { TouchableOpacity } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type SaleManagerTabNavigationProps = DrawerNavigationProp<
   MainDrawerParamList,
@@ -19,9 +21,12 @@ type SaleManagerTabNavigationProps = DrawerNavigationProp<
 export default function SaleTabsLayout() {
   const db = useSQLiteContext();
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<SaleManagerTabNavigationProps>();
   const { currentInvoice, isHideTabs } = useSaleManagerStackContext();
   const countProduct = currentInvoice?.countProduct ?? 0;
+
+  const isHideBottomTab = useBottomTabSaleStore((x) => x.isHideTab);
 
   const InitSQLLite_Database = async () => {
     SQLLiteQuery.InitDatabase(db);
@@ -34,7 +39,9 @@ export default function SaleTabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarStyle: { display: isHideTabs ? "none" : "flex" },
+        tabBarStyle: {
+          display: isHideBottomTab ? "none" : "flex",
+        },
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.greyOutline,
         headerStyle: {
@@ -75,7 +82,7 @@ export default function SaleTabsLayout() {
               type={IconType.IONICON}
               name={focused ? "book-outline" : "book"}
               color={color}
-              size={24}
+              size={20}
             />
           ),
         }}
@@ -90,7 +97,7 @@ export default function SaleTabsLayout() {
               type={IconType.IONICON}
               name={focused ? "list" : "list-sharp"}
               color={color}
-              size={24}
+              size={20}
             />
           ),
           headerRight: () => (

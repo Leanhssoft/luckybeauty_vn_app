@@ -45,8 +45,7 @@ const Product = () => {
   const insets = useSafeAreaInsets();
   const route = useRoute<ProductSaleRouteProp>();
   const navigation = useNavigation<ProductSaleNavigationProps>();
-  const { currentInvoice, setCurrentInvoice, setIsHideTab } =
-    useSaleManagerStackContext();
+  const { currentInvoice, setCurrentInvoice } = useSaleManagerStackContext();
   const idHoaDonCurrent = currentInvoice?.idHoaDon ?? "";
   const idLoaiChungTu =
     currentInvoice?.idLoaiChungTu ?? LoaiChungTu.HOA_DON_BAN_LE;
@@ -59,12 +58,6 @@ const Product = () => {
   const [ctDoing, setCTDoing] = useState<IHoaDonChiTietDto>(
     {} as IHoaDonChiTietDto
   );
-
-  useEffect(() => {
-    if (setIsHideTab !== undefined) {
-      setIsHideTab(isCheckMultipleProduct);
-    }
-  }, [isCheckMultipleProduct, setIsHideTab]);
 
   const PageLoad = async () => {};
 
@@ -250,6 +243,7 @@ const Product = () => {
   };
   const addMultipleProduct = async () => {
     setIsCheckMultipleProduct(false);
+
     setArrIdQuyDoiChosed([]);
     setIsDoneAgreeChoseProduct(() => isDoneAgreeChoseProduct + 1);
 
