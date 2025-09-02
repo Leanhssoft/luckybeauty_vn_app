@@ -60,10 +60,10 @@ export function RootLayout() {
             {Platform.OS === "ios" && (
               <View
                 style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
+                  // position: "absolute",
+                  // top: 0,
+                  // left: 0,
+                  // right: 0,
                   zIndex: 999, // đảm bảo nằm trên cùng
                   height: insets.top,
                   backgroundColor: config.backgroundColor,

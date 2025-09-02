@@ -19,6 +19,7 @@ export default function ManagerSystemStack() {
         name="index"
         options={{
           headerShown: true,
+          headerTitle: "Quản trị",
           headerLeft: () => (
             <TouchableOpacity onPress={() => navigationDrawer.openDrawer()}>
               <Icon
