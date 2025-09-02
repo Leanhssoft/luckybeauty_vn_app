@@ -6,6 +6,7 @@ import { Icon, Theme } from "@rneui/base";
 import { useTheme } from "@rneui/themed";
 import { useEffect, useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ModalAddGioHang({
   isShow,
@@ -15,6 +16,7 @@ export default function ModalAddGioHang({
 }: PropModal<IHoaDonChiTietDto>) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
+  const insest = useSafeAreaInsets();
   const [ctDoing, setCTDoing] = useState<IHoaDonChiTietDto>(
     {} as IHoaDonChiTietDto
   );
@@ -86,13 +88,8 @@ export default function ModalAddGioHang({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <BackDropView
-        style={{
-          backgroundColor: "rgba(0, 0, 0, 0.4)",
-          justifyContent: "flex-start",
-        }}
-      >
-        <View style={styles.modalView}>
+      <BackDropView>
+        <View style={[styles.modalView, { marginTop: insest.top }]}>
           <Pressable
             onPress={onClose}
             style={{
@@ -194,7 +191,6 @@ export default function ModalAddGioHang({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     modalView: {
-      marginTop: 12,
       borderRadius: 12,
       padding: 30,
       width: "98%",
