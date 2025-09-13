@@ -25,8 +25,15 @@ export default function Role() {
       maxResultCount: 100,
     };
     const data = await RoleService.GetAll(param);
+    const arr: IRoleDto[] = [];
     if (data !== null) {
-      setListRole([...data?.items]);
+      for (let i = 0; i < data?.items?.length; i++) {
+        const itFor = data?.items[i];
+        const users = await RoleService.GetListUser_byRole(itFor?.id ?? -1);
+        itFor.users = users;
+        arr.push(itFor);
+      }
+      setListRole([...arr]);
     }
   };
 
@@ -95,23 +102,33 @@ export default function Role() {
       <View style={{ marginTop: 24, gap: 16 }}>
         {listRole?.map((x) => (
           <View style={[styles.flexRow, { gap: 16 }]} key={x.id}>
-            <TouchableOpacity style={styles.card}>
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() =>
+                router.navigate({
+                  pathname:
+                    "/(drawer)/(manager-system)/(role-permission)/role_users",
+                  params: {
+                    id: x.id.toString(),
+                    name: x.name,
+                  },
+                })
+              }
+            >
               <Text
                 style={{ textAlign: "center", fontSize: 18, fontWeight: 600 }}
               >
                 {x.displayName}
               </Text>
               <View style={[styles.flexRow, { marginTop: 16 }]}>
-                <Avatar
-                  title="A"
-                  rounded
-                  containerStyle={{ backgroundColor: "#ccc" }}
-                />
-                <Avatar
-                  title="B"
-                  rounded
-                  containerStyle={{ backgroundColor: "#ccc", marginLeft: -12 }}
-                />
+                {x?.users?.map((o) => (
+                  <Avatar
+                    key={o.id}
+                    title={CommonFunc.getFirstLetter(o?.userName)}
+                    rounded
+                    containerStyle={{ backgroundColor: theme.colors.grey5 }}
+                  />
+                ))}
               </View>
             </TouchableOpacity>
             <TouchableOpacity
@@ -122,6 +139,7 @@ export default function Role() {
                     "/(drawer)/(manager-system)/(role-permission)/permission",
                   params: {
                     id: x.id.toString(),
+                    name: x.name,
                   },
                 })
               }
@@ -163,5 +181,6 @@ const createStyles = (theme: Theme) =>
       borderColor: theme.colors.primary,
       padding: 16,
       flex: 9,
+      minHeight: 100,
     },
   });

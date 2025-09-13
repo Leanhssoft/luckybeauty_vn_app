@@ -25,7 +25,10 @@ export default function ManagerSystemMenu() {
         </View>
         <Icon name="chevron-forward" type={IconType.IONICON} />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.tabs}>
+      <TouchableOpacity
+        style={styles.tabs}
+        onPress={() => route.navigate("/(drawer)/(manager-system)/user")}
+      >
         <View style={styles.boxLeft}>
           <Icon name="person-circle-outline" type={IconType.IONICON} />
           <Text>Người dùng</Text>

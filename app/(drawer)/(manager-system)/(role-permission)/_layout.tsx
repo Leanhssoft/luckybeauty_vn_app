@@ -32,6 +32,20 @@ export default function RolePermissionStack() {
             ) : null,
         })}
       />
+      <Stack.Screen
+        name="role_users"
+        options={() => ({
+          title: "Người dùng theo vai trò",
+          headerTitleAlign: "left",
+          drawerLockMode: "locked-closed", // chặn Drawer gesture
+          headerLeft: ({ canGoBack }) =>
+            canGoBack ? (
+              <TouchableOpacity onPress={() => router.back()}>
+                <Icon name="arrow-back-ios" size={24} />
+              </TouchableOpacity>
+            ) : null,
+        })}
+      />
     </Stack>
   );
 }

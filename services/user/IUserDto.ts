@@ -5,7 +5,7 @@ export interface IUserDto {
   emailAddress: string;
   phoneNumber: string;
   isActive: boolean;
-  roleNames: string[];
+  roleNames: string;
   password: string;
   id: number;
   nhanSuId: string | null;

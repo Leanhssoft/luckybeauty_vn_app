@@ -24,7 +24,7 @@ class RoleService {
     );
     return data;
   };
-  GetListUser_byRole = async (roleId: number): Promise<IUserBasic> => {
+  GetListUser_byRole = async (roleId: number): Promise<IUserBasic[]> => {
     const data = await api.get(
       `api/services/app/Role/GetListUser_byRole?id=${roleId}`
     );

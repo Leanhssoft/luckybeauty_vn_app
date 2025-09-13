@@ -1,4 +1,6 @@
 import api from "../api";
+import { IPagedRequestDto } from "../commonDto/IPagedRequestDto";
+import { IPageResultDto } from "../commonDto/IPageResultDto";
 import { IUserDto } from "./IUserDto";
 
 class UserService {
@@ -66,6 +68,17 @@ class UserService {
       return result;
     } catch (error) {
       console.log(`UpdateProfile ${error}`);
+      return null;
+    }
+  };
+  GetAllUser = async (
+    input: IPagedRequestDto
+  ): Promise<IPageResultDto<IUserDto> | null> => {
+    try {
+      const result = await api.get(`api/services/app/User/GetAllUser`, input);
+      return result;
+    } catch (error) {
+      console.log(`GetAllUser ${error}`);
       return null;
     }
   };
