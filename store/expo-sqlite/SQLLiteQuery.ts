@@ -234,7 +234,7 @@ class SQLLiteQuery {
     try {
       db.runAsync(
         `UPDATE tblHoaDon set idKhachHang= $idKhachHang where id=$id`,
-        { $idKhacHang: idKhachHang, $id: idHoaDon }
+        { $idKhachHang: idKhachHang, $id: idHoaDon }
       );
     } catch (error) {
       console.log("UpdateKhachHang_toHoaDon ", error);

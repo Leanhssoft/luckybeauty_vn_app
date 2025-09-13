@@ -46,7 +46,7 @@ export const CustomerItem = ({ item, choseCustomer }: PropCustomerItem) => {
               fontWeight: 500,
             }}
           >
-            TGT: {item?.soDuTheGiaTri ?? 0}{" "}
+            Số dư: {CommonFunc.formatCurrency(item?.soDuTheGiaTri ?? 0)}
           </Text>
           {(item?.conNo ?? 0) > 0 && <Text>Nợ: {item?.conNo ?? 0} </Text>}
         </View>

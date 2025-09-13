@@ -1,6 +1,4 @@
 import { TextLink } from "@/components/_text_link";
-import { Modal_ListTaiKhoanNganHang } from "@/components/modal_list_tai_khoan_ngan_hang";
-import { SimpleDialog } from "@/components/simple_dialog";
 import ApiConst from "@/const/ApiConst";
 import { DiaryStatus } from "@/enum/DiaryStatus";
 import { HinhThucThanhToan } from "@/enum/HinhThucThanhToan";
@@ -33,7 +31,16 @@ import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ThanhToan() {
@@ -83,12 +90,17 @@ export default function ThanhToan() {
 
   const arrPhuongThucTT = [
     {
-      id: HinhThucThanhToan.TIEN_MAT,
-      text: "Tiển mặt",
+      id: HinhThucThanhToan.THE_GIA_TRI,
+      text: "TGT",
     },
+
     {
       id: HinhThucThanhToan.CHUYEN_KHOAN,
       text: "Chuyển khoản",
+    },
+    {
+      id: HinhThucThanhToan.TIEN_MAT,
+      text: "Tiển mặt",
     },
     {
       id: HinhThucThanhToan.QUYET_THE,
@@ -271,6 +283,15 @@ export default function ThanhToan() {
       db,
       hoadonOpen?.id
     );
+    if (lstCTHD?.length === 0) {
+      setObjSimpleDialog({
+        ...objSimpleDialog,
+        isShow: true,
+        title: "Thông báo",
+        mes: "Vui lòng nhập thông tin hóa đơn",
+      });
+      return;
+    }
     hoadonOpen.idChiNhanh = idChiNhanhCurrent;
     hoadonOpen.maHoaDon = "";
     const dataHD = await HoaDonService.InsertHoaDon(hoadonOpen);
@@ -414,6 +435,9 @@ export default function ThanhToan() {
     const arrPhuongThucTT = lstQuyCT?.map((x) => {
       return x.hinhThucThanhToan;
     });
+    if (arrPhuongThucTT?.includes(HinhThucThanhToan.THE_GIA_TRI)) {
+      sPhuongThucTT = "Thẻ giá trị, ";
+    }
     if (arrPhuongThucTT?.includes(HinhThucThanhToan.TIEN_MAT)) {
       sPhuongThucTT = "Tiền mặt, ";
     }
@@ -466,7 +490,7 @@ export default function ThanhToan() {
 
   return (
     <View style={[styles.container]}>
-      <Modal_ListTaiKhoanNganHang
+      {/* <Modal_ListTaiKhoanNganHang
         isShow={isShowModalTaiKhoanNganHang}
         onClose={() => setIsShowModalTaiKhoanNganHang(false)}
         onSave={agreeChoseTaiKhoanNganHang}
@@ -476,7 +500,7 @@ export default function ThanhToan() {
         title={objSimpleDialog?.title}
         mes={objSimpleDialog?.mes}
         onClose={onCloseSimpleDialog}
-      />
+      /> */}
       <View style={{ gap: 16, marginTop: 16, padding: 8 }}>
         <View style={styles.flexRow}>
           <Text style={styles.textInfor}>Tổng phải trả</Text>
@@ -488,31 +512,61 @@ export default function ThanhToan() {
         </View>
         <View style={styles.boxCheckPhuongThucTT}>
           <Text>Phương thức thanh toán</Text>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              paddingLeft: 0,
-            }}
-          >
-            {arrPhuongThucTT?.map((item) => (
-              <CheckBox
-                key={item.id}
-                title={item.text}
-                containerStyle={{
-                  marginLeft: 0,
-                }}
-                checked={arrHinhThucChosed.includes(item.id)}
-                onPress={() => {
-                  changeHinhThucThanhToan(item.id);
-                }}
-              />
-            ))}
+          <View style={[styles.flexRow]}>
+            <CheckBox
+              title={"Thẻ giá trị"}
+              containerStyle={styles.checkBox}
+              checked={arrHinhThucChosed.includes(
+                HinhThucThanhToan.THE_GIA_TRI
+              )}
+              onPress={() => {
+                changeHinhThucThanhToan(HinhThucThanhToan.THE_GIA_TRI);
+              }}
+            />
+            <CheckBox
+              title={"Chuyển khoản"}
+              containerStyle={styles.checkBox}
+              checked={arrHinhThucChosed.includes(
+                HinhThucThanhToan.CHUYEN_KHOAN
+              )}
+              onPress={() => {
+                changeHinhThucThanhToan(HinhThucThanhToan.CHUYEN_KHOAN);
+              }}
+            />
+          </View>
+          <View style={[styles.flexRow]}>
+            <CheckBox
+              title={"Tiền mặt"}
+              containerStyle={styles.checkBox}
+              checked={arrHinhThucChosed.includes(HinhThucThanhToan.TIEN_MAT)}
+              onPress={() => {
+                changeHinhThucThanhToan(HinhThucThanhToan.TIEN_MAT);
+              }}
+            />
+            <CheckBox
+              title={"POS"}
+              containerStyle={styles.checkBox}
+              checked={arrHinhThucChosed.includes(HinhThucThanhToan.QUYET_THE)}
+              onPress={() => {
+                changeHinhThucThanhToan(HinhThucThanhToan.QUYET_THE);
+              }}
+            />
           </View>
         </View>
 
-        <ScrollView>
+        <ScrollView contentContainerStyle={{ gap: 20, marginTop: 8 }}>
+          {arrHinhThucChosed?.includes(HinhThucThanhToan.THE_GIA_TRI) && (
+            <View style={styles.itemLoaiTien}>
+              <Text>Thẻ giá trị</Text>
+              <Input
+                inputStyle={{
+                  textAlign: "right",
+                }}
+                value={tienMat?.toString()}
+                onChangeText={(txt) => editTienTheGiaTri(txt)}
+              />
+            </View>
+          )}
           {arrHinhThucChosed?.includes(HinhThucThanhToan.TIEN_MAT) && (
             <View style={styles.itemLoaiTien}>
               <Text>Tiền mặt</Text>
@@ -527,7 +581,7 @@ export default function ThanhToan() {
           )}
 
           {arrHinhThucChosed?.includes(HinhThucThanhToan.CHUYEN_KHOAN) && (
-            <View style={[styles.flexRow, { gap: 8, marginTop: 20 }]}>
+            <View style={[styles.flexRow, { gap: 8 }]}>
               <View style={styles.itemLoaiTien}>
                 <Text>Chuyển khoản</Text>
                 <Input
@@ -546,22 +600,18 @@ export default function ThanhToan() {
               </View>
 
               {!CommonFunc.checkNull_OrEmpty(idTaiKhoanChuyenKhoan) ? (
-                <View
-                  style={{
-                    width: "40%",
-                  }}
-                >
+                <View style={styles.linkChoseTaiKhoan}>
                   <View style={styles.accountItem}>
                     <Image
                       style={{
-                        height: 60,
+                        height: 50,
                       }}
                       source={{
                         uri: taiKhoanCKChosed?.logoNganHang,
                       }}
                     />
 
-                    <View>
+                    <View style={{ marginTop: -10 }}>
                       <Text
                         style={{
                           fontWeight: 500,
@@ -580,35 +630,26 @@ export default function ThanhToan() {
                         {taiKhoanCKChosed?.soTaiKhoan ?? ""}
                       </Text>
                     </View>
+                    <TextLink
+                      lable="Thay đổi"
+                      overrideStyles={{ textAlign: "center" }}
+                      onPress={() => changeTaiKhoanNganHang(true)}
+                    />
                   </View>
-                  <TextLink
-                    lable="Thay đổi"
-                    overrideStyles={{ textAlign: "center" }}
-                    onPress={() => changeTaiKhoanNganHang(true)}
-                  />
                 </View>
               ) : (
                 <TouchableOpacity
-                  style={[
-                    styles.flexRow,
-                    {
-                      width: "40%",
-                    },
-                  ]}
+                  style={[styles.linkChoseTaiKhoan]}
                   onPress={() => showModalTaiKhoanNganHang(true)}
                 >
-                  <Text
-                    style={{
-                      textDecorationLine: "underline",
-                      textAlign: "center",
-                    }}
-                  >
+                  <Text style={styles.lblLinkChosetaiKhoan}>
                     Chọn tài khoản nhận
                   </Text>
                   <Icon
-                    size={30}
+                    size={20}
                     name="keyboard-double-arrow-right"
                     type={IconType.MATERIAL}
+                    color={theme.colors.primary}
                   />
                 </TouchableOpacity>
               )}
@@ -616,7 +657,7 @@ export default function ThanhToan() {
           )}
 
           {arrHinhThucChosed.includes(HinhThucThanhToan.QUYET_THE) && (
-            <View style={[styles.flexRow, { gap: 16, marginTop: 20 }]}>
+            <View style={[styles.flexRow, { gap: 8 }]}>
               <View style={styles.itemLoaiTien}>
                 <Text>POS</Text>
                 <Input
@@ -634,11 +675,7 @@ export default function ThanhToan() {
                 />
               </View>
               {!CommonFunc.checkNull_OrEmpty(idTaiKhoanPOS) ? (
-                <View
-                  style={{
-                    width: "40%",
-                  }}
-                >
+                <View style={styles.linkChoseTaiKhoan}>
                   <View style={styles.accountItem}>
                     <Image
                       style={{
@@ -649,7 +686,7 @@ export default function ThanhToan() {
                       }}
                     />
 
-                    <View>
+                    <View style={{ marginTop: -10 }}>
                       <Text
                         style={{
                           fontWeight: 500,
@@ -677,26 +714,17 @@ export default function ThanhToan() {
                 </View>
               ) : (
                 <TouchableOpacity
-                  style={[
-                    styles.flexRow,
-                    {
-                      width: "40%",
-                    },
-                  ]}
+                  style={[styles.linkChoseTaiKhoan]}
                   onPress={() => showModalTaiKhoanNganHang(false)}
                 >
-                  <Text
-                    style={{
-                      textDecorationLine: "underline",
-                      textAlign: "center",
-                    }}
-                  >
+                  <Text style={styles.lblLinkChosetaiKhoan}>
                     Chọn tài khoản nhận
                   </Text>
                   <Icon
-                    size={30}
+                    size={20}
                     name="keyboard-double-arrow-right"
                     type={IconType.MATERIAL}
+                    color={theme.colors.primary}
                   />
                 </TouchableOpacity>
               )}
@@ -704,87 +732,88 @@ export default function ThanhToan() {
           )}
         </ScrollView>
       </View>
-
-      <View
-        style={{
-          position: "absolute",
-          bottom: 8,
-          width: "100%",
-          paddingBottom: insets.bottom,
-          backgroundColor: theme.colors.white,
-        }}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+        style={[styles.footer, { paddingBottom: insets.bottom }]}
       >
-        <View style={{ gap: 16, paddingHorizontal: 8 }}>
-          <Input
-            placeholder="Nội dung thanh toán"
-            inputStyle={{
-              fontStyle: "italic",
-            }}
-            value={noiDungThu}
-            onChangeText={(text) => setNoiDungThu(text)}
-          />
-          <View
-            style={{
-              flex: 1,
-              borderWidth: 1,
-              borderColor: theme.colors.black,
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={{ gap: 16, paddingHorizontal: 8 }}>
+            <Input
+              placeholder="Nội dung thanh toán"
+              inputStyle={{
+                fontStyle: "italic",
+              }}
+              errorStyle={{ height: 0 }}
+              value={noiDungThu}
+              onChangeText={(text) => setNoiDungThu(text)}
+            />
+
             <View
               style={{
-                gap: 16,
+                flex: 1,
+                borderWidth: 1,
+                borderColor: theme.colors.primary,
+                borderRadius: 8,
+                padding: 12,
               }}
             >
-              <View style={styles.flexRow}>
-                <View
-                  style={{
-                    gap: 16,
-                  }}
-                >
-                  <Text
+              <View
+                style={{
+                  gap: 16,
+                }}
+              >
+                <View style={styles.flexRow}>
+                  <View
                     style={{
-                      fontWeight: 500,
+                      gap: 16,
                     }}
                   >
-                    Tổng khách trả
-                  </Text>
-                  <Text>{tienKhachThieu < 0 ? "Tiền thừa" : "Còn thiếu"}</Text>
-                </View>
-                <View
-                  style={{
-                    gap: 16,
-                  }}
-                >
-                  <Text
+                    <Text
+                      style={{
+                        fontWeight: 500,
+                      }}
+                    >
+                      Tổng khách trả
+                    </Text>
+                    <Text>
+                      {tienKhachThieu < 0 ? "Tiền thừa" : "Còn thiếu"}
+                    </Text>
+                  </View>
+                  <View
                     style={{
-                      fontWeight: 500,
+                      gap: 16,
                     }}
                   >
-                    {CommonFunc.formatCurrency(tienKhachDua)}
-                  </Text>
-                  <Text
-                    style={{
-                      textAlign: "right",
-                    }}
-                  >
-                    {CommonFunc.formatCurrency(Math.abs(tienKhachThieu))}
-                  </Text>
+                    <Text
+                      style={{
+                        fontWeight: 500,
+                      }}
+                    >
+                      {CommonFunc.formatCurrency(tienKhachDua)}
+                    </Text>
+                    <Text
+                      style={{
+                        textAlign: "right",
+                      }}
+                    >
+                      {CommonFunc.formatCurrency(Math.abs(tienKhachThieu))}
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
+            <Button
+              title={"Thanh toán"}
+              size="lg"
+              containerStyle={{
+                borderRadius: 4,
+              }}
+              onPress={thanhToan}
+            />
           </View>
-          <Button
-            title={"Thanh toán"}
-            size="lg"
-            containerStyle={{
-              borderRadius: 4,
-            }}
-            onPress={thanhToan}
-          />
-        </View>
-      </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -805,7 +834,18 @@ const createStyles = (theme: Theme) =>
       fontSize: 18,
       fontWeight: 600,
     },
-    boxCheckPhuongThucTT: { gap: 8, width: "100%" },
+    boxCheckPhuongThucTT: { gap: 12 },
+    linkChoseTaiKhoan: {
+      width: "40%",
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    lblLinkChosetaiKhoan: {
+      textDecorationLine: "underline",
+      textAlign: "center",
+      fontSize: 12,
+      color: theme.colors.primary,
+    },
     itemLoaiTien: {
       padding: 16,
       borderRadius: 16,
@@ -816,5 +856,20 @@ const createStyles = (theme: Theme) =>
     },
     accountItem: {
       padding: 5,
+    },
+    checkBox: {
+      padding: 0,
+      margin: 0,
+      flex: 1,
+    },
+    footer: {
+      shadowColor: theme.colors.primary,
+      shadowOffset: { width: 0, height: -0.2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3,
+      position: "absolute",
+      bottom: 8,
+      width: "100%",
+      backgroundColor: theme.colors.white,
     },
   });
