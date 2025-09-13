@@ -9,7 +9,6 @@ import { Redirect, Slot } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -57,19 +56,15 @@ export function RootLayout() {
           <ThemeProvider theme={theme}>
             <StatusBar style={config.style} />
             {/* iOS: giả lập background cho status bar */}
-            {Platform.OS === "ios" && (
+            {/* {Platform.OS === "ios" && (
               <View
                 style={{
-                  // position: "absolute",
-                  // top: 0,
-                  // left: 0,
-                  // right: 0,
-                  zIndex: 999, // đảm bảo nằm trên cùng
+                  zIndex: 999, 
                   height: insets.top,
                   backgroundColor: config.backgroundColor,
                 }}
               />
-            )}
+            )} */}
             <Slot />
           </ThemeProvider>
         </GestureHandlerRootView>

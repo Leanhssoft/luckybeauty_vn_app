@@ -15,7 +15,7 @@ export default function Permission() {
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const navigation = useNavigation();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const [textSearch, setTextSearch] = useState<string>("");
   const [expandedPermissions, setExpandedPermissions] = useState<string[]>([]);
   const [allPermission, setAllPermission] = useState<IPermissionDto[]>();
@@ -65,6 +65,7 @@ export default function Permission() {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => <TextLink lable="Xong" onPress={savePermissionRole} />,
+      title: `Vai trò: ${name}`,
     });
   }, [navigation]);
 
@@ -130,12 +131,8 @@ export default function Permission() {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.flexRow, { gap: 8, justifyContent: "center" }]}>
-        <Text> Vai trò:</Text>
-        <Text style={{ fontWeight: 600 }}> {roleInfor?.displayName}</Text>
-      </View>
       <SearchBar
-        placeholder="Tìm kiếm vai trò"
+        placeholder="Tìm kiếm quyền"
         value={textSearch}
         onChangeText={(txt) => setTextSearch(txt)}
         lightTheme

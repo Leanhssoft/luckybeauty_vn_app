@@ -759,10 +759,6 @@ const createStyles = (theme: Theme) =>
       height: 85,
       width: (screenWidth - 48) / 2,
       backgroundColor: "#E5F3FF",
-      // shadowColor: "#000",
-      // shadowOffset: { width: 0, height: 0.5 },
-      // shadowOpacity: 0.25,
-      // shadowRadius: 3, // tương đương với Blur
     },
     title: { fontSize: 16, fontWeight: 700 },
     button: {
